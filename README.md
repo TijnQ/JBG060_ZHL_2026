@@ -2,8 +2,8 @@
 
 ## Introduction and overview
 
-This repository supports the 2026 JBG060 course project on flood dynamics in South Sudan. 
-Its current scope is data loading and preprocessing: it brings hydrometeorological hazard data together with 
+This repository supports the 2026 JBG060 course project on flood dynamics in South Sudan.
+Its current scope is data loading and preprocessing: it brings hydrometeorological hazard data together with
 exposure and impact data so that they can be used in later flood-risk analyses.
 
 The repository currently provides utilities for:
@@ -14,7 +14,7 @@ The repository currently provides utilities for:
 - spatial subsetting by coordinate or bounding box; and
 - converting selected raw inputs into pandas, GeoPandas, Xarray, or NetworkX objects.
 
-This is not yet an end-to-end flood model or a complete reproducible analysis pipeline. The two Python files contain 
+This is not yet an end-to-end flood model or a complete reproducible analysis pipeline. The two Python files contain
 loader functions and executable demonstrations.
 
 ## Repository structure
@@ -31,7 +31,7 @@ JBG060-2026/
 `-- README.md
 ```
 
-Running the evapotranspiration processor creates `processing_data/evapotranspiration/`. 
+Running the evapotranspiration processor creates `processing_data/evapotranspiration/`.
 Both that generated directory and `raw_data/` are excluded from Git.
 
 ## Requirements and installation
@@ -104,7 +104,7 @@ An overview of the supplied datasets and files is available in `Data_overview.xl
 
 ## Usage and examples
 
-Run Python from the repository root. The code uses relative paths such as `./raw_data/...`; running from 
+Run Python from the repository root. The code uses relative paths such as `./raw_data/...`; running from
 another directory will cause file-not-found errors.
 
 ### Recommended: call only the functions needed
@@ -180,11 +180,11 @@ python processing_data/loading_impact_data.py
 
 These commands run the full demonstrations:
 
-- `loading.py` works across 2000-2025, loads large NetCDF and Parquet datasets, and may process approximately 
+- `loading.py` works across 2000-2025, loads large NetCDF and Parquet datasets, and may process approximately
 9,500 daily evapotranspiration files into annual CSV files.
 - `loading_impact_data.py` loads the administrative boundaries, demonstrates two coordinate lookups, runs every
 impact-data example, requests a road network from OpenStreetMap, and opens interactive plots.
-- The OpenStreetMap step needs an internet connection. Prefer the individual functions when working headlessly 
+- The OpenStreetMap step needs an internet connection. Prefer the individual functions when working headlessly
 or with limited time or memory.
 
 ## Function and data reference
@@ -201,7 +201,7 @@ or with limited time or memory.
 | `load_flood_masks(years, bbox=None)` | Recurring and unusual flood Parquet files | DataFrame with `date`, `lat`, `lon`, `tile`, and `flood_type` |
 | `flood_mask_bbox(df, bbox)` | Flood DataFrame and coordinate limits | Spatially filtered DataFrame |
 
-In flood-mask results, `flood_type == 0` denotes recurring flooding and `flood_type == 1` denotes unusual flooding. 
+In flood-mask results, `flood_type == 0` denotes recurring flooding and `flood_type == 1` denotes unusual flooding.
 If both classes occur for the same date and pixel, the unusual class takes priority.
 
 ### Exposure and impact data: `processing_data/loading_impact_data.py`
@@ -220,7 +220,7 @@ If both classes occur for the same date and pixel, the unusual class takes prior
 | `load_GDP()` | World Bank indicator CSV | GDP values for 2008-2015 keyed by year |
 | `load_ipc_data()` | IPC Excel workbooks | County-level IPC Phase 3+ population table |
 
-`mask_type` must be either `"crop"` or `"rangeland"`. Bounding boxes use decimal degrees and require the keys 
+`mask_type` must be either `"crop"` or `"rangeland"`. Bounding boxes use decimal degrees and require the keys
 `lat_min`, `lat_max`, `lon_min`, and `lon_max`.
 
 ## Generated outputs
@@ -234,7 +234,7 @@ Generated ET files, downloaded data, cached files, virtual environments, and Pyt
 
 ## Credits and acknowledgements
 
-Dataset descriptions, file overviews, provenance, and original provider information are documented in `Data_overview.xlsx`. 
+Dataset descriptions, file overviews, provenance, and original provider information are documented in `Data_overview.xlsx`.
 Consult the original providers for licenses, citation instructions, and usage restrictions.
 
 ### Literature
@@ -260,9 +260,9 @@ for the complete version-pinned environment.
 
 ## Legal and ethical considerations
 
-- The repository is intended for educational and research use. It has not been validated for emergency response, 
+- The repository is intended for educational and research use. It has not been validated for emergency response,
 resource allocation, or other operational humanitarian decisions.
-- Flood detections and the `flood_type` label are data-product classifications, not direct measures of damage, 
+- Flood detections and the `flood_type` label are data-product classifications, not direct measures of damage,
 severity, or individual exposure.
-- Respect each data provider's license, attribution, access, and redistribution conditions. Access through SURFdrive 
+- Respect each data provider's license, attribution, access, and redistribution conditions. Access through SURFdrive
 does not replace the original provider's terms.

@@ -1,8 +1,9 @@
+import io
+from pathlib import Path
+
+import numpy as np
 import pandas as pd
 import xarray as xr
-import io
-import numpy as np
-from pathlib import Path
 from tqdm import tqdm
 
 #### NOTE: FIRST DOWNLOAD THE RAW DATA FROM SURFDRIVE
@@ -17,7 +18,7 @@ def load_dartmouth_data() -> dict[int, pd.DataFrame]:
     - station number
     - country
     - latitude
-    - longitude   
+    - longitude
 
     This data is downloaded from: https://floodobservatory.colorado.edu
     """
@@ -49,7 +50,7 @@ def load_lake_stations() -> dict[int, pd.DataFrame]:
 
     The txt file of Kyoga and Victoria provides information of the content of this data, as well as
     the coordinates of the lakes.
-    
+
     Attributes of lake Albert are stored in the attribute dictionary.
 
     The data is downloaded from:
@@ -71,8 +72,8 @@ def load_lake_stations() -> dict[int, pd.DataFrame]:
             print("Attributes of Lake Albert Data:")
             for key,value in albert_attributes.items():
                 print(f"{key} : {value}")
-            print("")
-                
+            print()
+
             df = ds.to_dataframe().reset_index(drop=True)
             df['datetime'] = pd.to_datetime(df['datetime'])
             df = df.set_index('datetime', drop = True).sort_index()
@@ -108,12 +109,12 @@ def load_lake_stations() -> dict[int, pd.DataFrame]:
                 names=col_names,
                 na_values=['999.99', '99.999', '9999.99']
             )
-            df = df.dropna()    
+            df = df.dropna()
             df['date'] = pd.to_datetime(df['date'].astype(str), format='%Y%m%d')
             df = df.set_index('date', drop = True).sort_index()
-            
-            print(df.head())        
-                    
+
+            print(df.head())
+
         data[name] = df
     return data
 
@@ -124,16 +125,16 @@ def load_rainfall_runoff(years: np.ndarray) -> xr.Dataset:
 
     Data downloaded from : https://cds.climate.copernicus.eu/datasets/reanalysis-era5-single-levels?tab=overview
 
-    Returns a xr.Dataset with dimensions 
+    Returns a xr.Dataset with dimensions
     - valid_time: each day in the years provided as input (data provided for 2000-2025)
-    - latitude: 145, 
-    - longitude: 57, 
+    - latitude: 145,
+    - longitude: 57,
     covering the Nile Basin at 0.25° resolution
 
     Variables:
     - tp : float32 (valid_time, latitude, longitude). This represents the total precipitation per day[m/day].
     - ro : float32 (valid_time, latitude, longitude). This represents the total runoff per day[m/day].
-    
+
     Coordinates:
     - valid_time : datetime64[ns]. Daily timestamps, one per calendar day.
     - latitude : float64. Latitude in degrees North (33.0 to -3.0, step -0.25).
@@ -169,13 +170,13 @@ def process_ET(year:int, target_longitude: float = 30.725, target_latitude: floa
     Data downloaded from: https://cds.climate.copernicus.eu/datasets/sis-agrometeorological-indicators?tab=overview
     Definition variable:
         "Calculated using the Penman-Monteith method as described by the FAO56 guidelines,
-        it represents the rate at which a well-watered reference crop loses water to the atmosphere 
+        it represents the rate at which a well-watered reference crop loses water to the atmosphere
         through evapotranspiration and transpiration."
 
-    Reads one .nc file per calendar day, extracts the evapotranspiration on that day at the target coordinate provided, 
+    Reads one .nc file per calendar day, extracts the evapotranspiration on that day at the target coordinate provided,
     and saves the result to
-        processing_data/evapotranspiration/ET_{year}_{target_lat}N_{target_lon}E_processed.csv 
-    
+        processing_data/evapotranspiration/ET_{year}_{target_lat}N_{target_lon}E_processed.csv
+
     The evapotranspiration data is provided for the years 2000-2025 in the Nile basin.
 
     Variable written to CSV:
@@ -187,9 +188,9 @@ def process_ET(year:int, target_longitude: float = 30.725, target_latitude: floa
     - latitude  : float64. Latitude in degrees North (33.0 to -3.0, step -0.1°).
     - longitude : float64. Longitude in degrees East (23.0 to 37.0, step -0.1°).
     """
-     
+
     ET_dir = Path(f'./raw_data/evapotranspiration/ET_{year}')
-    out_dir = Path(f'./processing_data/evapotranspiration')
+    out_dir = Path('./processing_data/evapotranspiration')
     out_dir.mkdir(parents=True, exist_ok=True)
     variable = 'ReferenceET_PenmanMonteith_FAO56'
 
@@ -236,7 +237,7 @@ def load_processed_ET(years: np.ndarray, target_longitude: float, target_latitud
     Loads the processed ET variables into a single dictionary, containing for each year a dataframe
     with the daily ET value at the given grid cell.
     """
-    base_path = Path(f'./processing_data/evapotranspiration')
+    base_path = Path('./processing_data/evapotranspiration')
     lat_str = f"{target_latitude:.3f}N"
     lon_str = f"{target_longitude:.3f}E"
 
@@ -246,15 +247,15 @@ def load_processed_ET(years: np.ndarray, target_longitude: float, target_latitud
         try:
             df = pd.read_csv(f'{base_path}/ET_{year}_{lat_str}_{lon_str}_processed.csv')
             data[year] = df
-        except:
+        except FileNotFoundError:
             print(f"  WARNING: no processed .csv files found for year {year} in {base_path}")
 
     print(data[years[0]].head())
-        
+
     return data
 
 
-def load_flood_masks(years: np.array, bbox: dict = None) -> pd.DataFrame:
+def load_flood_masks(years: np.array, bbox: dict | None = None) -> pd.DataFrame:
     """
     Loads the compact flood mask parquet files for all given years and both tiles (together spanning South Sudan),
     and merges the recurring and unusual flood events into a single DataFrame.
@@ -269,10 +270,10 @@ def load_flood_masks(years: np.array, bbox: dict = None) -> pd.DataFrame:
     Specifically, we load post-processed 3-day flood mask MCDWD_L3_NRT data.
 
     The raw data is distributed in 10x10° tiles, the two tiles together span South Sudan.
-    The tiles are 4800 x 4800 pixels, with pixel size of 0.0020833 degrees (~232 m at the equator). 
+    The tiles are 4800 x 4800 pixels, with pixel size of 0.0020833 degrees (~232 m at the equator).
     It contains each location and day at which a recurring and unusual flood was detected, for the 3-day composite.
 
-    This product sums over 3 days of data, and requires multiple water detections from all available observations 
+    This product sums over 3 days of data, and requires multiple water detections from all available observations
     in the composite time window, to mark a pixel as water. This is done to minimize the impact of cloud and
     terrain shadows that are often also detected as water due to their spectral similarities.
 
@@ -284,8 +285,8 @@ def load_flood_masks(years: np.array, bbox: dict = None) -> pd.DataFrame:
     """
     # Load tiles in South Sudan
     tiles = ['h20v08', 'h21v08']
-    base_path = f'./raw_data/flood_masks'
-    
+    base_path = './raw_data/flood_masks'
+
     recurring_parts = []
     unusual_parts   = []
 
@@ -298,7 +299,7 @@ def load_flood_masks(years: np.array, bbox: dict = None) -> pd.DataFrame:
             df = pd.read_parquet(recurring_path, engine='pyarrow', columns=['date', 'lat', 'lon', 'tile'])
             df['flood_type'] = 0
             recurring_parts.append(df)
-            
+
             df = pd.read_parquet(unusual_path, engine='pyarrow', columns=['date', 'lat', 'lon', 'tile'])
             df['flood_type'] = 1
             unusual_parts.append(df)
@@ -362,8 +363,8 @@ def main():
     target_latitude     = 9.475
 
     ## Process ET data if not done yet with a progress bar
-    raw_dir = Path(f'./raw_data/evapotranspiration')
-    processed_dir = Path(f'./processing_data/evapotranspiration')
+    raw_dir = Path('./raw_data/evapotranspiration')
+    processed_dir = Path('./processing_data/evapotranspiration')
 
     files_raw = list(raw_dir.glob("*"))
     files_processed = list(processed_dir.glob("*"))

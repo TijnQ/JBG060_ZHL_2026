@@ -1,20 +1,20 @@
-import pandas as pd
-import xarray as xr
-import numpy as np
+import os
 from pathlib import Path
-import rasterio 
-import rioxarray as rxr
-from geopandas.geodataframe import GeoDataFrame
-from networkx.classes import MultiDiGraph
-from rasterio.windows import from_bounds
+
+import geopandas as gpd
+import matplotlib.pyplot as plt
+import numpy as np
 
 ## for open streetmap
 import osmnx as ox
-import geopandas as gpd
-import matplotlib.pyplot as plt
-import os
+import pandas as pd
+import rasterio
+import rioxarray as rxr
+import xarray as xr
+from geopandas.geodataframe import GeoDataFrame
+from networkx.classes import MultiDiGraph
+from rasterio.windows import from_bounds
 from shapely.geometry import Point
-
 
 #### NOTE: FIRST DOWNLOAD THE RAW DATA FROM SURFDRIVE
 
@@ -63,8 +63,8 @@ def load_worldpop_coordinate(longitude: float, latitude: float) -> dict[int, pd.
     """
     Constrained estimates of the total number of people per grid square at a resolution of 3 arc
     (approximately 100m at the equator) R2025A version v1.
-    Unit: number of people per pixel. 
-    
+    Unit: number of people per pixel.
+
     This function extracts the population count at the given coordinate, at each year between 2015-2025.
 
     Notice that due to the small spatial grid size of this data, lots of grid locations will not have people.
@@ -78,7 +78,7 @@ def load_worldpop_coordinate(longitude: float, latitude: float) -> dict[int, pd.
         fname = data_dir + f"/ssd_pop_{year}_CN_100m_R2025A_v1.tif"
 
         with rasterio.open(fname) as src:
-            bounds = src.bounds  
+            bounds = src.bounds
             # Check if the provided coordinates are within South Sudan
             if not (bounds.left <= longitude <= bounds.right and
                     bounds.bottom <= latitude <= bounds.top):
@@ -98,14 +98,14 @@ def load_worldpop_coordinate(longitude: float, latitude: float) -> dict[int, pd.
 
     return pop_data
 
-    
+
 def load_worldpop_area(bbox: dict) -> dict[int, pd.DataFrame]:
     """
     Constrained estimates of the total number of people per grid square at a resolution of 3 arc
     (approximately 100m at the equator) R2025A version v1.
-    Unit: number of people per pixel. 
-    
-    This function extracts the total population count in the provided bounding box, at each year between 2015-2025.    
+    Unit: number of people per pixel.
+
+    This function extracts the total population count in the provided bounding box, at each year between 2015-2025.
     """
     years = np.arange(2015, 2026)
     data_dir = './raw_data/worldpop'
@@ -121,7 +121,7 @@ def load_worldpop_area(bbox: dict) -> dict[int, pd.DataFrame]:
                 bbox['lon_max'], bbox['lat_max'],
                 src.transform
             )
-            
+
             # Load the data in this window
             arr = src.read(window=window).astype(np.float32)
 
@@ -203,8 +203,8 @@ def load_health_facilities() -> GeoDataFrame:
     reference facilities  for the PHCUs, providing all the services provided by a PHCU but in theory additional
     services covering diagnostic laboratory, maternity and inpatient care."
 
-        Macharia PM, Ouma PO, Gogo EG, Snow RW, Noor AM. 
-        Spatial accessibility to basic public health services in South Sudan. 
+        Macharia PM, Ouma PO, Gogo EG, Snow RW, Noor AM.
+        Spatial accessibility to basic public health services in South Sudan.
         Geospatial Health. 2017 May;12(1):510. DOI: 10.4081/gh.2017.510. PMID: 28555479; PMCID: PMC5483170.
     """
     # Load health facilities file and filter country by South Sudan
@@ -246,10 +246,10 @@ def load_farmland_mask(bbox: dict, mask_type: str) -> xr.DataArray:
     """
     This dataset contains crop or rangeland masks at 0.004464285715 degree resolution (about 1/4 square kilometer).
     Each pixel represents the area fraction of the specific cover (i.e. percentage of the pixel with crops).
-    Data ranges between 1 and 100 showing the % value. 
+    Data ranges between 1 and 100 showing the % value.
 
     This is static data, last updated on December 1st, 2023.
-    
+
     Downloaded from: https://agricultural-production-hotspots.ec.europa.eu/download.php
     """
     # Load either crop or rangeland mask
@@ -390,42 +390,38 @@ def main():
     long, lat = 27.386, 8.771
     admin1_aweil, admin2_aweil = locate_coordinate(long, lat)
     print(
-        "Administrative area for coordinate (lon, lat) = ({}, {}) is: "
-        "admin1 = {}, admin2 = {}".format(
-            long, lat, admin1_aweil, admin2_aweil
-        )
+        f"Administrative area for coordinate (lon, lat) = ({long}, {lat}) is: "
+        f"admin1 = {admin1_aweil}, admin2 = {admin2_aweil}"
     )
 
     # Not in South Sudan
     long, lat = 26.6, 10.87
     admin1, admin2 = locate_coordinate(long, lat)
     print(
-        "For coordinate (lon, lat) = ({}, {}), NOT in South Sudan".format(
-            long, lat
-        )
+        f"For coordinate (lon, lat) = ({long}, {lat}), NOT in South Sudan"
     )
-    print("Administrative area is: {}, {}".format(admin1, admin2))
+    print(f"Administrative area is: {admin1}, {admin2}")
 
     ### 3) Population data
 
     ## Loading population data at a single location
     # Where there are people
     pop_loc = load_worldpop_coordinate(31.046249993815, 9.473750002105)
-    print(f"Location with population : lon = 31.046249993815, lat = 9.473750002105" )
+    print("Location with population : lon = 31.046249993815, lat = 9.473750002105" )
     for year, count in pop_loc.items():
         print(f"Year {year} has total population count of {count}")
-    print("")
+    print()
 
     # Where there aren't people
     pop_loc = load_worldpop_coordinate(31, 9)
     print("pop_loc : ", pop_loc)
-    print(f"Location with population : lon = 31, lat = 9" )
+    print("Location with population : lon = 31, lat = 9" )
     for year, count in pop_loc.items():
         print(f"Year {year} has total population count of {count}")
-    print("")
-    
+    print()
+
     ## Loading the data for an area
-    bbox_ex = dict()
+    bbox_ex = {}
     bbox_ex['lon_min'] = 29.5
     bbox_ex['lat_min'] = 8.5
     bbox_ex['lon_max'] = 32.5
@@ -443,7 +439,7 @@ def main():
     download_OSM_network(city_name)
 
     ## Then plotting the network
-    G = plot_network(f"{city_name}")
+    plot_network(f"{city_name}")
 
     ### 5) Loading the health facility data
     hf = load_health_facilities()
@@ -459,7 +455,7 @@ def main():
     print(f"at (long, lat) = ({lon_value}, {lat_value}), there are {df.loc[lat_value, lon_value]} cattle grazing")
 
     ## 7) Cropland mask
-    bbox_ssd = dict()
+    bbox_ssd = {}
     bbox_ssd['lon_min'] = 24
     bbox_ssd['lat_min'] = 3
     bbox_ssd['lon_max'] = 36
