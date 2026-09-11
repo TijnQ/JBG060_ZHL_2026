@@ -1,0 +1,11 @@
+county,flood_type,detections,first_detection,last_detection,mean_cloud_fraction
+Aweil Centre,recurring,8099,2000-10-21,2025-10-29,0.0
+Aweil Centre,unusual,29835,2000-10-21,2025-12-17,0.0
+Aweil East,recurring,283383,2000-10-30,2025-12-13,0.0
+Aweil East,unusual,180738,2001-08-21,2025-12-21,0.0
+Aweil North,recurring,2549,2001-10-02,2025-10-29,0.0
+Aweil North,unusual,13439,2001-08-21,2025-11-11,0.0
+Aweil South,recurring,184559,2001-10-02,2025-12-13,0.0
+Aweil South,unusual,193964,2000-11-23,2025-12-13,0.0
+Aweil West,recurring,14948,2000-10-30,2025-11-08,0.0
+Aweil West,unusual,61074,2001-08-21,2025-11-11,0.0

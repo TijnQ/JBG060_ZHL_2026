@@ -2,20 +2,19 @@
 
 ## Introduction and overview
 
-This repository supports the 2026 JBG060 course project on flood dynamics in South Sudan.
-Its current scope is data loading and preprocessing: it brings hydrometeorological hazard data together with
-exposure and impact data so that they can be used in later flood-risk analyses.
+This is our repository for the JBG060 project on floods in South Sudan. It contains code to load the datasets
+and explore them. The flood-mask EDA focuses on the five counties in Northern Bahr el Ghazal.
 
-The repository currently provides utilities for:
+The code can load:
 
-- river discharge, lake levels, rainfall, runoff, evapotranspiration, and flood masks;
-- administrative boundaries, population, roads, health facilities, cattle, cropland, rangeland, GDP, and
-  food-insecurity data;
-- spatial subsetting by coordinate or bounding box; and
-- converting selected raw inputs into pandas, GeoPandas, Xarray, or NetworkX objects.
+- River discharge, lake levels, rainfall, runoff, evapotranspiration and flood masks
+- County boundaries, population, roads, health facilities, cattle, cropland, rangeland, GDP and food-security data
 
-This is not yet an end-to-end flood model or a complete reproducible analysis pipeline. The two Python files contain
-loader functions and executable demonstrations.
+There are also functions to select a smaller area and convert the data to pandas, GeoPandas, Xarray or NetworkX.
+
+Running the flood-mask notebook produces its tables and figures. The forecast model and the analysis of
+food-security impacts still need to be developed. The files in `processing_data/` contain the loading
+functions and examples of how to use them.
 
 ## Repository structure
 
@@ -24,8 +23,17 @@ JBG060-2026/
 |-- processing_data/
 |   |-- loading.py                 # Hydrometeorological data loaders
 |   `-- loading_impact_data.py     # Exposure and impact data loaders
+|-- EDA_flood_masks/
+|   |-- flood_masks_eda.ipynb       # Run all cells to reproduce the flood EDA
+|   |-- flood_eda.py               # Loading and aggregation functions
+|   |-- check_flood_eda.py         # Small checks with known expected results
+|   |-- README.md                  # Methods, results and column explanations
+|   `-- outputs/
+|       |-- tables/                # Six generated CSV tables
+|       `-- figures/               # Three generated PNG figures
+|-- EDA_farmland/                  # Farmland EDA notebook and map helper
 |-- literature/                    # Supporting papers and data documentation
-|-- raw_data/                      # External download; ignored by Git
+|-- raw_data/                      # Downloaded separately and ignored by Git
 |-- requirements.txt               # Pinned Python dependencies
 |-- .gitignore
 `-- README.md
@@ -84,7 +92,8 @@ python -m pip install -r requirements.txt
 
 ## External data setup
 
-The data is deliberately **not stored in this Git repository**. Download it separately from SURFdrive. The SURFdrive link and Password is shared in the description of the assignment on Canvas.
+Download the data from SURFdrive using the link and password on Canvas. The raw data is not included in this
+repository.
 
 Put the downloaded data in the `raw_data` folder.
 
@@ -100,12 +109,12 @@ raw_data/
 These files must be present whenever `processing_data.loading_impact_data` is imported because the module loads the
 administrative boundaries at import time.
 
-An overview of the supplied datasets and files is available in `Data_overview.xlsx`.
+The supplied `Data Overview.xlsx` describes the datasets and their files.
 
 ## Usage and examples
 
-Run Python from the repository root. The code uses relative paths such as `./raw_data/...`; running from
-another directory will cause file-not-found errors.
+Run the loading examples below from the main project folder. They use relative paths such as `./raw_data/...`,
+so they will not find the data if you start from another folder.
 
 ### Recommended: call only the functions needed
 
@@ -212,8 +221,8 @@ If both classes occur for the same date and pixel, the unusual class takes prior
 | `locate_coordinate(long, lat)` | Longitude and latitude in decimal degrees | Admin-level 1 and 2 names containing the coordinate |
 | `load_worldpop_coordinate(longitude, latitude)` | WorldPop rasters for 2015-2025 | Population value by year at the selected pixel |
 | `load_worldpop_area(bbox)` | WorldPop rasters for 2015-2025 | Total population by year inside the bounding box |
-| `download_OSM_network(name)` | OpenStreetMap place name and live internet connection | NetworkX road graph; also attempts to save and plot nodes and edges |
-| `plot_network(name)` | Existing OSM node and edge shapefiles | NetworkX graph and two GeoDataFrames; also plots the graph |
+| `download_OSM_network(name)` | OpenStreetMap place name and live internet connection | NetworkX road graph. Also attempts to save and plot nodes and edges |
+| `plot_network(name)` | Existing OSM node and edge shapefiles | NetworkX graph and two GeoDataFrames. Also plots the graph |
 | `load_health_facilities()` | Sub-Saharan health-facility GeoJSON | South Sudan facilities as a GeoDataFrame |
 | `load_cattle()` | Cattle raster | DataFrame plus longitude and latitude arrays |
 | `load_farmland_mask(bbox, mask_type)` | Crop or rangeland raster | Spatially subset Xarray DataArray |
@@ -225,17 +234,43 @@ If both classes occur for the same date and pixel, the unusual class takes prior
 
 ## Generated outputs
 
+### Satellite flood-mask EDA
+
+Open [`EDA_flood_masks/flood_masks_eda.ipynb`](EDA_flood_masks/flood_masks_eda.ipynb) in VS Code with the Python
+and Jupyter extensions. Select the project environment and click **Run All**. The required `ipykernel` package
+is included in `requirements.txt`. You can start from the main project folder or the notebook folder.
+
+The notebook loads 52 files for tile `h20v08`, covering both flood classes from 2000 to 2025.
+It selects the five counties in Northern Bahr el Ghazal and saves six CSV tables in
+`EDA_flood_masks/outputs/tables/` and three PNG figures in `EDA_flood_masks/outputs/figures/`.
+The code gives an error if an annual file is missing.
+
+We count each detected pixel once per county and week, using its area based on latitude.
+The recurring and unusual results are saved separately, because adding them together can count pixels twice.
+The monthly plot shows the average weekly detected area. We also group consecutive weeks with detections
+somewhere in a county. This does not tell us how long the same field was flooded.
+A week with no detections can also be caused by missing observations.
+
+The [flood EDA README](EDA_flood_masks/README.md) explains the methods, results, limitations and CSV columns.
+The notebook includes the saved results and figures. You can run the small checks without the raw data:
+
+```bash
+python -m EDA_flood_masks.check_flood_eda
+```
+
+### Other generated outputs
+
 - `process_ET()` creates annual CSV files in `processing_data/evapotranspiration/`.
 - `download_OSM_network()` is intended to create node and edge shapefiles in `raw_data/OSM/<place>/`.
-- Plotting functions display figures but do not save image files.
+- The original loader demonstrations display figures but do not save image files.
 - All other loader functions return Python objects in memory.
 
 Generated ET files, downloaded data, cached files, virtual environments, and Python bytecode should not be committed.
 
 ## Credits and acknowledgements
 
-Dataset descriptions, file overviews, provenance, and original provider information are documented in `Data_overview.xlsx`.
-Consult the original providers for licenses, citation instructions, and usage restrictions.
+The supplied `Data Overview.xlsx` lists the datasets and where they come from.
+Check the original sources for their licences and how to cite them.
 
 ### Literature
 
@@ -254,9 +289,8 @@ Consult the original providers for licenses, citation instructions, and usage re
   [PDF](<literature/Floods and food insecurity - A method to estimate the effect of inundation on crops availability.pdf>) |
   [DOI](https://doi.org/10.1016/j.advwatres.2017.06.019)
 
-Supporting papers and data manuals are retained in [`literature/`](literature/). The project relies on pandas, NumPy, Xarray,
-Dask, GeoPandas, Shapely, Rasterio, rioxarray, NetworkX, OSMnx, and Matplotlib; see [`requirements.txt`](requirements.txt)
-for the complete version-pinned environment.
+The papers and data manuals are in [`literature/`](literature/).
+The packages and their versions are listed in [`requirements.txt`](requirements.txt).
 
 ## Legal and ethical considerations
 
