@@ -6,7 +6,7 @@ from matplotlib.lines import Line2D
 from processing_data.loading_impact_data import load_admin_boundaries
 
 
-def plot_map(farm_path, label_farm, admin_path, output):
+def plot_map_farm(farm_path, label_farm, admin_path, output):
 
     #load basemap
     basemap = gpd.read_file(admin_path)
