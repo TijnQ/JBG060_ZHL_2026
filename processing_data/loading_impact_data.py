@@ -362,6 +362,19 @@ def load_ipc_data() -> pd.DataFrame:
         "Current - Phase 3+": "Phase 3+ Pop"
     })
 
+    # normalize county names to the admin2 GeoJSON spelling ---
+    _, admin2 = load_admin_boundaries()
+    canon = dict(zip(admin2["adm2_name"].str.strip().str.lower(),
+                     admin2["adm2_name"].str.strip()))
+    combined["County"] = combined["County"].map(
+        lambda c: canon.get(str(c).strip().lower(), c)
+    )
+
+    # Warn about IPC counties that don't exist in the admin2 layer at all
+    unmatched = sorted(set(combined["County"]) - set(admin2["adm2_name"].str.strip()))
+    if unmatched:
+        print(f"Warning: IPC counties not found in admin2 boundaries: {unmatched}")
+
     # Pivot so each county is a column, value = Phase 3+ population
     result = combined.pivot_table(
         index=["Start Date", "End Date"],
