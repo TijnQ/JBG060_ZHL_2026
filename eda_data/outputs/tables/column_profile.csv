@@ -1,0 +1,13 @@
+level,column,dtype,non_null_count,nan_count,nan_pct,n_unique,min,max,mean,std,top_value,top_count
+Country (South Sudan),lat,double,95255114,0,0.0,4800,0.0010416667209938169,9.998958587646484,6.7338694087829865,3.0402597343644353,,
+Country (South Sudan),lon,double,95255114,0,0.0,9600,20.001041412353516,39.998958587646484,32.150254885915295,3.404696966216718,,
+Country (South Sudan),cloud_frac,double,95255114,0,0.0,1,0.0,0.0,0.0,0.0,,
+Country (South Sudan),date,timestamp[ms],95255114,0,0.0,9242,2000-02-28,2025-12-31,,,,
+Country (South Sudan),tile,string,95255114,0,0.0,2,,,,,"h20v08, h21v08",95255114.0
+Country (South Sudan),flood_type,string,95255114,0,0.0,2,,,,,"recurring, unusual",95255114.0
+Northern Bahr el Ghazal state,date,datetime64[us],972588,0,0.0,2232,2000-10-21,2025-12-21,,,,
+Northern Bahr el Ghazal state,lat,float32,972588,0,0.0,706,7.976041793823242,9.757291793823242,8.869258880615234,0.10534972697496414,,
+Northern Bahr el Ghazal state,lon,float32,972588,0,0.0,887,26.16145896911621,28.023958206176758,27.672502517700195,0.2990169823169708,,
+Northern Bahr el Ghazal state,tile,object,972588,0,0.0,1,,,,,h20v08,972588.0
+Northern Bahr el Ghazal state,cloud_frac,float32,972588,0,0.0,1,0.0,0.0,0.0,0.0,,
+Northern Bahr el Ghazal state,flood_type,str,972588,0,0.0,2,,,,,recurring,493538.0
