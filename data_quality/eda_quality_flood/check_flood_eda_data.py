@@ -1,4 +1,4 @@
-"""Run with: python -m eda_data.check_flood_eda_data (no raw data required)."""
+"""Run with: python -m data_quality.eda_quality_flood.check_flood_eda_data (no raw data required)."""
 
 import tempfile
 from pathlib import Path
@@ -8,7 +8,7 @@ import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-from eda_data.flood_eda_data import (
+from data_quality.eda_quality_flood.flood_eda_data import (
     _combined_n_unique,
     _fmt_date,
     country_profile,
