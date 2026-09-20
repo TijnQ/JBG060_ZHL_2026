@@ -212,6 +212,21 @@ def load_aweil_counties(boundaries_path) -> gpd.GeoDataFrame:
     return selected[['adm2_name', 'geometry']].rename(columns={'adm2_name': 'county'})
 
 
+def load_south_sudan_counties(boundaries_path) -> gpd.GeoDataFrame:
+    """Load all South Sudan county polygons from admin level 2 boundary file."""
+    counties = gpd.read_file(boundaries_path).to_crs('EPSG:4326')
+    if 'adm2_name' in counties.columns:
+        col = 'adm2_name'
+    elif 'shapeName' in counties.columns:
+        col = 'shapeName'
+    elif 'county' in counties.columns:
+        col = 'county'
+    else:
+        col = counties.columns[0]
+    return counties[[col, 'geometry']].rename(columns={col: 'county'})
+
+
+
 def load_aweil_flood_observations(flood_root, counties: gpd.GeoDataFrame,
                                   years=(2024,)) -> pd.DataFrame:
     """Load recurring and unusual flood pixels and assign each to an Aweil county."""
@@ -239,6 +254,48 @@ def load_aweil_flood_observations(flood_root, counties: gpd.GeoDataFrame,
     )
     located = gpd.sjoin(points, counties, how='inner', predicate='within')
     return pd.DataFrame(located.drop(columns=['geometry', 'index_right']))
+
+
+def load_south_sudan_flood_observations(flood_root, counties: gpd.GeoDataFrame,
+                                         years=(2024,)) -> pd.DataFrame:
+    """Load recurring and unusual flood pixels across all South Sudan counties."""
+    bounds = tuple(counties.total_bounds)
+    location_filter = (
+        (arrow_dataset.field('lon') >= bounds[0]) &
+        (arrow_dataset.field('lon') <= bounds[2]) &
+        (arrow_dataset.field('lat') >= bounds[1]) &
+        (arrow_dataset.field('lat') <= bounds[3])
+    )
+    parts = []
+    for year in years:
+        for flood_type in ('recurring', 'unusual'):
+            path = flood_root / f'compact_{flood_type}' / f'flood_events_h20v08_{year}.parquet'
+            if not path.exists():
+                folder = flood_root / f'compact_{flood_type}'
+                if folder.exists():
+                    matching = list(folder.glob(f'*{year}*.parquet'))
+                    if matching:
+                        path = matching[0]
+                    else:
+                        continue
+                else:
+                    continue
+            frame = arrow_dataset.dataset(path, format='parquet').to_table(
+                columns=['date', 'lat', 'lon', 'cloud_frac'], filter=location_filter
+            ).to_pandas()
+            frame['flood_type'] = flood_type
+            parts.append(frame)
+    if not parts:
+        return pd.DataFrame(columns=['date', 'lat', 'lon', 'cloud_frac', 'flood_type', 'county'])
+    observations = pd.concat(parts, ignore_index=True)
+    observations['date'] = pd.to_datetime(observations['date']).dt.normalize()
+    points = gpd.GeoDataFrame(
+        observations, geometry=gpd.points_from_xy(observations['lon'], observations['lat']),
+        crs='EPSG:4326'
+    )
+    located = gpd.sjoin(points, counties, how='inner', predicate='within')
+    return pd.DataFrame(located.drop(columns=['geometry', 'index_right']))
+
 
 
 def daily_flood_pixels(observations: pd.DataFrame) -> pd.DataFrame:

@@ -11,6 +11,8 @@ from EDA_hydrometeorology.hydrological_analysis import (
     flood_event_metrics,
     lake_altimetry_quality,
     lagged_correlation,
+    load_south_sudan_counties,
+    load_south_sudan_flood_observations,
     monthly_climatology,
     percentile_extremes,
     quality_report,
@@ -68,8 +70,11 @@ def run_checks():
     assert era5_daily_table(raw).loc[0, "precipitation_mm"] == 1
     assert era5_spatial_summary(raw).loc[0, "mean_precipitation_mm_per_day"] == 1
     assert et_daily_table(et)["et_mm"].notna().all()
-    print("Passed: water budget, units, climatology, extremes, lag, floods, lakes and quality checks.")
+    assert callable(load_south_sudan_counties)
+    assert callable(load_south_sudan_flood_observations)
+    print("Passed: water budget, units, climatology, extremes, lag, floods, lakes, quality, and country checks.")
 
 
 if __name__ == "__main__":
     run_checks()
+
