@@ -26,7 +26,7 @@ The notebook was tested with Python 3.12.10, pandas 3.0.3, NumPy 2.4.6, GeoPanda
 PyArrow 24.0.0, Matplotlib 3.10.9, Seaborn 0.13.2 and ipykernel 7.3.0.
 
 If the notebook was already open when its files changed, close it and open the saved version again.
-Then restart the kernel and run all cells. The setup cell also reloads the Python helper files.
+Then restart the kernel and run all cells. Do this after editing a Python helper file too.
 Use the PNGs in `outputs/figures/`. PNGs directly in `outputs/` come from the old notebook version.
 
 You can also run the small checks below from the main project folder. They use made-up data,
@@ -46,6 +46,16 @@ python -m EDA_flood_masks.check_flood_eda
 | `README.md` | Instructions, methods, results and an explanation of the output columns. |
 | `outputs/tables/` | Six CSV files with the results. |
 | `outputs/figures/` | Three PNG figures made by the notebook. |
+
+## Reading the code
+
+Start with the notebook and follow the cells from top to bottom. The steps for loading files,
+calculating weekly totals and drawing the figures are written separately. In `flood_eda.py`,
+we use a calendar for each county to include weeks without detections in the monthly averages.
+For consecutive detections, a new run starts whenever the gap is not seven days.
+
+Pandas handles grouping and merging the tables. GeoPandas links the flood locations to counties,
+and NumPy calculates pixel areas. These libraries keep the code practical for a large dataset.
 
 ## How we process the data
 
@@ -223,13 +233,12 @@ area (`largest_weekly_union_area_km2`). Use `county` to join this table to the o
 
 ### Figures
 
-- `flood_detection_frequency.png` shows where detections occur. Both maps use the same logarithmic
-  colour scale, so the same colour means the same number of dates with a detection.
+- `flood_detection_frequency.png` combines recurring and unusual detections in one map. Four plain-language
+  groups show whether a satellite grid location was detected occasionally, repeatedly, frequently or very frequently.
 - `monthly_seasonality.png` shows the average weekly area per month in km2. Values between zero
   and 0.1 km2 are shown as `<0.1` to keep them separate from zero detections.
-- `event_size_duration.png` compares the length of each county detection run with its largest weekly
-  area. Colours show the counties. Bubble sizes show the sum of weekly areas.
-  The area axis is logarithmic so the smaller runs are easier to see.
+- `event_size_duration.png` uses directly labelled bars to compare each county's largest detected week
+  and longest sequence of detection weeks. It does not use logarithmic axes or bubble sizes.
 
 ## Limitations and next steps
 
@@ -264,3 +273,8 @@ The checks pass on both the example data and the real weekly totals. All eight c
 fresh Jupyter kernel. Starting from Capstone Data Challenge, the main project folder and the notebook folder worked.
 The saved notebook includes the tables, three figures and calculated results.
 The full notebook takes about 12 seconds on the local machine.
+
+## Communication update (2026-09-16)
+
+The three main figures were simplified for non-technical readers. Exact values and detailed indicators remain
+available in the CSV tables, while the notebook figures now use plain categories, direct labels and short caveats.

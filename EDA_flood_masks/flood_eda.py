@@ -38,12 +38,12 @@ def load_study_counties(boundaries_path: Path) -> gpd.GeoDataFrame:
         raise ValueError(f"Boundary file misses columns: {sorted(missing)}")
     if counties.crs is None:
         raise ValueError("Boundary file must specify a coordinate reference system")
-    selected = counties.loc[counties["adm1_name"].eq(STUDY_AREA)].copy()
+    selected = counties[counties["adm1_name"] == STUDY_AREA].copy()
     if selected.empty:
         raise ValueError(f"No counties found for {STUDY_AREA!r}")
-    return selected[["adm2_name", "area_sqkm", "geometry"]].rename(
-        columns={"adm2_name": "county"}
-    ).to_crs("EPSG:4326")
+    selected = selected[["adm2_name", "area_sqkm", "geometry"]]
+    selected = selected.rename(columns={"adm2_name": "county"})
+    return selected.to_crs("EPSG:4326")
 
 
 def _read_bbox(files: list[Path], bounds: tuple) -> pd.DataFrame:
@@ -56,25 +56,27 @@ def _read_bbox(files: list[Path], bounds: tuple) -> pd.DataFrame:
         (ds.field("lon") >= min_lon) & (ds.field("lon") <= max_lon)
         & (ds.field("lat") >= min_lat) & (ds.field("lat") <= max_lat)
     )
-    # The annual files use different Arrow encodings, so we read them one at a time.
-    return pd.concat([
-        ds.dataset(path, format="parquet").to_table(
-            columns=["date", "lat", "lon", "tile", "cloud_frac"], filter=bbox_filter
-        ).to_pandas()
-        for path in files
-    ], ignore_index=True)
+    # Some files store their columns differently, so read each file separately.
+    frames = []
+    columns = ["date", "lat", "lon", "tile", "cloud_frac"]
+    for path in files:
+        dataset = ds.dataset(path, format="parquet")
+        table = dataset.to_table(columns=columns, filter=bbox_filter)
+        frames.append(table.to_pandas())
+    return pd.concat(frames, ignore_index=True)
 
 
 def load_flood_observations(flood_root: Path, counties: gpd.GeoDataFrame) -> pd.DataFrame:
     """Load the flood records and find the county for each pixel."""
     frames = []
     for flood_type in ("recurring", "unusual"):
-        files = [
-            flood_root / f"compact_{flood_type}" / f"flood_events_{STUDY_TILE}_{year}.parquet"
-            for year in YEARS
-        ]
+        files = []
+        for year in YEARS:
+            filename = f"flood_events_{STUDY_TILE}_{year}.parquet"
+            files.append(flood_root / f"compact_{flood_type}" / filename)
         frame = _read_bbox(files, tuple(counties.total_bounds))
-        frames.append(frame.assign(flood_type=flood_type))
+        frame["flood_type"] = flood_type
+        frames.append(frame)
     observations = pd.concat(frames, ignore_index=True)
     observations["date"] = pd.to_datetime(observations["date"], errors="raise")
     # A pixel stays in the same county, so we only look it up once.
@@ -106,9 +108,13 @@ def summarise_weekly(observations: pd.DataFrame, *, by_type: bool = False) -> pd
         raise ValueError("Observations must be non-empty and required values non-null")
     if not set(observations["flood_type"]).issubset({"recurring", "unusual"}):
         raise ValueError("Flood classes must be recurring or unusual")
-    classes = ["flood_type"] if by_type else []
-    keys = ["county", "week"] + classes
-    data = observations.drop_duplicates(["county", "date", "lat", "lon"] + classes).copy()
+    keys = ["county", "week"]
+    daily_keys = ["county", "date", "lat", "lon"]
+    if by_type:
+        keys.append("flood_type")
+        daily_keys.append("flood_type")
+    data = observations.drop_duplicates(daily_keys).copy()
+    # W-SUN means the week ends on Sunday, so start_time gives us Monday.
     data["week"] = data["date"].dt.to_period("W-SUN").dt.start_time
     detections = data.groupby(keys, observed=True).agg(
         detected_pixel_days=("lon", "size"), mean_cloud_fraction=("cloud_frac", "mean")
@@ -130,9 +136,9 @@ def _validate_weekly_totals(weekly: pd.DataFrame) -> None:
         raise ValueError("Use unique county-week totals from summarise_weekly(by_type=False)")
     if weekly.empty or weekly[["county", "week", "detected_area_km2"]].isna().any().any():
         raise ValueError("Weekly totals must be non-empty and non-null")
-    if not np.isfinite(weekly["detected_area_km2"]).all() or weekly["detected_area_km2"].lt(0).any():
+    if not np.isfinite(weekly["detected_area_km2"]).all() or (weekly["detected_area_km2"] < 0).any():
         raise ValueError("Detected area must be finite and non-negative")
-    if weekly["week"].dt.dayofweek.ne(0).any():
+    if (weekly["week"].dt.dayofweek != 0).any():
         raise ValueError("Weeks must start on Monday")
 
 
@@ -151,12 +157,18 @@ def summarise_seasonality(weekly: pd.DataFrame, county_names, years=YEARS) -> pd
     if not set(weekly["county"]).issubset(names):
         raise ValueError("County list must include every county in the weekly totals")
     calendar = pd.date_range(f"{years[0]}-01-01", f"{years[-1]}-12-31", freq="W-MON")
-    index = pd.MultiIndex.from_product([names, calendar], names=["county", "week"])
-    complete = weekly.set_index(["county", "week"])["detected_area_km2"].reindex(index)
-    complete = complete.fillna(0).rename("area").reset_index()
+    # Give each county every week, including weeks with no flood records.
+    county_calendars = []
+    for county in names:
+        county_calendar = pd.DataFrame({"county": county, "week": calendar})
+        county_calendars.append(county_calendar)
+    complete = pd.concat(county_calendars, ignore_index=True)
+    areas = weekly[["county", "week", "detected_area_km2"]]
+    complete = complete.merge(areas, on=["county", "week"], how="left")
+    complete["area"] = complete["detected_area_km2"].fillna(0)
     complete["year"] = complete["week"].dt.year
     complete["month"] = complete["week"].dt.month
-    complete["positive"] = complete["area"].gt(0)
+    complete["positive"] = complete["area"] > 0
     monthly = complete.groupby(["county", "year", "month"], observed=True).agg(
         weekly_mean=("area", "mean"), calendar_weeks=("area", "size"),
         weeks_with_detection=("positive", "sum"),
@@ -176,9 +188,12 @@ def find_detected_events(weekly: pd.DataFrame) -> pd.DataFrame:
     although missing observations could also explain that gap.
     """
     _validate_weekly_totals(weekly)
-    totals = weekly.loc[weekly["detected_area_km2"].gt(0)].sort_values(["county", "week"]).copy()
-    gap = totals.groupby("county")["week"].diff().dt.days.ne(7)
-    totals["run_id"] = gap.groupby(totals["county"]).cumsum()
+    totals = weekly[weekly["detected_area_km2"] > 0].copy()
+    totals = totals.sort_values(["county", "week"])
+    days_since_previous_week = totals.groupby("county")["week"].diff().dt.days
+    # Start a new run at the first detection or when the previous week is missing.
+    totals["new_run"] = days_since_previous_week != 7
+    totals["run_id"] = totals.groupby("county")["new_run"].cumsum()
     return totals.groupby(["county", "run_id"], observed=True).agg(
         start_week=("week", "min"), end_week=("week", "max"),
         county_detected_weeks=("week", "size"),
