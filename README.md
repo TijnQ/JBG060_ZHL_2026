@@ -32,6 +32,9 @@ JBG060-2026/
 |       |-- tables/                # Six generated CSV tables
 |       `-- figures/               # Three generated PNG figures
 |-- EDA_farmland/                  # Farmland EDA notebook and map helper
+|-- data_quality/                  # Data-quality EDA package
+|   |-- eda_quality_hydrometeorology/  # ERA5/ET/discharge/lake input-quality EDA
+|   `-- eda_quality_flood/              # Flood-mask EDA (country + NBeG state)
 |-- literature/                    # Supporting papers and data documentation
 |-- raw_data/                      # Downloaded separately and ignored by Git
 |-- requirements.txt               # Pinned Python dependencies
@@ -256,6 +259,19 @@ The notebook includes the saved results and figures. You can run the small check
 
 ```bash
 python -m EDA_flood_masks.check_flood_eda
+```
+
+### Flood-mask data-quality EDA
+
+Open [`data_quality/eda_quality_flood/data_eda.ipynb`](data_quality/eda_quality_flood/data_eda.ipynb) to profile the raw flood-mask
+records (missing values, min/max, means, cardinality) at two levels: the whole country
+(both tiles, ~95 million rows) and the Northern Bahr el Ghazal state. Columns are aggregated
+with PyArrow so the country statistics never load all rows into memory. It saves
+`data_quality/eda_quality_flood/outputs/tables/level_overview.csv` and `column_profile.csv` and two figures.
+Offline checks (no raw data) run with:
+
+```bash
+python -m data_quality.eda_quality_flood.check_flood_eda_data
 ```
 
 ### Other generated outputs
