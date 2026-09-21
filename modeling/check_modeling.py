@@ -379,6 +379,32 @@ def test_unet_helpers() -> None:
     check("UNet parameter count < 3M (fits a 3090 comfortably)", n_params < 3_000_000, f"{n_params}")
 
 
+# --- family policy checks -----------------------------------------------------
+
+
+def test_families() -> None:
+    from modeling.train_task_a import FAMILY_PRIORITY, PRIMARY_FAMILY, resolve_families
+
+    check(
+        PRIMARY_FAMILY == "lgbm" and FAMILY_PRIORITY[0] == "lgbm",
+        True,
+        "LightGBM must be the primary backbone (first in priority order)",
+    )
+    check(resolve_families(None) == ["lgbm"], True, "default trains the primary only (LightGBM first)")
+    check(resolve_families("") == ["lgbm"], True, "empty spec -> primary only")
+    check(
+        resolve_families("cat,lgbm,xgb") == ["lgbm", "xgb", "cat"],
+        True,
+        "spec is normalised to priority order",
+    )
+    check(resolve_families("xgb") == ["xgb"], True, "cross-check-only run allowed")
+    try:
+        resolve_families("lgbm,foo")
+        check(False, "unknown family must raise")
+    except ValueError:
+        check(True, "unknown family raises ValueError")
+
+
 # --- import checks ----------------------------------------------------------------
 
 
@@ -420,6 +446,8 @@ def main() -> int:
     test_audit_helpers()
     print("\n-- unet --")
     test_unet_helpers()
+    print("\n-- families --")
+    test_families()
     print("\n-- imports --")
     test_imports()
     print(f"\n{'=' * 60}\n{len(FAILURES)} failure(s)")

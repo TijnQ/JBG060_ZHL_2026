@@ -328,7 +328,10 @@ report's framing, and give the group region-specific references:
 2. **E2 baselines** — climatology, persistence, last-composite nowcast; score on the E5
    protocol. *(CPU, hours)*
 3. **E3 GBM Task A** — LightGBM quantile regression on county-week features (Aweil first,
-   then national); SHAP report; compare vs E2. *(CPU, hours)*
+   then national); SHAP report; compare vs E2. In the code the **default run trains LightGBM
+   only** (the primary backbone); XGBoost/CatBoost are cross-checks added via
+   `--families lgbm,xgb,cat`, with a primary-vs-cross-check verdict on the model card.
+   *(CPU, hours)*
 4. **E4 TabPFN zero-shot** — same table, no tuning; check whether the foundation model beats
    E3 on this small, non-i.i.d. table. *(GPU/CPU, hours)*
 5. **E5 protocol hardening** — embargoed walk-forward, spike-weighted metrics, gauge

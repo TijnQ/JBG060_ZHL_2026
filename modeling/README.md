@@ -4,7 +4,7 @@ Implementation of the experiment plan in [`MODEL_RESEARCH.md`](../MODEL_RESEARCH
 
 | Task | Question | Entry point |
 |------|----------|-------------|
-| A | Forecast weekly flood extent per county (2000-2025, ERA5 + gauge inputs) | `python -m modeling.train_task_a --scope aweil` / `--scope national` |
+| A | Forecast weekly flood extent per county (2000-2025, ERA5 + gauge inputs) | `python -m modeling.train_task_a --scope aweil` (LightGBM primary) / `--families lgbm,xgb,cat` for the cross-check ladder |
 | B | Forecast *where* floods happen: weekly pixel grids from ERA5 tiles (U-Net) | `python -m modeling.unet --epochs 20` |
 | C | Turn a forecast into an impact advisory (exposed farmland / rangeland / cattle) | `python -m modeling.advisory --scope aweil` |
 
@@ -19,7 +19,7 @@ Supporting modules:
 | `metrics.py` | MAE/RMSE/R², CRPS from the 3-quantile forecast, detection (POD/FAR/CSI), skill vs persistence. |
 | `baselines.py` | Climatology, persistence, last-detection baselines (every model must beat these). |
 | `features.py` | Feature frame builder: ERA5 boxes, gauge, Albert level, ET0, rolling windows, spike threshold. |
-| `train_task_a.py` | Task A: LightGBM / XGBoost / CatBoost quantile + detection models, metrics, model cards, optional SHAP. |
+| `train_task_a.py` | Task A: **LightGBM is the primary backbone** (default run trains only it); XGBoost / CatBoost are cross-checks added via `--families`, with an explicit primary-vs-cross-check verdict on the model card. Quantile + detection models, metrics, SHAP on the primary. |
 | `train_tabpfn.py` | Optional zero-shot TabPFN cross-check (degrades gracefully to point predictions). |
 | `unet.py` | Task B: 40x40 tile U-Net, 17 channels (14 daily ERA5 + 3 static), BCE with pos_weight, early stopping, null baseline (historical flood frequency), 2-panel figure. |
 | `shap_report.py` | SHAP summary for a trained LightGBM model (bar plot of the top-15 |mean SHAP|). |
@@ -53,7 +53,8 @@ cd <repo root>
 # 2. gate 0: multi-year signal audit (do NOT skip)
 .venv/bin/python -m modeling.audit --scope aweil
 
-# 3. Task A (CPU is fine)
+# 3. Task A (CPU is fine). Default = LightGBM primary only ("try LightGBM first");
+#    add --families lgbm,xgb,cat for the full ladder incl. cross-checks.
 .venv/bin/python -m modeling.train_task_a --scope aweil --shap
 
 # 4. Task B (GPU strongly recommended; CPU works for a smoke test with --epochs 2)

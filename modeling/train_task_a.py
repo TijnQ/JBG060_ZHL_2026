@@ -16,9 +16,15 @@ question is answered per split: **does the model beat persistence on spike
 weeks?**
 
 Usage:
-    python -m modeling.train_task_a --scope aweiL           # primary scope
+    python -m modeling.train_task_a --scope aweiL                 # LightGBM primary only (default)
+    python -m modeling.train_task_a --scope aweiL --shap          # + SHAP on the primary
+    python -m modeling.train_task_a --scope aweiL --families lgbm,xgb,cat  # full ladder
     python -m modeling.train_task_a --scope national
-    python -m modeling.train_task_a --scope aweiL --shap    # + SHAP (E4)
+
+Family policy (MODEL_RESEARCH.md §4.2): LightGBM is the PRIMARY backbone. The
+default run trains only LightGBM ("try LightGBM first"); XGBoost and CatBoost
+are cross-checks added via ``--families`` and are only promoted if they
+consistently beat the primary on the spike slice.
 
 Outputs (under ``modeling/outputs/``):
     tables/task_a_predictions_{scope}.csv   val+test rows, all models
@@ -58,7 +64,31 @@ _LGBM_BASE = {
     "verbose": -1,
 }
 _ALPHAS = (0.1, 0.5, 0.9)
-FAMILIES = ("lgbm", "xgb", "cat")
+
+# MODEL_RESEARCH.md §4.2: LightGBM is the PRIMARY backbone for Task A.
+# XGBoost and CatBoost are cross-checks only — trained on request, scored in
+# the same table, promoted only if they consistently beat the primary on the
+# spike slice.
+PRIMARY_FAMILY = "lgbm"
+FAMILY_PRIORITY = ("lgbm", "xgb", "cat")
+# Backwards-compatible alias (priority order).
+FAMILIES = FAMILY_PRIORITY
+
+
+def resolve_families(spec: str | None) -> list[str]:
+    """Families to train, in priority order.
+
+    ``None`` (the default) trains only the primary (LightGBM) — that is the
+    ladder in MODEL_RESEARCH.md: try LightGBM first. A comma-separated spec
+    selects any subset (order is normalised to priority); unknown names raise.
+    """
+    if spec is None or spec.strip() == "":
+        return [PRIMARY_FAMILY]
+    wanted = [p.strip() for p in spec.split(",") if p.strip()]
+    unknown = [w for w in wanted if w not in FAMILY_PRIORITY]
+    if unknown:
+        raise ValueError(f"unknown families {unknown}; valid: {list(FAMILY_PRIORITY)}")
+    return [f for f in FAMILY_PRIORITY if f in wanted]
 
 
 def build_model(family: str, kind: str, alpha: float | None = None):
@@ -162,8 +192,13 @@ def _model_frame(
     return pd.DataFrame(rows)
 
 
-def train_scope(scope: str, shap: bool = False) -> dict[str, str]:
-    """Run the full Task A pipeline for one scope; returns a path map."""
+def train_scope(scope: str, shap: bool = False, families: str | None = None) -> dict[str, str]:
+    """Run the full Task A pipeline for one scope; returns a path map.
+
+    ``families``: comma-separated subset of ``FAMILY_PRIORITY`` to train;
+    ``None`` = primary only (LightGBM first, per MODEL_RESEARCH.md §4.2).
+    """
+    fam_order = resolve_families(families)
     features = build_features(scope)
     features = add_baselines(features, features["split"] == "train")
     features = add_spike_threshold(features)
@@ -186,7 +221,7 @@ def train_scope(scope: str, shap: bool = False) -> dict[str, str]:
 
     predictions: list[pd.DataFrame] = []
     fitted: dict[str, tuple[dict, object]] = {}
-    for family in FAMILIES:
+    for family in fam_order:
         try:
             area_models = {
                 a: _fit_with_early_stop(
@@ -232,9 +267,20 @@ def train_scope(scope: str, shap: bool = False) -> dict[str, str]:
         for model, group in all_pred.groupby("model", observed=True)
     ]
     metric_frames = [f for f in metric_frames if len(f)]
+
+    # Role column + ordering: primary backbone first, then cross-checks in
+    # priority order, then the trivial baselines (persistence first — it is
+    # the headline bar every model must beat).
+    role = {f: ("primary" if f == PRIMARY_FAMILY else "cross-check") for f in fam_order}
+    base_rank = {"persistence": len(fam_order), "climatology": len(fam_order) + 1,
+                 "lastdet": len(fam_order) + 2}
+    fam_rank = {f: i for i, f in enumerate(fam_order)}
+    all_metrics = pd.concat(metric_frames, ignore_index=True)
+    all_metrics["role"] = all_metrics["model"].map(lambda m: role.get(m, "baseline"))
+    all_metrics["_rank"] = all_metrics["model"].map(lambda m: fam_rank.get(m, base_rank.get(m, 99)))
     all_metrics = (
-        pd.concat(metric_frames, ignore_index=True)
-        .sort_values(["model", "split", "slice"])
+        all_metrics.sort_values(["_rank", "split", "slice"])
+        .drop(columns="_rank")
         .reset_index(drop=True)
     )
 
@@ -252,7 +298,7 @@ def train_scope(scope: str, shap: bool = False) -> dict[str, str]:
     all_metrics.to_csv(met_path, index=False)
     paths["metrics"] = str(met_path)
 
-    card = _model_card(scope, features, all_metrics, fitted, shap)
+    card = _model_card(scope, features, all_metrics, fitted, shap, fam_order)
     card_path = config.TABLES / f"task_a_modelcard_{scope}.md"
     card_path.write_text(card, encoding="utf-8")
     paths["modelcard"] = str(card_path)
@@ -264,34 +310,46 @@ def train_scope(scope: str, shap: bool = False) -> dict[str, str]:
         paths["lgbm_booster"] = str(booster_path)
         print(f"wrote {booster_path}")
 
-    if shap and "lgbm" in fitted:
-        from modeling.shap_report import shap_plot, shap_summary
+    if shap:
+        if "lgbm" in fitted:
+            from modeling.shap_report import shap_plot, shap_summary
 
-        summary = shap_summary(
-            _booster(fitted["lgbm"][0][0.5]),
-            Xtr,
-            list(FEATURE_COLUMNS),
-        )
-        shap_path = config.FIGURES / f"task_a_top_shap_{scope}.png"
-        shap_plot(summary, shap_path, title=f"Task A {scope}: mean |SHAP| (q50)")
-        shap_csv = config.TABLES / f"task_a_shap_{scope}.csv"
-        summary.to_csv(shap_csv, index=False)
-        paths["shap"] = str(shap_path)
-        print(f"wrote {shap_path}")
+            summary = shap_summary(
+                _booster(fitted["lgbm"][0][0.5]),
+                Xtr,
+                list(FEATURE_COLUMNS),
+            )
+            shap_path = config.FIGURES / f"task_a_top_shap_{scope}.png"
+            shap_plot(summary, shap_path, title=f"Task A {scope}: mean |SHAP| (q50)")
+            shap_csv = config.TABLES / f"task_a_shap_{scope}.csv"
+            summary.to_csv(shap_csv, index=False)
+            paths["shap"] = str(shap_path)
+            print(f"wrote {shap_path}")
+        else:
+            print("  shap: skipped (SHAP attribution is defined for the LightGBM primary; "
+                  "this run did not fit it)")
 
-    # Headline: test-split spike slice, q50 vs persistence.
-    head = all_metrics[
-        (all_metrics["model"] == "lgbm")
-        & (all_metrics["split"] == "test")
-        & (all_metrics["slice"] == "spike")
-    ]
-    if len(head):
-        row = head.iloc[0]
-        print(
-            f"\nHEADLINE ({scope}, test, spike weeks): MAE q50={row['mae_q50']:.1f} km2 "
-            f"vs persistence {row['mae_baseline']:.1f} km2 "
-            f"(skill {row['skill_q50']:+.2f}); CSI {row['csi']:.2f}"
-        )
+    # Headline: first fitted family in priority order (LightGBM when fitted),
+    # test-split spike slice, q50 vs the persistence baseline.
+    head_fam = next((f for f in fam_order if f in fitted), None)
+    if head_fam is None:
+        print("\nHEADLINE: none of the requested families is installed — no model fitted")
+    else:
+        head = all_metrics[
+            (all_metrics["model"] == head_fam)
+            & (all_metrics["split"] == "test")
+            & (all_metrics["slice"] == "spike")
+        ]
+        if len(head):
+            row = head.iloc[0]
+            tag = " (primary backbone)" if head_fam == PRIMARY_FAMILY else \
+                " (cross-check — NOT the primary backbone; see --families)"
+            print(
+                f"\nHEADLINE ({scope}, test, spike weeks, {head_fam}{tag}): "
+                f"MAE q50={row['mae_q50']:.1f} km2 "
+                f"vs persistence {row['mae_baseline']:.1f} km2 "
+                f"(skill {row['skill_q50']:+.2f}); CSI {row['csi']:.2f}"
+            )
     return paths
 
 
@@ -309,8 +367,20 @@ def _model_card(
     metrics_df: pd.DataFrame,
     fitted: dict,
     shap: bool,
+    fam_order: list[str],
 ) -> str:
     counts = features.groupby("split").size()
+    if PRIMARY_FAMILY in fitted:
+        others = [f for f in fam_order if f != PRIMARY_FAMILY]
+        models_line = f"- Models: **{PRIMARY_FAMILY} (primary backbone, per MODEL_RESEARCH.md §4.2)**"
+        if others:
+            models_line += (f"; cross-checks: {', '.join(others)} (promoted only if they "
+                            "consistently beat the primary on the spike slice)")
+    else:
+        models_line = (
+            f"- Models: {', '.join(fitted) or 'none installed'} "
+            f"— note: {PRIMARY_FAMILY} is the designated primary backbone and was not fitted in this run"
+        )
     lines = [
         f"# Task A model card — {scope} ({datetime.now(timezone.utc).date().isoformat()})",
         "",
@@ -324,13 +394,15 @@ def _model_card(
             f"- Features: {len(FEATURE_COLUMNS)} "
             f"(embargoed to Friday before the target week), see `modeling/features.py`"
         ),
-        f"- Models fitted: {', '.join(fitted) or 'none installed'}",
+        models_line,
         (
             "- Split: strict temporal (2000-2014 / 2015-2019 / 2020-2025), "
             "boundary weeks purged, 3-day label embargo on all features."
         ),
         "",
         "## Headline metrics (model x split x slice)",
+        "",
+        "Ordered primary → cross-checks → baselines; the `role` column marks which is which.",
         "",
         _metrics_table(metrics_df),
         "",
@@ -344,17 +416,71 @@ def _model_card(
         "- `det_prob` drives POD/FAR/CSI at threshold 0.5.",
         "",
     ]
-    if shap:
+    lines.extend(_card_verdict(metrics_df, fitted, fam_order))
+    if shap and "lgbm" in fitted:
         lines.append(f"(SHAP attribution: see `task_a_top_shap_{scope}.png`)")
     return "\n".join(lines)
+
+
+def _card_verdict(metrics_df: pd.DataFrame, fitted: dict, fam_order: list[str]) -> list[str]:
+    """Primary-vs-cross-check verdict for the card (test split, `all` slice)."""
+    lines: list[str] = ["## Primary / cross-check verdict (test, all weeks)", ""]
+    prim = fitted.get(PRIMARY_FAMILY)
+    if prim is None:
+        lines.append(f"- {PRIMARY_FAMILY} was not fitted in this run; no primary verdict.")
+        return lines
+
+    def _skill(model: str, split: str, slc: str) -> float | None:
+        row = metrics_df[
+            (metrics_df["model"] == model) & (metrics_df["split"] == split) & (metrics_df["slice"] == slc)
+        ]
+        return float(row.iloc[0]["skill_q50"]) if len(row) else None
+
+    p_all, p_spike = _skill(PRIMARY_FAMILY, "test", "all"), _skill(PRIMARY_FAMILY, "test", "spike")
+    if p_all is not None:
+        lines.append(
+            f"- **{PRIMARY_FAMILY} (primary)**: skill vs persistence = "
+            f"{p_all:+.2f} (all weeks), {p_spike if p_spike is not None else float('nan'):+.2f} (spike weeks)."
+        )
+    crossed = [f for f in fam_order if f != PRIMARY_FAMILY and f in fitted]
+    if not crossed:
+        lines.append("- No cross-checks fitted in this run (default = primary only; "
+                     "`--families lgbm,xgb,cat` adds them).")
+    for f in crossed:
+        c_all = _skill(f, "test", "all")
+        if c_all is None:
+            continue
+        if p_all is not None and c_all > p_all + 0.05:
+            lines.append(
+                f"- **{f} (cross-check) beats the primary** on test-all skill "
+                f"({c_all:+.2f} vs {p_all:+.2f}) — per §4.2, investigate before finalising "
+                f"the backbone choice."
+            )
+        else:
+            lines.append(
+                f"- {f} (cross-check): {c_all:+.2f} vs primary {p_all if p_all is not None else float('nan'):+.2f} "
+                "— does not beat the primary by a meaningful margin; primary stands."
+            )
+    if not crossed or all(_skill(f, "test", "all") is None for f in crossed):
+        lines.append("- Verdict: **LightGBM remains the Task A backbone**.")
+    lines.append("")
+    return lines
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--scope", choices=config.SCOPES, default=config.AWEIL_SCOPE)
     parser.add_argument("--shap", action="store_true", help="add SHAP attribution (needs shap)")
+    parser.add_argument(
+        "--families",
+        default=None,
+        help=(
+            "comma-separated families to train (subset of lgbm,xgb,cat); "
+            "default = primary only (lgbm)"
+        ),
+    )
     args = parser.parse_args()
-    train_scope(args.scope, shap=args.shap)
+    train_scope(args.scope, shap=args.shap, families=args.families)
 
 
 if __name__ == "__main__":
