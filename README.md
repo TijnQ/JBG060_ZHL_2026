@@ -37,6 +37,7 @@ JBG060-2026/
 |   `-- eda_quality_flood/              # Flood-mask EDA (country + NBeG state)
 |-- literature/                    # Supporting papers and data documentation
 |-- raw_data/                      # Downloaded separately and ignored by Git
+|-- MODEL_RESEARCH.md              # Living research notes on model choice and framework
 |-- requirements.txt               # Pinned Python dependencies
 |-- .gitignore
 `-- README.md
