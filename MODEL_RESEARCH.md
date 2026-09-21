@@ -22,12 +22,15 @@ update it as experiments proceed (keep dated entries so the reasoning trail stay
 
 **Bottom line in one sentence:** LightGBM quantile regression on weekly county features (CPU) as the backbone forecast, a small PyTorch U-Net on the 3090 for the spatial "where", and a rule-based exposure→advisory layer on top — with a multi-year feature audit as gate 0.
 
-**Code status (2026-09-21):** implementation has started on the `model-exploration` branch. The new
-`modeling/` package contains the data check, multi-year audit (E1), baselines + LightGBM / XGBoost /
-CatBoost / TabPFN training (E2–E4), SHAP attribution, the deterministic advisory layer (E7) and the
-U-Net (E6 — written to run on the 3090; no GPU on the dev machine). Nothing has been run on the raw
-data yet (dataset not on this machine); all logic is validated with the synthetic
-`python -m modeling.check_modeling` suite, which runs without data or GPU.
+**Code status (2026-09-21):** fully implemented and **merged into `main`** (commit `46798d0`):
+the `modeling/` package (14 modules) covers the data check, the gate-0 multi-year audit (E1),
+baselines (E2), LightGBM / XGBoost / CatBoost / TabPFN training (E3–E4), SHAP attribution, the
+U-Net (E6) and the deterministic advisory layer (E7). All logic is validated by a 68-check
+known-answer suite (`python -m modeling.check_modeling`, no data or GPU needed) which caught and
+fixed four real bugs during development. **Nothing has been run on the raw data yet and no model
+has produced a single number.** Full maturity status — what is verified, what is not, and the
+gates that turn "written" into "tested" — is in the **"Status of the modeling code"** section
+below.
 
 ## 1. The question we are answering
 
@@ -318,7 +321,7 @@ report's framing, and give the group region-specific references:
 | 7 | Era5 0.25° may be too coarse for 250 m floodplain detail | Predict at 0.25° first, then a nearest-neighbor "where" map at 250 m as a derived output; don't over-claim resolution |
 | 8 | `EDA_hydrometeorology/hydrometeorology_eda_country.py` **silently falls back to synthetic data** (broad `except` in `main()` → sine/gamma/Poisson generator) when raw files are missing; its committed `outputs_country/` tables are synthetic and its real path reads only tile h20v08 for flood observations | `modeling/` never consumes that fallback (real loaders only; `modeling/data_check.py` fails loudly on missing inputs). The EDA script itself should be fixed to raise or print a loud warning instead of the silent fallback — suggested for the group, not done here |
 
-## 8. Proposed experiment ladder (for when data lands — nothing built yet)
+## 8. Experiment ladder (all steps implemented in `modeling/` — see the status section for what remains unverified)
 
 1. **E1 data check & audit** — `raw_data` completeness report; multi-year (2015–2025) lag
    correlations, county + national; coverage statistics. *(cheap, CPU, day-scale)*
@@ -445,6 +448,63 @@ into the course report; cite the verified references in §References.
 
 ---
 
+## Status of the modeling code — what is verified, what is still untested (2026-09-21)
+
+This section is the single source of truth for how far the implementation has actually come.
+Short version: **the code is complete and self-checked, but it has never touched the real data
+and no model has been trained.** Anything below "Verified" is a hypothesis until the gates in
+"What makes it tested" have run.
+
+### Verified (done on the CPU dev machine, 2026-09-21, no raw data present)
+
+| Claim | Evidence |
+|---|---|
+| All 14 `modeling/` modules compile, import (without torch/shap/tabpfn installed) and pass lint | `compileall` over the whole repo; ruff + trailing-whitespace pre-commit hooks green; clean fast-forward merge into `main` (`46798d0`) |
+| The 68-check known-answer suite passes | `python -m modeling.check_modeling` → `0 failure(s)`; pins exact CRPS values (incl. y outside [q10, q90]), split boundaries + boundary purge, baseline values, advisory tiers & exposure scaling, rolling-window arithmetic, audit coverage counting, U-Net shapes & null baseline |
+| The suite is not decoration — it caught **4 real bugs** before merge | (1) `crps_quantiles` returned NaN for y outside the quantile range (would silently corrupt the headline metric on dry weeks); (2) the climatology baseline's `merge` silently dropped counties absent from the training period; (3) the audit counted *detection-days* instead of *weeks* with detections; (4) `rolling(1, min_periods=3)` invalid on pandas 3.0 |
+| `requirements-ml.txt` pins are valid | all 10 versions re-checked against the PyPI JSON API on 2026-09-21 (all equal then-current latest) |
+
+### Not verified (what "untested" actually means here)
+
+1. **Zero real-data runs.** No loader in `modeling/` has ever seen a real NetCDF / CSV / raster
+   (the dataset is not on the dev machine). Unknowns only real data can answer: NetCDF variable
+   names & chunking, the gauge `information.xlsx` parse, the county-name join between the
+   boundary file and the flood CSVs, missing ET0 weeks, the runtime of the national ERA5 box
+   load (the heaviest step), and whether CatBoost/XGBoost/TabPFN behave as expected on this
+   table (incl. whether TabPFN 9.0.0 supports quantile outputs — `train_tabpfn.py` degrades to
+   point predictions if not).
+2. **The U-Net has never executed.** torch is not installed on the dev machine, so the forward
+   pass, the training loop, AMP and the CUDA path are code-reviewed only; the check suite
+   covers shapes, grid mapping and the null baseline with synthetic tensors but not a trained
+   network. First execution will be the §9.5 smoke test on the 3090 (also the first test of the
+   CUDA 12.8 wheel against that machine's driver — §9.1).
+3. **Zero trained models, zero metrics.** No model cards, SHAP plots or prediction CSVs exist.
+   Every performance statement in this document (GBM beats persistence, U-Net beats the spatial
+   null, advisory tiers are useful) is a hypothesis pending E1–E7.
+4. **Environment gap:** `requirements-ml.txt` is not yet installed in any venv (the data-room
+   venv only has the base `requirements.txt` stack).
+
+**Most likely first failure points** (in expected order): gauge xlsx parsing → county-name join
+→ missing ET0 weeks → TabPFN API drift → rasterio transform handling → runtime/memory of the
+national ERA5 load.
+
+### What makes it "tested" (gate order — each gate must run on real data and be inspected)
+
+| Step | Command | Passes when… |
+|---|---|---|
+| 1. data check | `python -m modeling.data_check` | every inventory item is present & readable (no silent workarounds) |
+| 2. **gate 0 audit** | `python -m modeling.audit --scope aweil` | multi-year (2000–2024) lag structure inspected: signal present → continue; weak → fall back to national scope (§7 risk 1) |
+| 3. Task A training | `python -m modeling.train_task_a --scope aweil --shap` (then `--scope national`) | metric tables exist for both scopes; models beat persistence on the **spike slice** — an honest "does not beat" is a valid, recordable result |
+| 4. Task B U-Net (3090) | `python -m modeling.unet --epochs 20` | it trains, the val-CSI curve is inspected, and the result (CSI vs null baseline) is recorded either way |
+| 5. Advisory | `python -m modeling.advisory --scope aweil` | readable, correctly tiered text for a real 2024 week (case study) |
+
+**Definition used here:** the code is *written* today, *validated* at the logic level (synthetic
+known answers), and becomes *tested* only after steps 1–5 have each run once on real data with
+their outputs inspected. Until then, no model result in any report may be cited from this
+package.
+
+---
+
 ## References (re-verified 2026-09-21 via arXiv API + Crossref + `literature/` PDFs)
 
 - Kratzert F. et al. (2018). Rainfall–runoff modelling using Long Short-Term Memory (LSTM)
@@ -526,6 +586,12 @@ into the course report; cite the verified references in §References.
   validation (adapted here to overlapping 3-day composite labels).
 
 ## Research log
+
+- **2026-09-21 13:56 CEST (doc update)** — Added the **"Status of the modeling code"** section
+(verified vs untested, gate order that turns "written" into "tested", likely first-failure
+points); §8 retitled (no longer "nothing built yet"); TL;DR code status now points to the merge
+into `main` (`46798d0`) instead of the `model-exploration` branch, which was deleted after the
+fast-forward merge. No research-content changes.
 
 - **2026-09-21 (re-evaluation pass, after the evening pass)** — Read all repo changes made since the
 document was created (verification pass, `data_quality/` package, national flood-exposure EDA with
