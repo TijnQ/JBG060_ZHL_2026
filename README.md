@@ -35,10 +35,15 @@ JBG060-2026/
 |-- data_quality/                  # Data-quality EDA package
 |   |-- eda_quality_hydrometeorology/  # ERA5/ET/discharge/lake input-quality EDA
 |   `-- eda_quality_flood/              # Flood-mask EDA (country + NBeG state)
+|-- EDA_hydrometeorology/          # Hydro-meteorology vs flood EDA (Aweil + nationwide)
+|   |-- outputs/                   # Aweil tables/figures (REAL data)
+|   `-- outputs_country/           # nationwide tables (SYNTHETIC fallback - see its README)
 |-- literature/                    # Supporting papers and data documentation
+|-- modeling/                      # ML models: Tasks A (county extent), B (pixel U-Net), C (advisory)
 |-- raw_data/                      # Downloaded separately and ignored by Git
 |-- MODEL_RESEARCH.md              # Living research notes on model choice and framework
 |-- requirements.txt               # Pinned Python dependencies
+|-- requirements-ml.txt            # Pinned ML stack for modeling/ (install separately)
 |-- .gitignore
 `-- README.md
 ```

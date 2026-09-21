@@ -22,6 +22,13 @@ update it as experiments proceed (keep dated entries so the reasoning trail stay
 
 **Bottom line in one sentence:** LightGBM quantile regression on weekly county features (CPU) as the backbone forecast, a small PyTorch U-Net on the 3090 for the spatial "where", and a rule-based exposure→advisory layer on top — with a multi-year feature audit as gate 0.
 
+**Code status (2026-09-21):** implementation has started on the `model-exploration` branch. The new
+`modeling/` package contains the data check, multi-year audit (E1), baselines + LightGBM / XGBoost /
+CatBoost / TabPFN training (E2–E4), SHAP attribution, the deterministic advisory layer (E7) and the
+U-Net (E6 — written to run on the 3090; no GPU on the dev machine). Nothing has been run on the raw
+data yet (dataset not on this machine); all logic is validated with the synthetic
+`python -m modeling.check_modeling` suite, which runs without data or GPU.
+
 ## 1. The question we are answering
 
 1. **Where will the next flood be?** — forecast flood extent ~7 days ahead (the project's target
@@ -34,17 +41,17 @@ update it as experiments proceed (keep dated entries so the reasoning trail stay
 
 ## 2. What the project EDA tells us (data reality check)
 
-Facts gathered from `EDA_flood_masks/` and `EDA_hydrometeorology/` outputs (all verified
-against the committed CSVs on 2026-09-21):
+Facts gathered from `EDA_flood_masks/` and `EDA_hydrometeorology/` outputs (Aweil county CSVs verified
+genuine on 2026-09-21; the `outputs_country` CSVs turned out to be synthetic — see the table below):
 
 | Fact | Value / consequence |
 |---|---|
 | Target label | MCDWD 3-day composite detections, 2000–2025, ~250 m points. **Label = a 3-day window, not an instant.** Consequences: (a) a model predicting "week t" must not use any feature dated later than week t's window minus the 3-day composite overlap, (b) consecutive weeks' labels overlap in time → validation needs an **embargo/gap** (see §5). |
 | Aweil volume | 972,588 pixel records, 1,457 county-weeks with detections, 357 detection runs, max run 33 weeks, peak month Oct (Nov for Aweil South), max weekly area 375 km² (Aweil East). |
-| National volume | 58,053,688 records, 40,904 county-weeks, 8,476 runs (longest 279 weeks). |
-| **Signal quality, Aweil 2024** | Lag correlations vs. daily flood pixels: local rainfall −0.13, local runoff −0.08, upstream rainfall −0.13, upstream runoff −0.04, **river discharge −0.45** (all at lag 0, decaying slowly to ~−0.30 at lag 14). |
-| **Signal quality, nationwide 2024** | Same signals, **all positive and much stronger**: rainfall +0.56, runoff +0.51, upstream +0.64/+0.63, discharge **+0.81**. |
-| Interpretation | The Aweil county-level result is a **single year** of data with a **negative** correlation — almost certainly a 2024-specific / gauge-location artifact: the only gauge (area ID 100205, 9.6°N 31.6°E) sits downstream on the Sudd/Nile side, so "discharge rising" there plausibly tracks water *draining away from* Bahr el Ghazal after the flood plain recedes. **Action: recompute all lag correlations over 2015–2025 (multi-year) before trusting any feature.** Do not build on the 2024-only sign. |
+| National volume | 58,053,688 records, 40,904 county-weeks, 8,476 runs (longest 279 weeks) — from the **real** nationwide flood-exposure EDA (`EDA_flood_masks/NATIONAL_README.md`: 2 tiles h20v08/h21v08, 2000–2025, 79 counties). |
+| **Signal quality, Aweil 2024** (real data) | Lag correlations vs. daily flood pixels: local rainfall −0.13, local runoff −0.08, upstream rainfall −0.13, upstream runoff −0.04, **river discharge −0.45** (all at lag 0, decaying slowly to ~−0.30 at lag 14). The county notebook has **no synthetic fallback**, so these are genuine 2024 values — but a single year. |
+| **Nationwide hydro signal — NOT yet established** | The committed `outputs_country/tables/south_sudan_lag_correlations.csv` (rainfall +0.56 … discharge **+0.81**) was produced by the **synthetic fallback** in `EDA_hydrometeorology/hydrometeorology_eda_country.py`: when the raw data was unavailable, the script silently generated sine-wave/gamma rainfall and Poisson flood pixels *from the same synthetic signals* — a circular result, not evidence. Its real-data path additionally reads flood observations from tile `h20v08` only, so it is not even nationwide. The genuine nationwide evidence is the flood-exposure EDA (flood extent + cattle/rangeland exposure only, no hydro signals). **The real nationwide lag audit (2015–2025 ERA5/gauge vs detections) is open work** — `modeling/audit.py`. |
+| Interpretation | The only real measured correlations we have are the 2024 Aweil ones: **negative and weak** — possibly a 2024-specific / gauge-location artifact: the only gauge (area ID 100205, 9.6°N 31.6°E) sits downstream on the Sudd/Nile side, so "discharge rising" there plausibly tracks water *draining away from* Bahr el Ghazal after the flood plain recedes. **Action: recompute all lag correlations over 2015–2025 (multi-year) before trusting any feature** (`modeling/audit.py`, gate 0). Do not build on the 2024-only sign. |
 | Sparsity | Weekly Aweil flood pixel counts are often 0–14 in the dry season; the label is **zero-inflated and spiky** (a 375 km² week follows many near-zero weeks). Any model must be evaluated on the *spike* component, not just overall R². |
 | Observation quality | All `cloud_frac` values are zero → cannot filter bad observations; weeks without detections are "no detection", not "dry" (coverage gaps). Missingness is part of the label. |
 | Exposure data | Crop & rangeland masks (ASAP v04) are **land fractions** (no crop type, no yield); cattle map is a **static coarse raster** (no goats/sheep, no herd mobility); IPC phase 3+ population only exists for **2022–2025** (5 three-month assessment rounds) — a short outcome window for any learned "impact" model. |
@@ -309,6 +316,7 @@ report's framing, and give the group region-specific references:
 | 5 | IPC outcome window = 5 rounds (2022–2025) | Use for validation narrative only, never for training an impact model |
 | 6 | U-Net may underperform climatology-derived spatial prior | Ship the climatology-spatial-prior baseline (e.g., per-pixel historical flood frequency map) as the spatial null model |
 | 7 | Era5 0.25° may be too coarse for 250 m floodplain detail | Predict at 0.25° first, then a nearest-neighbor "where" map at 250 m as a derived output; don't over-claim resolution |
+| 8 | `EDA_hydrometeorology/hydrometeorology_eda_country.py` **silently falls back to synthetic data** (broad `except` in `main()` → sine/gamma/Poisson generator) when raw files are missing; its committed `outputs_country/` tables are synthetic and its real path reads only tile h20v08 for flood observations | `modeling/` never consumes that fallback (real loaders only; `modeling/data_check.py` fails loudly on missing inputs). The EDA script itself should be fixed to raise or print a loud warning instead of the silent fallback — suggested for the group, not done here |
 
 ## 8. Proposed experiment ladder (for when data lands — nothing built yet)
 
@@ -333,6 +341,12 @@ Goal: a **cheap, defensible forecast + impact-to-advisory stack** that runs end-
 3090 machine, built in **gated phases** so a broken phase never blocks the next one. Every
 phase below maps to a standing experiment (E1–E7) and reuses the repo's existing loaders/EDA
 (§6). Version pins were checked against PyPI/pytorch.org on 2026-09-21.
+
+**Status (2026-09-21):** Phase 1–2 code (data check, audit, features, baselines, LightGBM +
+XGBoost/CatBoost/TabPFN, SHAP, advisory layer) is written in `modeling/` and passes the synthetic
+check suite; Phase 4 (U-Net) code is written for the 3090. **No phase has been run on the raw
+data yet** — the dataset is not on the dev machine, and Phase 0's 60-second GPU smoke test has
+not been executed (no GPU here). Everything below marked *(written)* is code-first, data-pending.
 
 ### 9.1 Phase 0 — Environment & hardware sanity (≤ 30 min)
 - Pin the ML stack (create `requirements-ml.txt` — keep it separate from the pinned geo stack):
@@ -512,6 +526,21 @@ into the course report; cite the verified references in §References.
   validation (adapted here to overlapping 3-day composite labels).
 
 ## Research log
+
+- **2026-09-21 (re-evaluation pass, after the evening pass)** — Read all repo changes made since the
+document was created (verification pass, `data_quality/` package, national flood-exposure EDA with
+real 2000–2025 data for 79 counties, and the nationwide hydrometeorology script). **Key correction:**
+`EDA_hydrometeorology/hydrometeorology_eda_country.py` contains a **silent synthetic fallback**
+(`build_country_hydrometeorological_dataset` — sine/gamma/Poisson generators); its committed
+`outputs_country/tables/*` (incl. `south_sudan_lag_correlations.csv`) are therefore synthetic, and its
+real-data path reads flood observations from tile h20v08 only. §2 corrected: the Aweil 2024 row is
+genuine (county notebook has no fallback), the "nationwide 2024 positive correlations" row was removed
+as evidence and replaced with the audit gap; new risk #8 added. Verified all §9.1 PyPI pins against the
+PyPI JSON API (all equal the current latest releases). **Started implementation** on `model-exploration`:
+new `modeling/` package (`data_check`, `audit`, `features`, `splits`, `metrics`, `baselines`,
+`train_task_a`, `train_tabpfn`, `shap_report`, `advisory`, `unet`, `check_modeling`) +
+`requirements-ml.txt` (verified pins) + module README; root README structure updated. Synthetic
+check suite runs green on the CPU dev machine; real-data runs and the 3090 smoke test are pending.
 
 - **2026-09-21 (evening)** — Verification & implementation-planning pass. (a) **Reference
   audit:** every cited arXiv ID re-checked against the arXiv Atom API (all exist); every DOI

@@ -9,3 +9,5 @@ cache
 .idea
 .git
 output
+# Generated modeling outputs (keep the code, not the results)
+modeling/outputs/
