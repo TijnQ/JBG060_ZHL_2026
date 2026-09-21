@@ -3,7 +3,23 @@
 **Status:** exploratory research only — **no models implemented yet**. This is a living document:
 update it as experiments proceed (keep dated entries so the reasoning trail stays visible).
 
-- 2026-09-21: initial research sweep (web literature + project EDA outputs). See "Research log" at the bottom.
+- 2026-09-21: initial research sweep (web literature + project EDA outputs); added TL;DR at top. See "Research log" at the bottom.
+
+## TL;DR — the recommended approach (2026-09-21)
+
+**Build it as three stages; start with the cheap one.**
+
+| Stage | What to build | Model | Framework / hardware |
+|---|---|---|---|
+| **A. County flood extent** (7-day ahead, per Aweil county, weekly) | tabular features (rolling ERA5 rain/runoff, gauge, lakes, ET0, calendar, lagged own extent) → next week's detected km² + detection probability | **LightGBM quantile regression** (primary), XGBoost/CatBoost as cross-checks, **TabPFN** as zero-shot baseline, climatology + persistence as the bar to beat; GRU/Mamba only if a temporal residual remains | scikit-learn + LightGBM, **CPU**, minutes per run (add to `requirements.txt` when we start) |
+| **B. Sub-county "where"** (250 m risk map) | ERA5 tile stack (40×40 at 0.25°) + terrain/ag channels → 250 m flood mask, 7-day ahead | **small 2D U-Net** (probabilistic output; physics-informed U-Net+FNO / PIML variants only if it plateaus) | **PyTorch 2.x + CUDA on the RTX 3090** (24 GB fits it easily; expect hours of training) |
+| **C. Impact → advisory** (crops / cattle / what to do) | predicted extent × EDA exposure math × agricultural phase → exposed ha / cattle / escalating advisory text | **deterministic post-processing first — no learning** (IPC 2022–2025 is too short to train on; use it for case studies only) | pandas + the EDA modules we already have |
+
+**Why this ladder:** our Aweil table is small (~1.4k non-zero county-weeks out of ~10.5k) and zero-inflated — the literature (NeurIPS 2022, TabArena 2025, Kratzert HESS 2018) says gradient boosting is the strongest first move on exactly this kind of data, while the GPU only earns its keep on the spatial task where there is genuine structure to exploit. Deep learning on *tabular* A is not justified yet; it gets promoted only if stage A shows a measurable temporal residual.
+
+**Non-negotiables before any of it:** (1) recompute all lag correlations over **2015–2025** — the 2024-only Aweil results are negative and weak and must not leak into feature selection (§2, §5.3); (2) strict temporal splits (2000–2014 / 2015–2019 / 2020–2025) with a **3-day embargo** around the composite labels; (3) every model is scored **against climatology + persistence**, including spike-week metrics (POD/FAR/CSI), not just overall R².
+
+**Bottom line in one sentence:** LightGBM quantile regression on weekly county features (CPU) as the backbone forecast, a small PyTorch U-Net on the 3090 for the spatial "where", and a rule-based exposure→advisory layer on top — with a multi-year feature audit as gate 0.
 
 ## 1. The question we are answering
 
