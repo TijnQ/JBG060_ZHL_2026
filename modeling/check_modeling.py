@@ -28,8 +28,8 @@ from modeling import (
     features,
     metrics,
     splits,
-    unet,
 )
+from modeling.unet import train as unet
 
 FAILURES: list[str] = []
 
@@ -165,6 +165,17 @@ def test_metrics() -> None:
         close(pos_row["crps"], 9.0066667, 1e-6),
         f"got {pos_row['crps']}",
     )
+    # Degenerate 3-quantile forecast (q10=q50=q90=v, e.g. the Random Forest
+    # cross-check's point prediction): the CDF is a point mass at v, so
+    # CRPS must reduce exactly to |y - v|. This pins the contract that the
+    # method guides rely on when comparing a point forecaster to proper
+    # quantile models.
+    for y, expect_v in ((3.0, 2.0), (5.0, 0.0), (7.0, 2.0), (10.0, 5.0)):
+        check(
+            f"degenerate crps(y={y}, v=5) == |y-5| = {expect_v}",
+            close(metrics.crps_quantiles(y, 5.0, 5.0, 5.0), expect_v),
+            f"got {metrics.crps_quantiles(y, 5.0, 5.0, 5.0)}",
+        )
 
 
 # --- baselines --------------------------------------------------------------------
@@ -379,30 +390,48 @@ def test_unet_helpers() -> None:
     check("UNet parameter count < 3M (fits a 3090 comfortably)", n_params < 3_000_000, f"{n_params}")
 
 
-# --- family policy checks -----------------------------------------------------
+# --- method policy checks (the testing ground) ---------------------------------
 
 
-def test_families() -> None:
-    from modeling.train_task_a import FAMILY_PRIORITY, PRIMARY_FAMILY, resolve_families
+def test_methods() -> None:
+    from modeling import methods_common
 
     check(
-        PRIMARY_FAMILY == "lgbm" and FAMILY_PRIORITY[0] == "lgbm",
-        True,
-        "LightGBM must be the primary backbone (first in priority order)",
+        "lightgbm is the primary backbone (index 0 of TASK_A_METHODS)",
+        config.TASK_A_METHODS[0] == "lightgbm",
+        str(config.TASK_A_METHODS),
     )
-    check(resolve_families(None) == ["lgbm"], True, "default trains the primary only (LightGBM first)")
-    check(resolve_families("") == ["lgbm"], True, "empty spec -> primary only")
     check(
-        resolve_families("cat,lgbm,xgb") == ["lgbm", "xgb", "cat"],
-        True,
-        "spec is normalised to priority order",
+        "Task A panel = lightgbm, xgboost, catboost, randomforest, tabpfn",
+        tuple(config.TASK_A_METHODS) == ("lightgbm", "xgboost", "catboost", "randomforest", "tabpfn"),
+        str(config.TASK_A_METHODS),
     )
-    check(resolve_families("xgb") == ["xgb"], True, "cross-check-only run allowed")
-    try:
-        resolve_families("lgbm,foo")
-        check(False, "unknown family must raise")
-    except ValueError:
-        check(True, "unknown family raises ValueError")
+    check("Task B panel = (unet,)", tuple(config.TASK_B_METHODS) == ("unet",))
+    check(
+        "methods_common owns the shared Task A pipeline",
+        {
+            "prepare_features",
+            "split_frames",
+            "fit_with_early_stop",
+            "model_frame",
+            "baseline_frames",
+            "metrics_for",
+            "primary_skill",
+            "headline",
+            "model_card",
+            "run_task_a_method",
+        }
+        <= set(methods_common.__all__),
+        str(methods_common.__all__),
+    )
+    # Every method folder must have a train module AND a guide.md — that is
+    # the unit of the testing ground (kill a method = delete one folder).
+    for m in config.TASK_A_METHODS + config.TASK_B_METHODS:
+        folder = config.MODELING_DIR / m
+        check(
+            f"method folder {m}/ has train.py and guide.md",
+            (folder / "train.py").exists() and (folder / "guide.md").exists(),
+        )
 
 
 # --- import checks ----------------------------------------------------------------
@@ -413,10 +442,14 @@ def test_imports() -> None:
         "modeling.audit",
         "modeling.features",
         "modeling.data_check",
-        "modeling.unet",
+        "modeling.unet.train",
         "modeling.advisory",
-        "modeling.train_task_a",
-        "modeling.train_tabpfn",
+        "modeling.methods_common",
+        "modeling.lightgbm.train",
+        "modeling.xgboost.train",
+        "modeling.catboost.train",
+        "modeling.randomforest.train",
+        "modeling.tabpfn.train",
         "modeling.shap_report",
         "modeling.baselines",
         "modeling.metrics",
@@ -446,8 +479,8 @@ def main() -> int:
     test_audit_helpers()
     print("\n-- unet --")
     test_unet_helpers()
-    print("\n-- families --")
-    test_families()
+    print("\n-- methods --")
+    test_methods()
     print("\n-- imports --")
     test_imports()
     print(f"\n{'=' * 60}\n{len(FAILURES)} failure(s)")

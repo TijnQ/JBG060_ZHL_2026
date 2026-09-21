@@ -39,7 +39,7 @@ JBG060-2026/
 |   |-- outputs/                   # Aweil tables/figures (REAL data)
 |   `-- outputs_country/           # nationwide tables (SYNTHETIC fallback - see its README)
 |-- literature/                    # Supporting papers and data documentation
-|-- modeling/                      # ML models: Tasks A (county extent), B (pixel U-Net), C (advisory)
+|-- modeling/                      # Model-development testing ground: one folder per method (lightgbm primary, xgboost/catboost/randomforest/tabpfn cross-checks, unet for Task B), each with a guide.md; losers get deleted
 |-- raw_data/                      # Downloaded separately and ignored by Git
 |-- MODEL_RESEARCH.md              # Living research notes on model choice and framework
 |-- requirements.txt               # Pinned Python dependencies

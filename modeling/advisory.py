@@ -26,9 +26,11 @@ full national advisories are a follow-up once national crop exposure is
 tabulated the same way.
 
 Usage:
-    python -m modeling.advisory --predictions modeling/outputs/tables/task_a_predictions_aweil.csv \
-        --model lgbm
-    python -m modeling.advisory --scope aweiL --case 2024-10-07 --county "Aweil East"
+    # default: the primary backbone's Aweil predictions
+    python -m modeling.advisory --case-week 2024-10-07 --case-county "Aweil East"
+    # or point at any method's prediction CSV:
+    python -m modeling.advisory --predictions modeling/outputs/methods/xgboost/tables/task_a_predictions_aweil.csv \
+        --model xgboost --case-week 2024-10-07 --case-county "Aweil East"
 """
 
 from __future__ import annotations
@@ -211,7 +213,7 @@ def _cattle_by_county() -> dict:
 
 
 def build_advisories(
-    predictions: pd.DataFrame, model: str = "lgbm"
+    predictions: pd.DataFrame, model: str = "lightgbm"
 ) -> pd.DataFrame:
     """Advisory rows for a Task A prediction frame (one model's rows)."""
     pred = predictions[predictions["model"] == model].copy()
@@ -286,10 +288,10 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--predictions",
-        default=str(config.TABLES / "task_a_predictions_aweil.csv"),
-        help="Task A prediction CSV (with a 'model' column)",
+        default=str(config.method_dirs(config.TASK_A_METHODS[0])["tables"] / "task_a_predictions_aweil.csv"),
+        help="Task A prediction CSV (default: the primary backbone's outputs)",
     )
-    parser.add_argument("--model", default="lgbm")
+    parser.add_argument("--model", default="lightgbm")
     parser.add_argument("--case-week", default=None, help="e.g. 2024-10-07")
     parser.add_argument("--case-county", default=None)
     args = parser.parse_args()

@@ -10,7 +10,9 @@ this module probes for quantile support and degrades to point predictions
 when it is absent, so a version mismatch never breaks the experiment ladder.
 The weight download is large (~1-3 GB) — run only when you want the check:
 
-    python -m modeling.train_tabpfn --scope aweiL
+    python -m modeling.tabpfn.train --scope aweiL
+
+Read ``guide.md`` in this folder for what to test and the keep/kill rules.
 """
 
 from __future__ import annotations
@@ -22,8 +24,13 @@ import numpy as np
 import pandas as pd
 
 from modeling import config, metrics
-from modeling.baselines import add_baselines
-from modeling.features import FEATURE_COLUMNS, add_spike_threshold, build_features
+from modeling.features import FEATURE_COLUMNS
+from modeling.methods_common import (
+    headline,
+    metrics_for,
+    model_card,
+    prepare_features,
+)
 
 __all__ = ["main", "run_tabpfn"]
 
@@ -94,17 +101,26 @@ def main() -> None:
     parser.add_argument("--scope", choices=config.SCOPES, default=config.AWEIL_SCOPE)
     args = parser.parse_args()
 
-    features = build_features(args.scope)
-    features = add_baselines(features, features["split"] == "train")
-    features = add_spike_threshold(features)
+    print("TabPFN — Task A zero-shot cross-check (primary: lightgbm)")
+    features = prepare_features(args.scope)
 
-    pred, score = run_tabpfn(features)
-    config.TABLES.mkdir(parents=True, exist_ok=True)
-    for suffix, frame in (("predictions", pred), ("metrics", score)):
-        out = config.TABLES / f"task_a_tabpfn_{suffix}_{args.scope}.csv"
+    pred, _ = run_tabpfn(features)
+    pred["model"] = "tabpfn"
+    all_metrics = metrics_for(pred)
+
+    dirs = config.method_dirs("tabpfn")
+    dirs["tables"].mkdir(parents=True, exist_ok=True)
+    for suffix, frame in (("predictions", pred), ("metrics", all_metrics)):
+        out = dirs["tables"] / f"task_a_tabpfn_{suffix}_{args.scope}.csv"
         frame.to_csv(out, index=False)
         print(f"wrote {out}")
-    print(score.to_string(index=False))
+    card_path = dirs["tables"] / f"task_a_modelcard_{args.scope}.md"
+    card_path.write_text(
+        model_card("tabpfn", "cross-check", args.scope, features, all_metrics),
+        encoding="utf-8",
+    )
+    print(f"wrote {card_path}")
+    headline("tabpfn", "cross-check", args.scope, all_metrics)
 
 
 if __name__ == "__main__":

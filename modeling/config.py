@@ -20,9 +20,30 @@ RAW_DATA = PROJECT_ROOT / "raw_data"
 
 MODELING_DIR = Path(__file__).resolve().parent
 OUT = MODELING_DIR / "outputs"
+# Shared outputs: data inventory, gate-0 audit, advisory layer, cross-method artifacts.
 TABLES = OUT / "tables"
 FIGURES = OUT / "figures"
 MODELS = OUT / "models"
+# Per-method outputs: outputs/methods/<name>/{tables,figures,models}.
+# The method folders are the units of the testing ground: kill a method and
+# you delete one folder plus its output folder — nothing shared is touched.
+METHODS_OUT = OUT / "methods"
+
+
+def method_dirs(name: str) -> dict[str, Path]:
+    """Output directories for one model method (created on demand)."""
+    root = METHODS_OUT / name
+    return {"tables": root / "tables", "figures": root / "figures", "models": root / "models"}
+
+
+# --- Model methods (the testing ground) ---------------------------------------
+# Task A methods in testing order; index 0 is the PRIMARY backbone
+# (MODEL_RESEARCH.md §4.2 — LightGBM first), the rest are cross-checks that
+# must justify themselves against it. Each name is a folder in this package
+# with a guide.md (what to test, how to run it, keep/kill criteria).
+# Task B is a separate competition (spatial "where", different output).
+TASK_A_METHODS = ("lightgbm", "xgboost", "catboost", "randomforest", "tabpfn")
+TASK_B_METHODS = ("unet",)
 
 BOUNDARIES_DIR = RAW_DATA / "Administrative boundaries"
 BOUNDARY_ADMIN1 = BOUNDARIES_DIR / "ssd_admin1.geojson"
@@ -35,6 +56,11 @@ GAUGE_ROOT = RAW_DATA / "Darthmouth Flood Observatory"
 LAKE_ROOT = RAW_DATA / "Water levels lakes"
 ET0_ROOT = PROJECT_ROOT / "processing_data" / "evapotranspiration"
 FARMLAND_ROOT = RAW_DATA / "farmland"
+# Static raster channels for the U-Net (file names as in the raw layout;
+# data_check reports their presence/readability).
+FARMLAND_CATTLE = FARMLAND_ROOT / "geonode__cattle_gha.tif"
+FARMLAND_CROPS = FARMLAND_ROOT / "asap_mask_crops_v04.tif"
+FARMLAND_RANGELAND = FARMLAND_ROOT / "asap_mask_rangeland_v04.tif"
 
 # Committed real-data EDA outputs that this package reuses as label tables
 # (regenerate them with the EDA scripts if the raw data changes).

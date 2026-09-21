@@ -22,10 +22,13 @@ update it as experiments proceed (keep dated entries so the reasoning trail stay
 
 **Bottom line in one sentence:** LightGBM quantile regression on weekly county features (CPU) as the backbone forecast, a small PyTorch U-Net on the 3090 for the spatial "where", and a rule-based exposure→advisory layer on top — with a multi-year feature audit as gate 0.
 
-**Code status (2026-09-21):** fully implemented and **merged into `main`** (commit `46798d0`):
-the `modeling/` package (14 modules) covers the data check, the gate-0 multi-year audit (E1),
-baselines (E2), LightGBM / XGBoost / CatBoost / TabPFN training (E3–E4), SHAP attribution, the
-U-Net (E6) and the deterministic advisory layer (E7). All logic is validated by a 68-check
+**Code status (2026-09-21):** fully implemented and **merged into `main`** (commits `46798d0`, `90d3bbb`):
+`modeling/` is the *testing ground* for model development — a shared core (data check, gate-0
+audit, features, splits, metrics, baselines, SHAP, the Task A pipeline) plus **one folder per
+model method**: `lightgbm/` (the primary backbone, run first), the cross-checks `xgboost/`,
+`catboost/`, `randomforest/` and `tabpfn/` (Task A), and `unet/` (Task B). Each folder carries
+a `guide.md` — what to test, how to run it, keep/kill verdicts — and a method that fails its
+guide is deleted wholesale. All logic is validated by an 86-check
 known-answer suite (`python -m modeling.check_modeling`, no data or GPU needed) which caught and
 fixed four real bugs during development. **Nothing has been run on the raw data yet and no model
 has produced a single number.** Full maturity status — what is verified, what is not, and the
@@ -68,7 +71,7 @@ right first moves are cheap tabular models, not heavy deep learning (below).
 
 | Task | Inputs → outputs | Scale | Best-fit model class (per §4) |
 |---|---|---|---|
-| **A. County flood extent** | tabular features per county-week (ERA5 rain/runoff rolling means, gauge, lakes, ET0, calendar, lagged own extent) → next week's detected area (km²), plus 0/>0 detection class | ~7k rows (Aweil), ~100k (national) | **Gradient boosting** (LightGBM/XGBoost/CatBoost); TabPFN as zero-shot check; climatology & persistence as mandatory baselines |
+| **A. County flood extent** | tabular features per county-week (ERA5 rain/runoff rolling means, gauge, lakes, ET0, calendar, lagged own extent) → next week's detected area (km²), plus 0/>0 detection class | ~7k rows (Aweil), ~100k (national) | **Gradient boosting** (LightGBM primary; XGBoost/CatBoost cross-checks; an *untuned* random forest as overfitting canary); TabPFN as zero-shot reference; climatology & persistence as mandatory baselines |
 | **B. Sub-county "where"** | ERA5 tiles (40×40 at 0.25° per 10° tile) + terrain/ag masks → 250 m flood mask for the tile, 7-day ahead | per tile per week: 26 yrs × ~52 wks ≈ 1,300 samples/tile | **Convolutional U-Net family** on GPU (fits the 3090 easily); rainfall+terrain attention prior art exists |
 | **C. Impact → advisory** | predicted extent (A/B) × crop/rangeland/cattle exposure (EDA already has the overlap machinery) → exposed ha / cattle / ag-phase → rule-based advisory text; optionally a small learned model linking exposure → IPC 3+ for the 2022–2025 window | small | **post-processing first** (deterministic), learned impact model only if the IPC window proves it |
 
@@ -327,13 +330,13 @@ report's framing, and give the group region-specific references:
    correlations, county + national; coverage statistics. *(cheap, CPU, day-scale)*
 2. **E2 baselines** — climatology, persistence, last-composite nowcast; score on the E5
    protocol. *(CPU, hours)*
-3. **E3 GBM Task A** — LightGBM quantile regression on county-week features (Aweil first,
-   then national); SHAP report; compare vs E2. In the code the **default run trains LightGBM
-   only** (the primary backbone); XGBoost/CatBoost are cross-checks added via
-   `--families lgbm,xgb,cat`, with a primary-vs-cross-check verdict on the model card.
-   *(CPU, hours)*
-4. **E4 TabPFN zero-shot** — same table, no tuning; check whether the foundation model beats
-   E3 on this small, non-i.i.d. table. *(GPU/CPU, hours)*
+3. **E3 GBM Task A** — per-method folders: `lightgbm/` is the primary backbone (run first:
+   `python -m modeling.lightgbm.train --scope aweil`), then `xgboost/`, `catboost/`,
+   `randomforest/` as cross-checks; each model card auto-compares against the saved primary run
+   (promotion margin 0.05) and states a keep/kill verdict; SHAP report; compare vs E2.
+   Every method folder has a `guide.md` with its own test question. *(CPU, minutes to hours)*
+4. **E4 TabPFN zero-shot** — `tabpfn/` folder: same table, no tuning; check whether the
+   foundation model beats E3 on this small, non-i.i.d. table. *(GPU/CPU, hours)*
 5. **E5 protocol hardening** — embargoed walk-forward, spike-weighted metrics, gauge
    sensitivity. *(CPU, days)*
 6. **E6 U-Net Task B** — tile-level 7-day-ahead mask; CSI/POD/FAR vs spatial-prior null;
@@ -348,9 +351,10 @@ Goal: a **cheap, defensible forecast + impact-to-advisory stack** that runs end-
 phase below maps to a standing experiment (E1–E7) and reuses the repo's existing loaders/EDA
 (§6). Version pins were checked against PyPI/pytorch.org on 2026-09-21.
 
-**Status (2026-09-21):** Phase 1–2 code (data check, audit, features, baselines, LightGBM +
-XGBoost/CatBoost/TabPFN, SHAP, advisory layer) is written in `modeling/` and passes the synthetic
-check suite; Phase 4 (U-Net) code is written for the 3090. **No phase has been run on the raw
+**Status (2026-09-21):** Phase 1–2 code (data check, audit, features, baselines, the Task A
+method folders `lightgbm/` `xgboost/` `catboost/` `randomforest/` `tabpfn/`, SHAP, advisory
+layer) is written in `modeling/` and passes the synthetic check suite; Phase 4 (U-Net, `unet/`
+folder) code is written for the 3090. **No phase has been run on the raw
 data yet** — the dataset is not on the dev machine, and Phase 0's 60-second GPU smoke test has
 not been executed (no GPU here). Everything below marked *(written)* is code-first, data-pending.
 
@@ -456,14 +460,18 @@ into the course report; cite the verified references in §References.
 This section is the single source of truth for how far the implementation has actually come.
 Short version: **the code is complete and self-checked, but it has never touched the real data
 and no model has been trained.** Anything below "Verified" is a hypothesis until the gates in
-"What makes it tested" have run.
+"What makes it tested" have run. Structure: the package is a **testing ground** — one folder
+per model method (`modeling/<method>/`), each with a `guide.md` stating what to test, how to
+run it and the keep/kill criteria; a method that fails is deleted wholesale (one `git rm`),
+and its surviving evidence is the numbers recorded in this document. The LightGBM-first policy
+is encoded in `config.TASK_A_METHODS` (index 0 = primary) and in the guides.
 
 ### Verified (done on the CPU dev machine, 2026-09-21, no raw data present)
 
 | Claim | Evidence |
 |---|---|
-| All 14 `modeling/` modules compile, import (without torch/shap/tabpfn installed) and pass lint | `compileall` over the whole repo; ruff + trailing-whitespace pre-commit hooks green; clean fast-forward merge into `main` (`46798d0`) |
-| The 68-check known-answer suite passes | `python -m modeling.check_modeling` → `0 failure(s)`; pins exact CRPS values (incl. y outside [q10, q90]), split boundaries + boundary purge, baseline values, advisory tiers & exposure scaling, rolling-window arithmetic, audit coverage counting, U-Net shapes & null baseline |
+| All `modeling/` modules — shared core + the 6 method folders (`lightgbm/`, `xgboost/`, `catboost/`, `randomforest/`, `tabpfn/`, `unet/`) — compile, import (without torch/shap/tabpfn installed) and pass lint | `compileall` over the whole repo; ruff + trailing-whitespace pre-commit hooks green; clean fast-forward merge into `main` (`46798d0`, `90d3bbb`) |
+| The 86-check known-answer suite passes | `python -m modeling.check_modeling` → `0 failure(s)`; pins exact CRPS values (incl. y outside [q10, q90] **and the degenerate point-forecast case CRPS = \|y−ŷ\|** used by the random-forest method), split boundaries + boundary purge, baseline values, advisory tiers & exposure scaling, rolling-window arithmetic, audit coverage counting, method-policy checks, U-Net shapes & null baseline |
 | The suite is not decoration — it caught **4 real bugs** before merge | (1) `crps_quantiles` returned NaN for y outside the quantile range (would silently corrupt the headline metric on dry weeks); (2) the climatology baseline's `merge` silently dropped counties absent from the training period; (3) the audit counted *detection-days* instead of *weeks* with detections; (4) `rolling(1, min_periods=3)` invalid on pandas 3.0 |
 | `requirements-ml.txt` pins are valid | all 10 versions re-checked against the PyPI JSON API on 2026-09-21 (all equal then-current latest) |
 
@@ -474,8 +482,10 @@ and no model has been trained.** Anything below "Verified" is a hypothesis until
    names & chunking, the gauge `information.xlsx` parse, the county-name join between the
    boundary file and the flood CSVs, missing ET0 weeks, the runtime of the national ERA5 box
    load (the heaviest step), and whether CatBoost/XGBoost/TabPFN behave as expected on this
-   table (incl. whether TabPFN 9.0.0 supports quantile outputs — `train_tabpfn.py` degrades to
-   point predictions if not).
+   table (incl. whether TabPFN 9.0.0 supports quantile outputs — `tabpfn/train.py` degrades to
+   point predictions if not). A latent bug found during the restructure: `unet/train.py`
+   referenced farmland raster paths that were never defined in `config.py` (now added,
+   `FARMLAND_CATTLE/CROPS/RANGELAND`) — it would have hit on the very first U-Net run.
 2. **The U-Net has never executed.** torch is not installed on the dev machine, so the forward
    pass, the training loop, AMP and the CUDA path are code-reviewed only; the check suite
    covers shapes, grid mapping and the null baseline with synthetic tensors but not a trained
@@ -497,9 +507,9 @@ national ERA5 load.
 |---|---|---|
 | 1. data check | `python -m modeling.data_check` | every inventory item is present & readable (no silent workarounds) |
 | 2. **gate 0 audit** | `python -m modeling.audit --scope aweil` | multi-year (2000–2024) lag structure inspected: signal present → continue; weak → fall back to national scope (§7 risk 1) |
-| 3. Task A training | `python -m modeling.train_task_a --scope aweil --shap` (then `--scope national`) | metric tables exist for both scopes; models beat persistence on the **spike slice** — an honest "does not beat" is a valid, recordable result |
-| 4. Task B U-Net (3090) | `python -m modeling.unet --epochs 20` | it trains, the val-CSI curve is inspected, and the result (CSI vs null baseline) is recorded either way |
-| 5. Advisory | `python -m modeling.advisory --scope aweil` | readable, correctly tiered text for a real 2024 week (case study) |
+| 3. Task A training | `python -m modeling.lightgbm.train --scope aweil --shap` (the primary first; then the cross-check folders `xgboost/`, `catboost/`, `randomforest/`, `tabpfn/`, and `--scope national` for the survivors) | metric cards exist for both scopes; the primary beats persistence on the **spike slice** — an honest "does not beat" is a valid, recordable result; each cross-check gets its keep/kill verdict from its guide |
+| 4. Task B U-Net (3090) | `python -m modeling.unet.train --epochs 20` (smoke test `--epochs 2` first) | it trains, the val-CSI curve is inspected, and the result (CSI vs null baseline) is recorded either way |
+| 5. Advisory | `python -m modeling.advisory --case-week 2024-10-07 --case-county "Aweil East"` | readable, correctly tiered text for a real 2024 week (case study) |
 
 **Definition used here:** the code is *written* today, *validated* at the logic level (synthetic
 known answers), and becomes *tested* only after steps 1–5 have each run once on real data with
@@ -589,6 +599,20 @@ package.
   validation (adapted here to overlapping 3-day composite labels).
 
 ## Research log
+
+- **2026-09-21 (restructure: method folders + random forest)** — Reorganised `modeling/` into the
+**testing-ground layout** the code is meant to support: one folder per model method, each with a
+`guide.md` (what to test, how to run, keep/kill verdicts) — `lightgbm/` (primary backbone),
+`xgboost/`, `catboost/`, `randomforest/` (new), `tabpfn/` (Task A) and `unet/` (Task B); the
+shared pipeline moved to `methods_common.py` and the old monolith `train_task_a.py` was split
+across the folders and deleted. **Random forest added** as the untuned cross-check: degenerate
+3-quantile forecast (CRPS = |y−ŷ|, pinned by a new known-answer check), feature importances as
+SHAP second opinion, overfitting canary. `advisory` stays a module (Task C is a post-processing
+layer, not a competing model). Caught during the move: `unet/train.py` referenced farmland
+raster constants that were never defined in `config.py` (added). Check suite is now 86 checks,
+all passing; ruff clean; all six method CLIs verified. No research-content changes: the
+experiment ladder (E1–E7), the LightGBM-first policy and the maturity definition are unchanged —
+only how the code is organised and how methods are killed (one `git rm` per folder).
 
 - **2026-09-21 13:56 CEST (doc update)** — Added the **"Status of the modeling code"** section
 (verified vs untested, gate order that turns "written" into "tested", likely first-failure

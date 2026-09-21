@@ -1,83 +1,88 @@
-# `modeling/` — flood forecasting models (Tasks A, B, C)
+# modeling/ — the model-development testing ground
 
-Implementation of the experiment plan in [`MODEL_RESEARCH.md`](../MODEL_RESEARCH.md):
+This package exists to **test which models actually work** on the Aweil
+flood-forecasting problem — and the code is disposable by design. Each
+candidate model lives in its **own folder with a `guide.md`**; a method
+that fails its keep/kill test gets **deleted wholesale** (one folder, one
+`git rm`), while its evidence (a few numbers, one sentence) is recorded
+in `MODEL_RESEARCH.md` at the repo root. Nothing here may fall back to
+synthetic data.
 
-| Task | Question | Entry point |
-|------|----------|-------------|
-| A | Forecast weekly flood extent per county (2000-2025, ERA5 + gauge inputs) | `python -m modeling.train_task_a --scope aweil` (LightGBM primary) / `--families lgbm,xgb,cat` for the cross-check ladder |
-| B | Forecast *where* floods happen: weekly pixel grids from ERA5 tiles (U-Net) | `python -m modeling.unet --epochs 20` |
-| C | Turn a forecast into an impact advisory (exposed farmland / rangeland / cattle) | `python -m modeling.advisory --scope aweil` |
+The research context, hypotheses and the definition of what counts as
+"tested" live in [`MODEL_RESEARCH.md`](../MODEL_RESEARCH.md) (sections 4,
+5 and the "Status of the modeling code" section). This README is the map.
 
-Supporting modules:
+## The methods (the unit of testing)
 
-| Module | Role |
-|--------|------|
-| `config.py` | All paths, split boundaries, hyperparameters. Change numbers here, not in code. |
-| `data_check.py` | Pre-flight inventory of the raw data (no processing): `python -m modeling.data_check`. **Run this first.** |
-| `audit.py` | **Gate 0**: multi-year (2000-2024) lagged hydro-meteorology audit vs flood extent before training: `python -m modeling.audit --scope aweil`. Writes `outputs/audit/{scope}_audit.csv` and a heatmap. |
-| `splits.py` | Split assignment + 1-week boundary purge + the embargo rule (`feature_cutoff`). |
-| `metrics.py` | MAE/RMSE/R², CRPS from the 3-quantile forecast, detection (POD/FAR/CSI), skill vs persistence. |
-| `baselines.py` | Climatology, persistence, last-detection baselines (every model must beat these). |
-| `features.py` | Feature frame builder: ERA5 boxes, gauge, Albert level, ET0, rolling windows, spike threshold. |
-| `train_task_a.py` | Task A: **LightGBM is the primary backbone** (default run trains only it); XGBoost / CatBoost are cross-checks added via `--families`, with an explicit primary-vs-cross-check verdict on the model card. Quantile + detection models, metrics, SHAP on the primary. |
-| `train_tabpfn.py` | Optional zero-shot TabPFN cross-check (degrades gracefully to point predictions). |
-| `unet.py` | Task B: 40x40 tile U-Net, 17 channels (14 daily ERA5 + 3 static), BCE with pos_weight, early stopping, null baseline (historical flood frequency), 2-panel figure. |
-| `shap_report.py` | SHAP summary for a trained LightGBM model (bar plot of the top-15 |mean SHAP|). |
-| `advisory.py` | Task C: magnitude tier (county-month climatology), flood-phase guidance, scaled exposure (crop + rangeland ha, cattle head-count), text advisory. |
-| `check_modeling.py` | **Known-answer checks — no raw data required.** `python -m modeling.check_modeling`. Pins CRPS values, split boundaries, purge behaviour, baselines, advisory tiers, U-Net shapes. Run after any change to this package. |
+| folder | task | role | what it tests | status (2026-09-21) |
+|---|---|---|---|---|
+| [`lightgbm/`](lightgbm/guide.md) | A — county weekly flood area | **primary backbone** | does *any* model beat persistence on spike weeks | code done, **untested** on real data |
+| [`xgboost/`](xgboost/guide.md) | A | cross-check | does a 2nd tree family reach the same verdict | code done, **untested** |
+| [`catboost/`](catboost/guide.md) | A | cross-check | 3rd tree family; the 3-family vote | code done, **untested** |
+| [`randomforest/`](randomforest/guide.md) | A | cross-check (untuned) | tuning premium + overfitting canary; degenerate point forecast (CRPS = \|y−ŷ\|) | code done, **untested** |
+| [`tabpfn/`](tabpfn/guide.md) | A | zero-shot reference | the no-training ceiling for this feature set | code done, **untested** (package never installed here) |
+| [`unet/`](unet/guide.md) | B — pixel map of the floodplain | only Task B method | does a spatial model beat the climatology ("null") map | code done, **never executed** (no torch on this machine) |
 
-## Validation protocol (all three tasks)
+Task C (advisory) is **not** a competing model — it is the deterministic
+post-processing layer that turns Task A predictions into guidance text.
+It stays a module: [`advisory.py`](advisory.py).
 
-- **Weeks**: Monday-aligned (`W-SUN`); target week `M` covers composites `M .. M+2` (Task A) — Task B unions all seven composites of the week, matching the EDA convention.
-- **Splits** (`config.py`): train 2000-01 .. 2014-12, validation 2015 .. 2019, test 2020 .. 2025.
-- **Purge**: the first week of the validation and test splits is dropped (its 3-day
-  composite window overlaps the previous split) — `splits.week_split_map` returns
-  `None` for those weeks and both tasks drop them.
-- **Embargo**: every feature for a target week is dated **<= Monday - 3 days**
-  (`splits.feature_cutoff`). No later data is read, so no leakage.
-- **Labels**: Task A from the committed weekly flood CSVs (sparse -> full calendar,
-  0 = no detection). Task B from the MCDWD composite masks directly.
-- **No synthetic data, ever**: every loader in this package raises with a pointer
-  to `data_check.py` when a file is missing. (The repository was already burned
-  once by a silent synthetic fallback in `EDA_hydrometeorology` — do not repeat it.)
+## Shared core (not per-method — do not duplicate into folders)
 
-## Running it
+| module | what it owns |
+|---|---|
+| [`config.py`](config.py) | all paths/constants, the method registry (`TASK_A_METHODS`, `TASK_B_METHODS`), per-method output dirs |
+| [`features.py`](features.py) | the 50 embargoed weekly features + county/week labels (the one feature set all Task A methods share) |
+| [`splits.py`](splits.py) | weekly calendar, 3-day label embargo, purged temporal 3-way split |
+| [`metrics.py`](metrics.py) | CRPS (linear 3-quantile CDF), POD/FAR/CSI, spike/dry slicing |
+| [`baselines.py`](baselines.py) | persistence / climatology / last-detection — the bar every method must beat |
+| [`methods_common.py`](methods_common.py) | the Task A pipeline: fit contract, prediction frames, metrics table, model cards, per-method output writing |
+| [`audit.py`](audit.py) | **gate 0**: multi-year (2015–2025) feature/lag audit — run this *before* any method |
+| [`data_check.py`](data_check.py) | raw-data inventory; fails loudly on anything missing |
+| [`shap_report.py`](shap_report.py) | TreeExplainer attribution (works for lgbm/xgb/cat/RF) |
+| [`check_modeling.py`](check_modeling.py) | known-answer suite (~80 checks, no data needed) — run after *any* change here |
+
+## How a method gets tested (the ladder)
 
 ```bash
-cd <repo root>
-.venv/bin/pip install -r requirements-ml.txt     # heavy ML stack (separate from requirements.txt)
+# 0. once, on the machine with the raw data:
+.venv/bin/pip install -r requirements-ml.txt
+python -m modeling.data_check          # all inputs present & readable?
+python -m modeling.audit --scope aweil # GATE 0 — any multi-year signal at all?
 
-# 1. data present?
-.venv/bin/python -m modeling.data_check
+# 1. primary first:
+python -m modeling.lightgbm.train --scope aweil
+python -m modeling.lightgbm.train --scope national
 
-# 2. gate 0: multi-year signal audit (do NOT skip)
-.venv/bin/python -m modeling.audit --scope aweil
+# 2. cross-checks, in order (cards compare against the saved primary run):
+python -m modeling.xgboost.train     --scope aweil
+python -m modeling.catboost.train    --scope aweil
+python -m modeling.randomforest.train --scope aweil
+python -m modeling.tabpfn.train      --scope aweil
 
-# 3. Task A (CPU is fine). Default = LightGBM primary only ("try LightGBM first");
-#    add --families lgbm,xgb,cat for the full ladder incl. cross-checks.
-.venv/bin/python -m modeling.train_task_a --scope aweil --shap
+# 3. spatial:
+python -m modeling.unet.train --epochs 2   # smoke test (seconds)
+python -m modeling.unet.train --epochs 20  # the test (3090)
 
-# 4. Task B (GPU strongly recommended; CPU works for a smoke test with --epochs 2)
-.venv/bin/python -m modeling.unet --epochs 20 --device auto
-
-# 5. Task C (deterministic; uses Task A predictions when present)
-.venv/bin/python -m modeling.advisory --scope aweil
-
-# known-answer checks (always, after changes)
-.venv/bin/python -m modeling.check_modeling
+# 4. advisory layer (reads the primary's predictions by default):
+python -m modeling.advisory --case-week 2024-10-07 --case-county "Aweil East"
 ```
 
-Outputs land in `modeling/outputs/` (gitignored):
-`audit/`, `features/`, `task_a/` (predictions, metrics, model cards, SHAP plot),
-`task_b/` (metrics + map figure), `advisory/`.
+Each run writes into `outputs/methods/<name>/` (gitignored): a
+predictions CSV, a metrics CSV with a **role** column, and a **model
+card** (`task_a_modelcard_*.md`) containing an automatic keep/kill
+verdict. The keep/kill rules themselves are in each folder's `guide.md`
+— that file is the contract; when a method dies, the guide's "record it
+in MODEL_RESEARCH.md" step is what survives.
 
 ## Status
 
-- **Code complete and self-checked** as of 2026-09-21 (this machine has no raw
-  data and no GPU; everything here was validated with `check_modeling.py`).
-- **Next on the GPU machine**: `data_check` -> `audit` -> `train_task_a` ->
-  `unet` smoke test -> `advisory`. If the gate-0 audit shows no meaningful
-  multi-year signal in the Aweil scope, the Task A national run is the fallback
-  (more counties = more signal per feature).
-- Hardware target: RTX 3090 (24 GB, sm_86). The U-Net (40x40x17 input, ~1 M
-  parameters) fits with a large margin; no gradient checkpointing needed.
+- **Code complete and logic-validated** (known-answer suite, 2026-09-21):
+  CRPS arithmetic, embargo, split boundaries, baselines, advisory tiers,
+  U-Net shapes/grid/null-baseline, method-policy checks.
+- **Never run on real data** — there is no `raw_data/` on this machine,
+  so no method has produced a single real number, and the U-Net has
+  never been executed at all (torch not installed).
+- The full maturity story (verified vs untested, most-likely first
+  failure points, what "tested" means) is the "Status of the modeling
+  code" section in `MODEL_RESEARCH.md`.

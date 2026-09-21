@@ -20,12 +20,14 @@ Protocol (same anti-leakage rules as Task A, applied to the pixel grid):
   frequency (a climatological "where" map), threshold-calibrated to the
   model's detection rate so CSI comparison is fair.
 
-Outputs:
+Outputs (``outputs/methods/unet/``):
     figures/task_b_unet_maps.png      mean val prediction vs null, one example
-    tables/task_b_unet_metrics.csv    CSI/POD/FAR/AUC, model vs null, per split
+    tables/task_b_unet_metrics.csv    CSI/POD/FAR, model vs null, per split
 
 Usage:
-    python -m modeling.unet --epochs 30
+    python -m modeling.unet.train --epochs 30
+
+Read ``guide.md`` in this folder for what to test and the keep/kill rules.
 """
 
 from __future__ import annotations
@@ -379,13 +381,14 @@ def main() -> None:
                 }
             )
     metrics_df = pd.DataFrame(rows)
-    config.TABLES.mkdir(parents=True, exist_ok=True)
-    metrics_path = config.TABLES / "task_b_unet_metrics.csv"
+    dirs = config.method_dirs("unet")
+    dirs["tables"].mkdir(parents=True, exist_ok=True)
+    metrics_path = dirs["tables"] / "task_b_unet_metrics.csv"
     metrics_df.to_csv(metrics_path, index=False)
     print(metrics_df.to_string(index=False))
     print(f"wrote {metrics_path}")
 
-    config.FIGURES.mkdir(parents=True, exist_ok=True)
+    dirs["figures"].mkdir(parents=True, exist_ok=True)
     import matplotlib
 
     matplotlib.use("Agg")
@@ -404,7 +407,7 @@ def main() -> None:
     axes[1].set_title("null: historical flood frequency (calibrated)")
     fig.colorbar(im1, ax=axes[1], fraction=0.046)
     fig.tight_layout()
-    fig_path = config.FIGURES / "task_b_unet_maps.png"
+    fig_path = dirs["figures"] / "task_b_unet_maps.png"
     fig.savefig(fig_path, dpi=150)
     plt.close(fig)
     print(f"wrote {fig_path}")
