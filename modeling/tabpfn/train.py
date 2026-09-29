@@ -10,7 +10,7 @@ this module probes for quantile support and degrades to point predictions
 when it is absent, so a version mismatch never breaks the experiment ladder.
 The weight download is large (~1-3 GB) — run only when you want the check:
 
-    python -m modeling.tabpfn.train --scope aweiL
+    python -m modeling.tabpfn.train --scope aweil
 
 Read ``guide.md`` in this folder for what to test and the keep/kill rules.
 """
@@ -35,8 +35,50 @@ from modeling.methods_common import (
 __all__ = ["main", "run_tabpfn"]
 
 
-def _supports_quantiles(regressor) -> bool:
-    return "output_type" in inspect.signature(regressor.predict).parameters
+def _normalise_quantiles(values, n_rows: int) -> np.ndarray:
+    """Return TabPFN quantiles as rows x quantiles across API versions."""
+    q = np.asarray(values)
+    if q.ndim != 2:
+        raise ValueError(f"expected 2-D quantile output, got shape {q.shape}")
+    if q.shape[1] == n_rows and q.shape[0] != n_rows:
+        q = q.T
+    if q.shape[0] != n_rows or q.shape[1] < 3:
+        raise ValueError(
+            f"quantile output shape {q.shape} does not match {n_rows} rows"
+        )
+    return q[:, [0, q.shape[1] // 2, q.shape[1] - 1]]
+
+
+def _predict_area_quantiles(regressor, features: pd.DataFrame) -> np.ndarray:
+    """Predict q10, q50 and q90, with point predictions as a fallback."""
+    parameters = inspect.signature(regressor.predict).parameters
+    if "output_type" in parameters:
+        try:
+            options = {"output_type": "quantiles"}
+            if "quantiles" in parameters:
+                options["quantiles"] = [0.1, 0.5, 0.9]
+            quantiles = regressor.predict(features, **options)
+            print("  quantile output available - using q10/q50/q90")
+            return _normalise_quantiles(quantiles, len(features))
+        except (TypeError, ValueError) as exc:
+            print(f"  quantile output unavailable ({exc}) - using point predictions")
+
+    point = np.asarray(regressor.predict(features))
+    return np.column_stack((point, point, point))
+
+
+def _prepare_features_cached(scope: str) -> pd.DataFrame:
+    """Build once and reuse the exact TabPFN feature frame after restarts."""
+    tables = config.method_dirs("tabpfn")["tables"]
+    path = tables / f"task_a_features_{scope}.parquet"
+    if path.exists():
+        print(f"loading cached features from {path}")
+        return pd.read_parquet(path)
+    features = prepare_features(scope)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    features.to_parquet(path, index=False)
+    print(f"cached features at {path}")
+    return features
 
 
 def run_tabpfn(features: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
@@ -61,19 +103,7 @@ def run_tabpfn(features: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
     reg = TabPFNRegressor()
     reg.fit(Xtr, train["y_true"])
 
-    point = reg.predict(Xtest)
-    q10 = q50 = q90 = pd.Series(point, index=test.index)
-    if _supports_quantiles(reg):
-        try:
-            q = np.asarray(reg.predict(Xtest, output_type="quantiles"))
-            if q.shape[1] >= 3:
-                idx = np.argsort(q[0])
-                q10 = pd.Series(q[:, idx[0]], index=test.index)
-                q50 = pd.Series(q[:, idx[len(idx) // 2]], index=test.index)
-                q90 = pd.Series(q[:, idx[-1]], index=test.index)
-                print("  quantile output available — using 3 quantiles")
-        except TypeError:
-            print("  quantile output unavailable — using point predictions")
+    area_quantiles = _predict_area_quantiles(reg, Xtest)
 
     clf = TabPFNClassifier()
     clf.fit(Xtr, train["y_det"])
@@ -85,9 +115,9 @@ def run_tabpfn(features: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
             "week": test["week"],
             "split": test["split"],
             "y_true": test["y_true"],
-            "q10": q10.clip(lower=0),
-            "q50": q50.clip(lower=0),
-            "q90": q90.clip(lower=0),
+            "q10": np.clip(area_quantiles[:, 0], 0, None),
+            "q50": np.clip(area_quantiles[:, 1], 0, None),
+            "q90": np.clip(area_quantiles[:, 2], 0, None),
             "det_prob": det_prob,
             "y_pred_baseline": test["y_pred_baseline"],
             "spike_threshold": test["spike_threshold"],
@@ -102,7 +132,7 @@ def main() -> None:
     args = parser.parse_args()
 
     print("TabPFN — Task A zero-shot cross-check (primary: lightgbm)")
-    features = prepare_features(args.scope)
+    features = _prepare_features_cached(args.scope)
 
     pred, _ = run_tabpfn(features)
     pred["model"] = "tabpfn"

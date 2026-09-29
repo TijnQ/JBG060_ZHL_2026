@@ -152,6 +152,9 @@ def era5_box_daily(dataset: xr.Dataset, box: dict[str, float]) -> pd.DataFrame:
     from EDA_hydrometeorology import hydrological_analysis
 
     table = hydrological_analysis.era5_daily_table(dataset, box)
+    table = table.rename(
+        columns={"precipitation_mm": "tp", "runoff_mm": "ro"}
+    )
     table["date"] = pd.to_datetime(table["date"])
     return table.set_index("date").sort_index()
 

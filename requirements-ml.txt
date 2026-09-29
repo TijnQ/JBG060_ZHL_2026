@@ -1,17 +1,14 @@
-# ML stack for the modeling/ package (pinned 2026-09-21, all verified as latest on PyPI).
-# Keep separate from requirements.txt so the data-pipeline venv stays lightweight.
-#
-#   .venv/bin/pip install -r requirements-ml.txt
-#
-# torch: the default PyPI wheel is CUDA 12.8 build — matches the RTX 3090 (sm_86,
-# any CUDA >= 11.8 driver). For the data room (no GPU) the same wheel works on CPU.
+# Packages used by the models.
+# Install these with: python -m pip install -r requirements-ml.txt
+# See modeling/README.md for the optional CUDA installation.
 scikit-learn==1.9.1
 lightgbm==4.7.0
-xgboost==3.4.1
+xgboost==3.2.0
 catboost==1.2.10
-shap==0.52.0
-torch==2.14.0
-torchvision==0.29.0
+shap==0.51.0
+torch==2.11.0
+torchvision==0.26.0
 tabpfn==9.0.0
 pytorch-lightning==2.6.6
-rasterio==1.5.1
+rasterio==1.4.4
+dask==2026.6.0

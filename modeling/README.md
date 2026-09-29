@@ -20,7 +20,7 @@ The research context, hypotheses and the definition of what counts as
 | [`xgboost/`](xgboost/guide.md) | A | cross-check | does a 2nd tree family reach the same verdict | code done, **untested** |
 | [`catboost/`](catboost/guide.md) | A | cross-check | 3rd tree family; the 3-family vote | code done, **untested** |
 | [`randomforest/`](randomforest/guide.md) | A | cross-check (untuned) | tuning premium + overfitting canary; degenerate point forecast (CRPS = \|y−ŷ\|) | code done, **untested** |
-| [`tabpfn/`](tabpfn/guide.md) | A | zero-shot reference | the no-training ceiling for this feature set | code done, **untested** (package never installed here) |
+| [`tabpfn/`](tabpfn/guide.md) | A | zero-shot reference | can a ready-made tabular model predict floods and flood area? | **tested on Aweil county data** |
 | [`unet/`](unet/guide.md) | B — pixel map of the floodplain | only Task B method | does a spatial model beat the climatology ("null") map | code done, **never executed** (no torch on this machine) |
 
 Task C (advisory) is **not** a competing model — it is the deterministic
@@ -46,7 +46,7 @@ It stays a module: [`advisory.py`](advisory.py).
 
 ```bash
 # 0. once, on the machine with the raw data:
-.venv/bin/pip install -r requirements-ml.txt
+python -m pip install -r requirements-ml.txt
 python -m modeling.data_check          # all inputs present & readable?
 python -m modeling.audit --scope aweil # GATE 0 — any multi-year signal at all?
 
@@ -77,12 +77,48 @@ in MODEL_RESEARCH.md" step is what survives.
 
 ## Status
 
-- **Code complete and logic-validated** (known-answer suite, 2026-09-21):
-  CRPS arithmetic, embargo, split boundaries, baselines, advisory tiers,
-  U-Net shapes/grid/null-baseline, method-policy checks.
-- **Never run on real data** — there is no `raw_data/` on this machine,
-  so no method has produced a single real number, and the U-Net has
-  never been executed at all (torch not installed).
-- The full maturity story (verified vs untested, most-likely first
-  failure points, what "tested" means) is the "Status of the modeling
-  code" section in `MODEL_RESEARCH.md`.
+- The shared code checks pass.
+- TabPFN was run on real Aweil county data on 29 September 2026.
+- The Aweil run used 3,915 training rows, 1,300 validation rows and
+  1,560 test rows. Each row had 50 model features.
+- TabPFN detected floods well, but it did not predict the exact flooded
+  area better than persistence. The results are explained in
+  [`MODEL_RESEARCH.md`](../MODEL_RESEARCH.md).
+- The national TabPFN run has not been completed yet.
+- The U-Net has not been tested as part of this TabPFN task.
+
+## Running TabPFN on Windows
+
+Create and activate a virtual environment first. Then install the model
+packages:
+
+```powershell
+python -m pip install -r requirements-ml.txt
+```
+
+The command above installs a version of PyTorch that works on a CPU. If
+the computer has a supported NVIDIA GPU, install the CUDA build instead:
+
+```powershell
+python -m pip install torch==2.11.0+cu128 torchvision==0.26.0+cu128 --index-url https://download.pytorch.org/whl/cu128
+```
+
+Each group member must use their own Prior Labs account, accept the
+TabPFN licence and set their own API key. Never place an API key in Git.
+
+Run the Aweil county baseline with:
+
+```powershell
+python -m modeling.tabpfn.train --scope aweil
+```
+
+The first run can take longer because TabPFN downloads its model files
+and the project builds all features. The feature table is then saved as
+`modeling/outputs/methods/tabpfn/tables/task_a_features_aweil.parquet`.
+Later runs load this table and are much faster. On the computer used for
+this test, a repeated run took about 35 seconds.
+
+The `modeling/outputs` folder is not stored in Git. Group members must
+either build the feature table themselves or receive it through the
+team's shared data storage. Large data files should not be committed to
+the repository.

@@ -8,8 +8,9 @@ matches a tuned gradient-boosting model, the data is not carrying much
 more signal; if the primary matches TabPFN's ceiling, the primary has
 saturated what the features offer.
 
-**Status: UNTESTED on real data** (never executed here — tabpfn is not
-installed on the dev machine; first run happens on the data/GPU machine).
+**Status: TESTED on real Aweil county data on 29 September 2026.**
+TabPFN detected flood events well, but it was worse than persistence at
+predicting the exact flooded area. The national run has not been done.
 
 ## What to test
 
@@ -34,13 +35,19 @@ installed on the dev machine; first run happens on the data/GPU machine).
 ## How to run
 
 ```bash
-# first time only: the weight download is ~1-3 GB
-.venv/bin/pip install -r requirements-ml.txt
+# First time only. The model files are downloaded during the first run.
+python -m pip install -r requirements-ml.txt
 
-# AFTER the primary (card compares against the saved primary run):
-.venv/bin/python -m modeling.tabpfn.train --scope aweil
-.venv/bin/python -m modeling.tabpfn.train --scope national
+# Run the county-level baseline.
+python -m modeling.tabpfn.train --scope aweil
+python -m modeling.tabpfn.train --scope national
 ```
+
+Each user needs their own Prior Labs account, accepted licence and API
+key. Do not save an API key in the repository.
+
+After the first run, the prepared features are loaded from a local
+Parquet cache. This avoids repeating the slow data preparation.
 
 No `--shap` (TabPFN is not a tree model; attribution is not available for
 it — that's part of what makes it an independent check).
@@ -60,6 +67,16 @@ it — that's part of what makes it an independent check).
 | ran successfully and produced its numbers | **KILL after use** — this folder's value is the one comparison paragraph in `MODEL_RESEARCH.md` (zero-shot ceiling vs tuned primary). Record it, delete the folder. Its outputs live in the gitignored `outputs/methods/tabpfn/`. |
 | version drift made quantiles unavailable | still usable (point-forecast mode) — note the mode in the research doc; same kill-after-use verdict |
 | import/API broken beyond the probe | park it (leave the folder), note in the research log; do not let a version fight delay the ladder |
+
+## Aweil result
+
+TabPFN was useful as a flood detection baseline. Its ROC-AUC was 0.945
+and it detected about 79 percent of the flood events. It was weaker at
+predicting flooded area. Its test MAE was 3.895 square kilometres,
+compared with 2.883 square kilometres for persistence. It also predicted
+an average of 8.558 square kilometres during spike events, while the
+real average was 40.217 square kilometres. This means that it strongly
+underestimated the largest floods.
 
 ## Known failure modes
 

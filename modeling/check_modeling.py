@@ -19,6 +19,7 @@ import sys
 
 import numpy as np
 import pandas as pd
+import xarray as xr
 
 from modeling import (
     advisory,
@@ -108,6 +109,10 @@ def test_splits() -> None:
 
 
 def test_metrics() -> None:
+    check(
+        "brier([0,1], [0.2,0.8]) == 0.04",
+        close(metrics.brier_score([0, 1], [0.2, 0.8]), 0.04),
+    )
     # CRPS known answers for the 3-quantile CDF q=(1,2,3).
     expect = {
         0.0: 1 + (0.9**3 - 0.5**3) / 1.2 + (0.5**3 - 0.1**3) / 1.2,  # 1.6066667
@@ -157,6 +162,7 @@ def test_metrics() -> None:
         "positive slice: csi 1.0, pod 1.0, far 0.0",
         close(pos_row["csi"], 1.0) and close(pos_row["pod"], 1.0) and close(pos_row["far"], 0.0),
     )
+    check("all-slice brier == 0.01", close(all_row["brier"], 0.01))
     check("spike slice keeps only the spiky row", int(spike_row["n"]) == 1)
     # y=10, q=(0,0,2): I1 = [0,2): ramp 0.5->0.9 -> (0.9^3-0.5^3)/0.6 = 1.0066667,
     # [2,10): 1 -> 8 ; I2 = 0  => 9.0066667
@@ -269,6 +275,22 @@ def test_advisory() -> None:
 
 
 def test_features_helpers() -> None:
+    sample = features.era5_box_daily(
+        xr.Dataset(
+            {
+                "tp": (("valid_time", "latitude", "longitude"), np.ones((1, 1, 1))),
+                "ro": (("valid_time", "latitude", "longitude"), np.ones((1, 1, 1))),
+            },
+            coords={
+                "valid_time": [pd.Timestamp("2020-01-01")],
+                "latitude": [5.0],
+                "longitude": [30.0],
+            },
+        ),
+        {"lat_min": 4.0, "lat_max": 6.0, "lon_min": 29.0, "lon_max": 31.0},
+    )
+    check("ERA5 wrapper exposes tp/ro columns", {"tp", "ro"} <= set(sample.columns))
+
     idx = pd.date_range("2020-01-01", periods=30, freq="D")
     vals = pd.Series(np.arange(30.0), index=idx)
     daily = pd.DataFrame(
@@ -395,6 +417,15 @@ def test_unet_helpers() -> None:
 
 def test_methods() -> None:
     from modeling import methods_common
+    from modeling.tabpfn.train import _normalise_quantiles
+
+    q_rows = np.arange(12).reshape(4, 3)
+    q_levels = q_rows.T
+    check(
+        "TabPFN quantiles normalize rows-first and levels-first APIs",
+        np.array_equal(_normalise_quantiles(q_rows, 4), q_rows)
+        and np.array_equal(_normalise_quantiles(q_levels, 4), q_rows),
+    )
 
     check(
         "lightgbm is the primary backbone (index 0 of TASK_A_METHODS)",

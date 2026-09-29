@@ -26,6 +26,7 @@ import numpy as np
 import pandas as pd
 
 __all__ = [
+    "brier_score",
     "crps_mean",
     "crps_quantiles",
     "detection_scores",
@@ -56,6 +57,13 @@ def r2(y_true: np.ndarray, y_pred: np.ndarray) -> float:
     if ss_tot == 0:
         return float("nan")
     return 1.0 - ss_res / ss_tot
+
+
+def brier_score(y_true: np.ndarray, probability: np.ndarray) -> float:
+    """Mean squared error of binary event probabilities; lower is better."""
+    y_true = np.asarray(y_true, dtype=float)
+    probability = np.asarray(probability, dtype=float)
+    return float(np.mean((probability - y_true) ** 2))
 
 
 def detection_scores(
@@ -216,21 +224,12 @@ def _slice_rows(
                 q90.loc[sub.index][mask],
             )
             row["crps_baseline"] = float("nan")  # baseline is a point forecast
-            row["pod"] = detection_scores(
-                (y[mask] > 0).astype(int).to_numpy(),
-                sub.loc[mask, "det_prob"].to_numpy(),
-                threshold=0.5,
-            )[0]
-            row["far"] = detection_scores(
-                (y[mask] > 0).astype(int).to_numpy(),
-                sub.loc[mask, "det_prob"].to_numpy(),
-                threshold=0.5,
-            )[1]
-            row["csi"] = detection_scores(
-                (y[mask] > 0).astype(int).to_numpy(),
-                sub.loc[mask, "det_prob"].to_numpy(),
-                threshold=0.5,
-            )[2]
+            event = (y[mask] > 0).astype(int).to_numpy()
+            probability = sub.loc[mask, "det_prob"].to_numpy()
+            row["brier"] = brier_score(event, probability)
+            row["pod"], row["far"], row["csi"] = detection_scores(
+                event, probability, threshold=0.5
+            )
             rows.append(row)
     return rows
 
