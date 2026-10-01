@@ -39,7 +39,8 @@ JBG060-2026/
 |   |-- outputs/                   # Aweil tables/figures (REAL data)
 |   `-- outputs_country/           # nationwide tables (SYNTHETIC fallback - see its README)
 |-- literature/                    # Supporting papers and data documentation
-|-- modeling/                      # Model-development testing ground: one folder per method (lightgbm primary, xgboost/catboost/randomforest/tabpfn cross-checks, unet for Task B), each with a guide.md; losers get deleted
+|-- LightGBM_v1/                    # LightGBM Flood Prediction Pipeline v1/v2 (see LightGBM_v1/README.md)
+|-- modeling/                      # Model-development testing ground: one folder per method
 |-- raw_data/                      # Downloaded separately and ignored by Git
 |-- MODEL_RESEARCH.md              # Living research notes on model choice and framework
 |-- requirements.txt               # Pinned Python dependencies
