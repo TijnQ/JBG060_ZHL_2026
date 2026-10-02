@@ -50,6 +50,8 @@ JBG060-2026/
 ```
 
 Running the evapotranspiration processor creates `processing_data/evapotranspiration/`.
+Run `python process_et_NBeG.py` to process every year 2000-2025 for the Aweil grid
+cell (9.475N, 30.725E) that the LightGBM pipeline reads as its `et0` feature.
 Both that generated directory and `raw_data/` are excluded from Git.
 
 ## Requirements and installation
