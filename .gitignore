@@ -13,3 +13,4 @@ output
 .agents
 # Generated modeling outputs (keep the code, not the results)
 modeling/outputs/
+TabPFN_v1/outputs/
