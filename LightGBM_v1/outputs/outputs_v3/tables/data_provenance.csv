@@ -1,0 +1,7 @@
+source,provenance,coverage_start,coverage_end,note
+admin2_boundaries,real,,,/home/tijnq/documents/uni/jbg060/JBG060_ZHL_2026/raw_data/Administrative boundaries/ssd_admin2.geojson
+era5_rainfall_runoff,real,2000-01-01,2025-12-31,AgERA5 .nc files under raw_data/rainfall and runoff
+et0_aweil,synthetic_fallback,2000-01-01,2025-12-31,generated sinusoidal seasonal signal — NOT real data
+flood_labels,real,2000-01-03,2025-12-29,1457 observed label rows; weeks without a valid satellite detection are filled with 0 (censoring — see README honesty note)
+gauge_100205_discharge,real,1998-01-01,2026-05-19,
+lake_albert_level,real,2002-07-10,2026-04-25,

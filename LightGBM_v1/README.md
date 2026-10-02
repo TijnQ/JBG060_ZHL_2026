@@ -1,19 +1,19 @@
 # LightGBM Flood Prediction & Advisory Pipeline (`LightGBM_v1`)
 
-> **Project**: JBG060 / ZHL — Northern Bahr el Ghazal Flood Modeling (South Sudan)  
-> **Scope**: 5 Aweil Counties (*Aweil Centre, Aweil East, Aweil North, Aweil South, Aweil West*)  
-> **Version**: `v2` (5-Fold Cross-Validation, Monthly & County Breakdown)
+> **Project**: JBG060 / ZHL — Northern Bahr el Ghazal Flood Modeling (South Sudan)
+> **Scope**: 5 Aweil Counties (*Aweil Centre, Aweil East, Aweil North, Aweil South, Aweil West*)
+> **Version**: `v3` (3-Fold Expanding-Window Cross-Validation, Protocol-Aligned Metrics, Provenance Tracking)
 
 ---
 
 ## 1. Executive Summary
 
-This package implements an end-to-end **LightGBM Machine Learning Pipeline** that predicts flood risk at county level in Northern Bahr el Ghazal, South Sudan. 
+This package implements an end-to-end **LightGBM Machine Learning Pipeline** that predicts flood risk at county level in Northern Bahr el Ghazal, South Sudan.
 
 The pipeline produces three core predictions per county and per week:
 1. **`det_prob`**: Probability of a detected flood event ($P(\text{flood}) \in [0, 1]$).
 2. **`q10 / q50 / q90`**: Quantile flood area in km² (Pessimistic $q10$, Median $q50$, Worst-case $q90$).
-3. **Multi-Horizon Duration**: Probability that flooding will persist 1, 2, 3, and 4 weeks ahead.
+3. **Multi-Horizon Duration**: Probability that flooding is detected 1, 2, 3, and 4 weeks ahead.
 
 These predictions feed into rule-based stakeholder layers to generate:
 - **`advisories.csv`**: Risk Tiers (0 to 3), agricultural crop phase, and exposed hectares.
@@ -21,147 +21,148 @@ These predictions feed into rule-based stakeholder layers to generate:
 
 ---
 
-## 2. Pipeline File Structure
+## 2. What Changed in v3
 
-The pipeline is organized into modular Python files inside [`LightGBM_v1/`](file:///c:/Users/20244086/OneDrive%20-%20TU%20Eindhoven/Universiteit/Year%203/Q1/JBG060/JBG060_ZHL_2026/LightGBM_v1):
+v3 fixes three evaluation-honesty problems found in the v2 design, following `evaluation_metrics.md`:
+
+1. **3 expanding-window CV folds** (replacing 5 folds of 5-year blocks). Walk-forward design with an expanding training window, 1 validation year, and 2–3 held-out test years per fold. Every flood season 2009–2024 is used for validation/test exactly once.
+2. **Per-fold references**: climatology & persistence baselines and advisory tier thresholds are estimated *inside each fold's training window* and never see validation/test years.
+3. **Protocol-aligned metrics**: the cutoff-dependent classification family (accuracy, precision, recall, F1, CSI, FAR) is removed from the headline summary — it throws the forecast probability away. Headline detection accuracy is the **Brier Score** with skill scores vs climatology and persistence, plus reliability diagrams. Area metrics are pinball loss, interval coverage, and flood-week MAE/bias. Duration gets its own Brier metric per horizon.
+
+### 2.1 Cross-Validation Folds (`config.CV_FOLDS`)
+
+| Fold | Train | Val | Test |
+|------|-------|-----|------|
+| 1 | 2000–2008 | 2009 | 2010–2011 |
+| 2 | 2000–2014 | 2015 | 2016–2017 |
+| 3 | 2000–2020 | 2021 | 2022–2024 |
+
+**2025 is loaded** (so feature completeness is real, not padded) **but stays outside the CV**: no fold trains, validates, or tests on 2025, and no CV output contains 2025. The first week of each validation/test window is purged so no lag feature or label window crosses a fold boundary.
+
+### 2.2 Data Provenance
+
+Every data loader records its source in a provenance registry (`data_loader.PROVENANCE`): `real` or `synthetic_fallback`, plus first/last valid date. Synthetic fallbacks are gated by `config.ALLOW_SYNTHETIC_FALLBACK` (currently `True`); set it to `False` and any missing real source raises `RuntimeError` instead of silently substituting generated data. Each run prints the provenance report and writes it to `tables/data_provenance.csv` — check it before interpreting results.
+
+---
+
+## 3. Pipeline File Structure
 
 ```
 LightGBM_v1/
 ├── __init__.py            # Package initialization
-├── config.py              # Configuration settings, paths, versioning (MODEL_VERSION), and embargo rules
-├── data_loader.py         # Hydro-meteorology signals & committed flood mask label loaders
-├── splits.py              # 5-fold 5-year block splits & boundary purging
+├── config.py              # Paths, MODEL_VERSION, CV_FOLDS, embargo, provenance gate, scope
+├── data_loader.py         # Signal & label loaders with provenance registry (real vs synthetic_fallback)
+├── splits.py              # 3 expanding-window CV folds & boundary purging
 ├── features.py            # 50 rolling hydro features enforcing the Friday 3-day embargo cutoff
 ├── baselines.py           # Climatology (smoothed & median) and Markov Persistence reference baselines
 ├── lgbm_model.py          # LightGBM detection classifier & q10/q50/q90 quantile area regressors
 ├── duration_model.py      # Multi-horizon binary LightGBM classifiers (1-4 weeks ahead)
-├── metrics.py             # Evaluation metric calculations (Accuracy, Precision, Recall, F1, Brier, BSS, Coverage)
+├── metrics.py             # Protocol metrics (Brier, BSS, pinball, coverage, MAE/bias, reliability)
 ├── advisory.py            # Stakeholder advisories.csv & movement_advice.csv generator
 ├── run.py                 # Master execution script orchestrating the end-to-end pipeline
 └── outputs/
     ├── outputs_v1/        # Execution outputs for initial baseline model
-    └── outputs_v2/        # Execution outputs for 5-fold CV & monthly/county breakdown
+    ├── outputs_v2/        # Execution outputs for 5-fold CV & monthly/county breakdown
+    └── outputs_v3/        # Execution outputs for 3-fold expanding-window CV (current)
         └── tables/
-            ├── 5fold_test_predictions_aweil.csv
-            ├── 5fold_metrics_summary_aweil.csv
-            ├── monthly_metrics_aweil.csv
+            ├── cv_test_predictions_aweil.csv
+            ├── cv_metrics_summary_aweil.csv
+            ├── duration_metrics_aweil.csv
+            ├── reliability_det_prob.csv
+            ├── reliability_duration_h1..h4.csv
             ├── county_metrics_aweil.csv
+            ├── monthly_metrics_aweil.csv
             ├── advisories.csv
-            └── movement_advice.csv
+            ├── movement_advice.csv
+            └── data_provenance.csv
 ```
 
 ---
 
-## 3. Key Modules & Functions
+## 4. Key Modules & Functions
 
 ### **`config.py`**
-- Centralizes project paths, seed (`SEED=2026`), versioning (`MODEL_VERSION="v2"`), geographic scope, and embargo settings.
-- Defines `FOLD_5YEAR_BLOCKS`: 5 folds of 5 years each (3 years Train, 1 year Val, 1 year Test).
+- Centralizes project paths, seed (`SEED=2026`), versioning (`MODEL_VERSION="v3"`), geographic scope, and embargo settings (`EMBARGO_DAYS=3`).
+- Defines `CV_FOLDS`: 3 expanding-window folds (see table above).
+- `ALLOW_SYNTHETIC_FALLBACK`: provenance gate for synthetic data substitution.
 
 ### **`data_loader.py`**
-- `load_boundaries()`: Loads Admin-2 GeoJSON county boundaries.
-- `load_flood_labels()`: Loads weekly county detected flood area (km²) and detection flags from committed satellite EDA datasets.
-- `load_era5_dataset()`: Loads AgERA5 daily precipitation (`tp`) and runoff (`ro`).
-- `load_gauge_daily()`, `load_albert_level()`, `load_et0_daily()`: Loads Dartmouth gauge 100205 discharge, Lake Albert water levels, and evapotranspiration data.
-
-### **`features.py`**
-- `build_weekly_features()`: Constructs 50 tabular features.
-- **Strict 3-Day Embargo Enforcement**: For a target week starting Monday $m$, all features are dated at most **Friday of the previous week ($m - 3\text{ days}$)** to prevent target-week data leakage.
-- Features include: 1, 3, 7, 14, 30-day rolling sums of rainfall/runoff, gauge/lake means & 7-day changes, net moisture, county flood lags (`y_true_lag1..4`), and calendar seasonality.
+- `load_boundaries()`, `load_flood_labels()`: Admin-2 GeoJSON boundaries and weekly county detected flood area (km²) from committed satellite EDA datasets.
+- `load_era5_dataset()`, `load_gauge_daily()`, `load_albert_level()`, `load_et0_daily()`: AgERA5 precipitation/runoff, Dartmouth gauge 100205 discharge, Lake Albert levels, reference evapotranspiration.
+- `PROVENANCE` + `get_provenance_report()`: real-vs-synthetic registry per source, written to `data_provenance.csv` every run.
 
 ### **`splits.py`**
-- `get_5fold_5year_splits()`: Generates 5 non-overlapping 5-year folds:
-  - **Fold 1**: Train 2000–2002, Val 2003, Test 2004
-  - **Fold 2**: Train 2005–2007, Val 2008, Test 2009
-  - **Fold 3**: Train 2010–2012, Val 2013, Test 2014
-  - **Fold 4**: Train 2015–2017, Val 2018, Test 2019
-  - **Fold 5**: Train 2020–2022, Val 2023, Test 2024
-- `purge_boundary_weeks()`: Drops the first week of non-train splits so composite label windows do not overlap across split boundaries.
+- `get_cv_folds()`: builds the 3 expanding-window folds from `config.CV_FOLDS`; purges the first week of each val/test window.
+
+### **`features.py`**
+- `build_weekly_features()`: embargoed weekly feature matrix — every feature dated for a target week starting Monday *m* is dated at most *m* − 3 days. County-weeks with any missing hydro feature are flagged `complete=False`; `run.py` drops and reports them. Lake Albert altimetry is sparse (~1 obs per 10-day satellite revisit, first obs 2002-07-10) and is forward-filled to daily (past data only); its timestamps carry the satellite pass time-of-day and are normalized to the pass day so they align with the daily grid; weeks before the first observation (~2000-01–2002-07) are incomplete and excluded.
 
 ### **`baselines.py`**
-- `climatology_detection_baseline()`: $(k + 0.5) / (n + 1)$ Laplace-smoothed monthly flood probability estimated strictly on training window.
-- `climatology_area_baseline()`: Historical median flood area per county-month on training window.
-- `persistence_detection_baseline()`: First-order Markov continuation probabilities ($p_{\text{on}} = P(\text{det}_t \mid \text{det}_{t-1}=1)$ vs $p_{\text{off}}$).
-- `persistence_area_baseline()`: Prev-week observed flood area ($\text{lag-1}$).
+- Climatology (smoothed `(k+0.5)/(n+1)` probability, median area) and first-order Markov Persistence (`p_on`/`p_off`) plus last-detection area baseline. Called **per fold** by `run.py` with a training-window mask, so references never leak.
 
-### **`lgbm_model.py`**
-- `train_detection_classifier()`: Fits `LGBMClassifier` for detection probability `det_prob`.
-- `train_quantile_regressors()`: Fits `LGBMRegressor` for quantiles $\alpha \in \{0.1, 0.5, 0.9\}$. Enforces monotonicity ($q10 \le q50 \le q90$) and non-negativity.
-
-### **`duration_model.py`**
-- `train_duration_models()`: Fits binary `LGBMClassifier` models for horizons $h \in \{1, 2, 3, 4\}$ weeks ahead.
+### **`lgbm_model.py` / `duration_model.py`**
+- `build_and_train_lightgbm()`: LGBMClassifier for `det_prob` + LGBMRegressor quantiles (α=0.1/0.5/0.9) for area. Early stopping on the fold's validation year.
+- `train_duration_models()` / `predict_duration()`: one binary classifier per horizon h1–h4, "flood detected h weeks ahead".
 
 ### **`metrics.py`**
-- `evaluate_all_outputs()`: Computes global evaluation summary across splits.
-- `evaluate_monthly_metrics()`: Computes monthly breakdown (Jan–Dec), highlighting rainy season peak months (Jun–Nov).
-- `evaluate_county_metrics()`: Computes county-level breakdown for all 5 Aweil counties.
-
-### **`advisory.py`**
-- `magnitude_tier()`: Compares predicted area $q50$ to county-month historical thresholds (mean, p80, p95) to set Risk Tiers 0–3.
-- `generate_advisories()`: Generates `advisories.csv` combining agricultural crop phase and exposed hectares.
-- `generate_movement_advice()`: Generates `movement_advice.csv` recommending safe destination counties for cattle relocation.
+- Detection: `brier_score`, `brier_skill_score`, `reliability_diagram_data`.
+- Area: `pinball_loss`, `mean_pinball_loss`, `interval_coverage`, `flood_week_mae_and_bias`.
+- Duration: `duration_climatology_reference`, `duration_persistence_reference`, `evaluate_duration_metrics`.
+- Summaries: `evaluate_summary_metrics` (per-fold + pooled rows), `evaluate_county_metrics`, `evaluate_monthly_metrics` — protocol columns only.
 
 ---
 
-## 4. Evaluation Metrics Defined
+## 5. Evaluation Protocol (aligned with `evaluation_metrics.md`)
 
-### **A. Detection Classification Metrics**
-- **Accuracy**: $\frac{\text{TP} + \text{TN}}{\text{TP} + \text{TN} + \text{FP} + \text{FN}}$ — Percentage of all county-weeks correctly classified.
-- **Precision**: $\frac{\text{TP}}{\text{TP} + \text{FP}}$ — Percentage of predicted flood events that actually flooded.
-- **Recall (POD / Hit Rate)**: $\frac{\text{TP}}{\text{TP} + \text{FN}}$ — Percentage of actual flood events successfully detected.
-- **F1 Score**: $2 \cdot \frac{\text{Precision} \cdot \text{Recall}}{\text{Precision} + \text{Recall}}$ — Harmonic mean of Precision and Recall.
-- **CSI (Critical Success Index)**: $\frac{\text{TP}}{\text{TP} + \text{FP} + \text{FN}}$ — Threat score ignoring true negatives.
-- **FAR (False Alarm Rate)**: $\frac{\text{FP}}{\text{TP} + \text{FP}}$ — Proportion of false flood alarms.
-- **Brier Score**: $\frac{1}{N} \sum (\hat{p}_i - y_i)^2$ — Mean squared error of probabilities (lower is better, 0 is perfect).
-- **Brier Skill Score (BSS)**: $1 - \frac{\text{Brier}_{\text{model}}}{\text{Brier}_{\text{ref}}}$ — Relative skill improvement over Climatology and Persistence (>0 means added skill).
+The headline summary (`cv_metrics_summary_aweil.csv`) contains **protocol metrics only**, one row per (fold, model) plus pooled rows for LightGBM, Climatology, and Persistence:
 
-### **B. Flood Area Quantile & Interval Metrics**
-- **Pinball Loss (Quantile Loss)**: $L_q(y, \hat{y}) = \max(q(y - \hat{y}), (q-1)(y - \hat{y}))$ averaged over $q \in \{0.1, 0.5, 0.9\}$.
-- **Interval Coverage**: Percentage of actual flood area $y_{\text{true}}$ falling inside $[q10, q90]$ (nominal target ~80%). Reported on **flood weeks ($y_{\text{true}} > 0$)** as the headline metric, and on all weeks.
-- **Flood-Week MAE & Bias**: Mean Absolute Error and Mean Error $(\hat{y} - y)$ calculated strictly on flood weeks ($y_{\text{true}} > 0$).
+### **A. Detection Probability**
+- **Brier Score**: $\frac{1}{N} \sum (\hat{p}_i - y_i)^2$ — headline probabilistic accuracy of `det_prob` (lower is better).
+- **Brier Skill Score (BSS)**: $1 - \frac{\text{Brier}_{\text{model}}}{\text{Brier}_{\text{ref}}}$ — relative skill vs **Climatology** and vs **Persistence**, both estimated per fold inside the fold's training window. > 0 means added skill.
+- **Reliability Diagram**: binned predicted-vs-observed frequency table (`reliability_det_prob.csv`), pooled over all OOF test weeks.
 
----
+### **B. Flood Area Quantiles**
+- **Pinball Loss**: $L_q(y, \hat{y}) = \max(q(y - \hat{y}), (q-1)(y - \hat{y}))$ averaged over $q \in \{0.1, 0.5, 0.9\}$.
+- **Interval Coverage**: percentage of actual flood area falling inside $[q10, q90]$ (nominal ~80%), on **flood weeks ($y_{\text{true}} > 0$)** as the headline metric and on all weeks.
+- **Flood-Week MAE & Bias**: computed strictly on flood weeks.
 
-## 5. Explanation of Output Files
+### **C. Duration (per horizon h1–h4)**
+- **Brier Score** of `det_prob_h{h}` against "flood detected h weeks ahead", with BSS vs a **county-month climatology** reference and a **Markov persistence** reference, both evaluated **at the target week** and estimated per fold (`duration_metrics_aweil.csv`).
+- **Reliability diagrams** per horizon (`reliability_duration_h1..h4.csv`).
 
-All outputs are saved to [`LightGBM_v1/outputs/outputs_v2/tables/`](file:///c:/Users/20244086/OneDrive%20-%20TU%20Eindhoven/Universiteit/Year%203/Q1/JBG060/JBG060_ZHL_2026/LightGBM_v1/outputs/outputs_v2/tables):
+> The classification family (accuracy, precision, recall, F1, CSI, FAR) is intentionally absent from Task-A outputs: it is cutoff-dependent and reserved for Task B event metrics in `evaluation_metrics.md`.
 
-1. **`5fold_test_predictions_aweil.csv`**
-   - Out-of-fold predictions on test years (2004, 2009, 2014, 2019, 2024).
-   - Columns: `county`, `week`, `split`, `y_true`, `y_det`, `det_prob`, `q10`, `q50`, `q90`, `fold`, baseline predictions.
-
-2. **`5fold_metrics_summary_aweil.csv`**
-   - Overall cross-validation performance comparison between LightGBM, Climatology, and Persistence.
-
-3. **`monthly_metrics_aweil.csv`**
-   - Monthly breakdown (Jan–Dec) showing performance during rainy season months (June–November) vs dry season months.
-
-4. **`county_metrics_aweil.csv`**
-   - County breakdown across the 5 Aweil counties (*Aweil Centre, Aweil East, Aweil North, Aweil South, Aweil West*), highlighting where the model makes mistakes (e.g. low recall in dry Aweil North vs area under-prediction in large Aweil East).
-
-5. **`advisories.csv`**
-   - Weekly stakeholder advisories containing `tier` (0–3), `phase` (agricultural phase), `crop_exposed_ha`, `rangeland_exposed_ha`, and plain-language advisory text.
-
-6. **`movement_advice.csv`**
-   - Multi-week duration relocation guidance recommending destination counties for cattle during high-risk weeks.
+### **Honesty note — label censoring**
+The flood labels come from satellite flood masks with irregular observation coverage. Weeks without a valid detection are filled with zero area, so some "dry" labels are censored (unobserved) rather than truly dry. This biases detection metrics conservatively but is inherited from the committed EDA datasets; the provenance report and the EDA provenance files document the observation coverage.
 
 ---
 
-## 6. How to Run & Versioning
+## 6. Explanation of Output Files
+
+All outputs are saved to `LightGBM_v1/outputs/outputs_v3/tables/`:
+
+1. **`cv_test_predictions_aweil.csv`** — Out-of-fold predictions for every fold test week (2010–2011, 2016–2017, 2022–2024). Columns: `county`, `week`, `test_year`, `y_true`, `y_det`, `det_prob`, `q10/q50/q90`, per-fold baselines, `fold`, duration predictions `det_prob_h1..h4`, duration targets & per-fold references.
+2. **`cv_metrics_summary_aweil.csv`** — 3 fold rows × 3 models + 3 pooled rows, protocol columns only.
+3. **`duration_metrics_aweil.csv`** — Per (fold, horizon) + pooled: Brier and BSS vs the two per-fold references.
+4. **`reliability_det_prob.csv` / `reliability_duration_h1..h4.csv`** — Binned reliability tables (pooled OOF).
+5. **`county_metrics_aweil.csv` / `monthly_metrics_aweil.csv`** — Per-county and per-month (Jan–Dec, rainy vs dry) protocol breakdowns.
+6. **`advisories.csv`** — Weekly stakeholder advisories for all fold test weeks: `tier` (0–3), agricultural `phase`, exposed hectares, cattle count, plain-language text.
+7. **`movement_advice.csv`** — Duration-based cattle relocation guidance recommending destination counties for high-risk weeks.
+8. **`data_provenance.csv`** — Per-source provenance (`real` / `synthetic_fallback`) with coverage ranges.
+
+---
+
+## 7. How to Run & Versioning
 
 ### **Running the Pipeline**
 Execute the master script from the repository root:
-```bash
-python run.py
-```
-or directly inside `LightGBM_v1`:
 ```bash
 python LightGBM_v1/run.py
 ```
 
 ### **Changing Model Version**
-To run an experiment and output to a new version folder (e.g., `outputs_v3`):
-1. Open [`LightGBM_v1/config.py`](file:///c:/Users/20244086/OneDrive%20-%20TU%20Eindhoven/Universiteit/Year%203/Q1/JBG060/JBG060_ZHL_2026/LightGBM_v1/config.py).
-2. Change `MODEL_VERSION = "v3"`.
-3. Run `python run.py`.
-4. Outputs will automatically be written to `LightGBM_v1/outputs/outputs_v3/tables/`.
+To run an experiment and output to a new version folder (e.g., `outputs_v4`):
+1. Open `LightGBM_v1/config.py`.
+2. Change `MODEL_VERSION = "v4"`.
+3. Run `python LightGBM_v1/run.py`.
+4. Outputs are automatically written to `LightGBM_v1/outputs/outputs_v4/tables/`.

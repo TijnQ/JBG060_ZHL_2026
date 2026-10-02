@@ -12,7 +12,6 @@ import numpy as np
 import pandas as pd
 
 from LightGBM_v1 import config, data_loader
-from LightGBM_v1.splits import assign_split, purge_boundary_weeks
 
 FEATURE_COLUMNS = [
     "local_tp_w1", "local_tp_w3", "local_tp_w7", "local_tp_w14", "local_tp_w30",
@@ -83,7 +82,12 @@ def build_daily_signals(years: list[int] | None = None) -> pd.DataFrame:
 
     gauge = data_loader.load_gauge_daily().reindex(idx).ffill(limit=7)
     out = out.join(gauge)
-    albert = data_loader.load_albert_level().reindex(idx)
+    # Lake Albert altimetry is sparse (~1 obs per 10-day satellite revisit,
+    # first obs 2002-07-10). The level varies on week-month timescales, so
+    # forward-filling to daily is legitimate (past data only, embargo-safe).
+    # Weeks before the first observation remain NaN and are dropped as
+    # incomplete by run.py (~2000-01 through 2002-07).
+    albert = data_loader.load_albert_level().reindex(idx).ffill()
     out = out.join(albert)
 
     with warnings.catch_warnings():
@@ -141,13 +145,10 @@ def build_weekly_features() -> pd.DataFrame:
     frame["month_sin"] = np.sin(2 * np.pi * frame["month"] / 12)
     frame["month_cos"] = np.cos(2 * np.pi * frame["month"] / 12)
 
-    # Split assignment and boundary purging
-    uniq_weeks = pd.DatetimeIndex(frame["week"].unique())
-    split_series = assign_split(uniq_weeks)
-    keep_mask = purge_boundary_weeks(uniq_weeks, split_series)
-
-    valid_weeks = uniq_weeks[keep_mask.to_numpy()]
-    frame = frame[frame["week"].isin(valid_weeks)].copy()
-    frame["split"] = frame["week"].map(dict(zip(uniq_weeks, split_series)))
+    # v3: boundary purging happens per fold in splits.get_cv_folds.
+    # County-weeks with any missing hydro feature (e.g. partial 2025 coverage)
+    # are flagged incomplete; run.py drops and reports them. 2025 weeks stay
+    # outside all CV folds (no fold trains, validates, or tests on 2025).
+    frame["complete"] = ~frame[FEATURE_COLUMNS].isna().any(axis=1)
 
     return frame.sort_values(["county", "week"]).reset_index(drop=True)

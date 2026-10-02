@@ -1,21 +1,21 @@
-"""Temporal splits and 5-fold 5-year block definitions for LightGBM_v1 pipeline.
+"""Temporal splits for LightGBM_v1 pipeline (v3: 3 expanding-window CV folds).
 
-Implements 5 folds of 5 years each (3 years train, 1 year val, 1 year test),
-3-day feature embargo cutoff, and boundary week purging.
+Walk-forward cross-validation with an expanding training window: each fold
+trains on everything before its validation year, validates on one
+flood-season year, and scores 2-3 held-out test years (evaluation_metrics.md
+sec. 2). The first week of each val/test window is purged so no lag feature or
+label window crosses a fold boundary.
 """
 
 from __future__ import annotations
 
 import pandas as pd
+
 from LightGBM_v1 import config
 
 __all__ = [
-    "assign_split",
     "feature_cutoff",
-    "get_5fold_5year_splits",
-    "get_temporal_splits",
-    "purge_boundary_weeks",
-    "weekly_index",
+    "get_cv_folds",
 ]
 
 
@@ -26,95 +26,36 @@ def feature_cutoff(week_start: pd.Timestamp) -> pd.Timestamp:
     return week_start - pd.Timedelta(days=config.EMBARGO_DAYS)
 
 
-def weekly_index(start: str = "2000-01-03", end: str = "2024-12-30") -> pd.DatetimeIndex:
-    """Return sequence of Monday week-start dates for full record."""
-    return pd.date_range(start=start, end=end, freq="W-MON")
+def _purge_first_week(df: pd.DataFrame) -> pd.DataFrame:
+    """Drop the first week of a window (all counties) to prevent boundary overlap."""
+    if df.empty:
+        return df
+    first = df["week"].min()
+    return df[df["week"] > first].copy()
 
 
-def assign_split(weeks: pd.Series | pd.DatetimeIndex) -> pd.Series:
-    """Map week timestamps to temporal split names: 'train', 'val', or 'test'."""
-    weeks_idx = pd.DatetimeIndex(weeks)
-    years = weeks_idx.year
-    out = pd.Series(index=weeks_idx, dtype=object)
-    for name, (lo, hi) in config.SPLITS.items():
-        out[years.isin(range(lo, hi + 1))] = name
-    return out
+def get_cv_folds(df: pd.DataFrame) -> list[dict[str, pd.DataFrame | int | str]]:
+    """Build the 3 expanding-window folds defined in config.CV_FOLDS.
 
-
-def purge_boundary_weeks(weeks: pd.DatetimeIndex, split_series: pd.Series) -> pd.Series:
-    """Drop the first week of non-train splits to prevent 3-day label overlap."""
-    keep = pd.Series(True, index=weeks)
-    for name in split_series.unique():
-        if name == "train":
-            continue
-        split_weeks = weeks[split_series.to_numpy() == name]
-        if len(split_weeks) > 0:
-            first_week = split_weeks[0]
-            keep[first_week] = False
-    return keep
-
-
-def get_temporal_splits(df: pd.DataFrame, purge: bool = True) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-    """Split DataFrame into train, val, and test subsets with optional boundary purging."""
-    weeks = pd.DatetimeIndex(df["week"])
-    split_series = assign_split(weeks)
-    if purge:
-        keep_mask = purge_boundary_weeks(weeks, split_series)
-        df_clean = df[keep_mask.to_numpy()].copy()
-        split_series = assign_split(pd.DatetimeIndex(df_clean["week"]))
-    else:
-        df_clean = df.copy()
-
-    train_df = df_clean[split_series.values == "train"].copy()
-    val_df = df_clean[split_series.values == "val"].copy()
-    test_df = df_clean[split_series.values == "test"].copy()
-
-    return train_df, val_df, test_df
-
-
-def get_5fold_5year_splits(df: pd.DataFrame) -> list[dict[str, pd.DataFrame | int]]:
-    """Return 5 folds of 5 years each: 3 years train, 1 year val, 1 year test.
-
-    Fold 1: Train 2000-2002 (3y), Val 2003 (1y), Test 2004 (1y)
-    Fold 2: Train 2005-2007 (3y), Val 2008 (1y), Test 2009 (1y)
-    Fold 3: Train 2010-2012 (3y), Val 2013 (1y), Test 2014 (1y)
-    Fold 4: Train 2015-2017 (3y), Val 2018 (1y), Test 2019 (1y)
-    Fold 5: Train 2020-2022 (3y), Val 2023 (1y), Test 2024 (1y)
+    Returns a list of dicts with keys: fold, train, val, test,
+    train_years, val_year, test_years.
     """
-    df_years = pd.to_datetime(df["week"]).dt.year
+    years = pd.to_datetime(df["week"]).dt.year
     folds = []
-
-    for block in config.FOLD_5YEAR_BLOCKS:
-        fold_num = block["fold"]
-        tr_lo, tr_hi = block["train"]
-        val_lo, val_hi = block["val"]
-        tst_lo, tst_hi = block["test"]
-
-        tr_mask = (df_years >= tr_lo) & (df_years <= tr_hi)
-        val_mask = (df_years >= val_lo) & (df_years <= val_hi)
-        tst_mask = (df_years >= tst_lo) & (df_years <= tst_hi)
-
-        tr_df = df[tr_mask].copy()
-        val_df = df[val_mask].copy()
-        tst_df = df[tst_mask].copy()
-
-        # Purge boundary week (first week of val and test)
-        if len(val_df) > 0:
-            val_first = val_df["week"].min()
-            val_df = val_df[val_df["week"] > val_first].copy()
-
-        if len(tst_df) > 0:
-            tst_first = tst_df["week"].min()
-            tst_df = tst_df[tst_df["week"] > tst_first].copy()
+    for spec in config.CV_FOLDS:
+        tr_lo, tr_hi = spec["train_years"]
+        tr_df = df[(years >= tr_lo) & (years <= tr_hi)].copy()
+        val_df = _purge_first_week(df[years == spec["val_year"]].copy())
+        te_lo, te_hi = spec["test_years"]
+        te_df = _purge_first_week(df[(years >= te_lo) & (years <= te_hi)].copy())
 
         folds.append({
-            "fold": fold_num,
+            "fold": spec["fold"],
             "train": tr_df,
             "val": val_df,
-            "test": tst_df,
+            "test": te_df,
             "train_years": f"{tr_lo}-{tr_hi}",
-            "val_year": f"{val_lo}",
-            "test_year": f"{tst_lo}",
+            "val_year": f"{spec['val_year']}",
+            "test_years": f"{te_lo}-{te_hi}",
         })
-
     return folds

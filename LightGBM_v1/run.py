@@ -1,10 +1,16 @@
-"""Main execution script for LightGBM_v1 pipeline (Version v2 with 5-fold 5-year splits, monthly & county breakdowns).
+"""Main execution script for LightGBM_v1 pipeline (v3: 3 expanding-window CV folds).
 
 Performs:
-1. 5-Fold Cross Validation (each fold: 3 years train, 1 year val, 1 year test)
-2. Detailed monthly performance breakdown (Jan - Dec) focusing on rainy season months (Jun - Nov)
-3. Detailed county-level performance breakdown across all 5 Aweil counties
-4. Outputs saved to LightGBM_v1/outputs/outputs_v2/tables/
+1.  Builds the embargoed weekly feature matrix (2000-2025; 2025 stays outside CV)
+2.  3-Fold Expanding-Window Cross-Validation (config.CV_FOLDS; 2025 excluded)
+3.  Per-fold honest references: climatology & persistence baselines and advisory
+    tier thresholds estimated strictly inside each fold's training window
+4.  Protocol-aligned metrics (evaluation_metrics.md): Brier / BSS, mean pinball,
+    interval coverage, flood-week MAE/bias, per-horizon duration Brier,
+    reliability diagrams (no cutoff-dependent classification metrics)
+5.  Stakeholder advisories & cattle movement advice for every fold test week
+6.  Data provenance report (real vs synthetic_fallback per source)
+7.  Outputs saved to LightGBM_v1/outputs/outputs_v3/tables/
 """
 
 from __future__ import annotations
@@ -29,27 +35,47 @@ from LightGBM_v1 import (
     splits,
 )
 
+_SUMMARY_COLS = [
+    "scope", "model", "n_samples", "flood_weeks", "flood_rate_pct",
+    "brier_score", "bss_vs_climatology", "bss_vs_persistence",
+    "mean_pinball_loss", "coverage_flood_weeks", "coverage_all_weeks",
+    "mae_flood_weeks", "bias_flood_weeks",
+]
+_BREAKDOWN_COLS = [
+    "n_samples", "flood_weeks", "flood_rate_pct",
+    "brier_score", "bss_vs_climatology", "bss_vs_persistence",
+    "mean_pinball_loss", "coverage_flood_weeks", "coverage_all_weeks",
+    "mae_flood_weeks", "bias_flood_weeks",
+]
+
 
 def main() -> None:
     print("=" * 95)
-    print(f"LIGHTGBM PIPELINE RUN — VERSION {config.MODEL_VERSION.upper()} — 5-FOLD (5-YR BLOCKS), MONTHLY & COUNTY BREAKDOWNS")
+    print(f"LIGHTGBM PIPELINE RUN — VERSION {config.MODEL_VERSION.upper()} — "
+          f"{len(config.CV_FOLDS)} EXPANDING-WINDOW FOLDS, PROTOCOL METRICS")
     print("=" * 95)
 
     # 1. Feature Engineering & Embargo
-    print("\n[1/8] Building weekly feature matrix with Friday 3-day embargo...")
+    print("\n[1/7] Building weekly feature matrix with Friday 3-day embargo...")
     feats_df = features.build_weekly_features()
+    n_incomplete = int((~feats_df["complete"]).sum())
+    if n_incomplete:
+        bad_years = sorted(pd.to_datetime(feats_df.loc[~feats_df["complete"], "week"]).dt.year.unique())
+        print(f"      Dropped {n_incomplete} incomplete county-weeks (years: {bad_years}) — see provenance report")
+    feats_df = feats_df[feats_df["complete"]].reset_index(drop=True)
+    feats_df = feats_df.drop(columns=["complete"])
     print(f"      Total rows: {len(feats_df)}, Total features: {len(features.FEATURE_COLUMNS)}")
 
-    # 2. Add Baselines
-    print("\n[2/8] Estimating Climatology & Markov Persistence baselines...")
-    train_mask = pd.to_datetime(feats_df["week"]).dt.year <= 2014
-    feats_df = baselines.add_baselines_to_dataframe(feats_df, train_mask)
+    # Full-frame duration targets (computed once; labels exist through end-2025)
+    full_duration_targets = duration_model.build_duration_targets(feats_df)
 
-    # 3. 5-Fold Cross Validation (5 blocks of 5 years: 3 train, 1 val, 1 test)
-    print("\n[3/8] Generating 5 folds (each fold: 3 yrs Train, 1 yr Val, 1 yr Test)...")
-    folds = splits.get_5fold_5year_splits(feats_df)
+    # 2. 3 Expanding-Window Folds
+    print("\n[2/7] Generating 3 expanding-window folds (2025 excluded from all folds)...")
+    folds = splits.get_cv_folds(feats_df)
 
-    oof_test_preds = []
+    oof_rows = []
+    advisory_rows = []
+    movement_rows = []
 
     for fold_info in folds:
         f_num = fold_info["fold"]
@@ -59,118 +85,149 @@ def main() -> None:
 
         print(f"      Fold {f_num}: Train {fold_info['train_years']} ({len(tr_df)} rows) | "
               f"Val {fold_info['val_year']} ({len(val_df)} rows) | "
-              f"Test {fold_info['test_year']} ({len(tst_df)} rows)")
+              f"Test {fold_info['test_years']} ({len(tst_df)} rows)")
 
-        X_train = tr_df[features.FEATURE_COLUMNS]
-        y_train_area = tr_df["y_true"]
-        y_train_det = tr_df["y_det"]
+        # 3. Per-fold baselines: estimated ONLY on this fold's training window.
+        # Keep original index labels (NO ignore_index): tr/val/test are disjoint
+        # year windows of the same frame, so labels are unique, and the
+        # .loc[label] round-trip below requires them.
+        fold_df = pd.concat([tr_df, val_df, tst_df])
+        train_mask = fold_df.index.isin(tr_df.index)
+        fold_df = baselines.add_baselines_to_dataframe(fold_df, train_mask)
+        val_df = fold_df.loc[val_df.index]
+        tst_df = fold_df.loc[tst_df.index]
 
-        X_val = val_df[features.FEATURE_COLUMNS]
-        y_val_area = val_df["y_true"]
-        y_val_det = val_df["y_det"]
-
-        X_test = tst_df[features.FEATURE_COLUMNS]
-
-        # Train models for this fold
+        # Train & predict this fold's LightGBM models
         models_fold = lgbm_model.build_and_train_lightgbm(
-            X_train, y_train_area, y_train_det, X_val, y_val_area, y_val_det
+            tr_df[features.FEATURE_COLUMNS], tr_df["y_true"], tr_df["y_det"],
+            val_df[features.FEATURE_COLUMNS], val_df["y_true"], val_df["y_det"],
         )
+        preds_tst = lgbm_model.predict_lightgbm(models_fold, tst_df[features.FEATURE_COLUMNS])
 
-        # Predict test year
-        preds_tst = lgbm_model.predict_lightgbm(models_fold, X_test)
-
-        res_df = tst_df[["county", "week", "split", "y_true", "y_det", "det_prob_clim", "area_clim_q50", "det_prob_persist", "area_persist"]].copy()
+        res_df = tst_df[["county", "week", "y_true", "y_det",
+                         "det_prob_clim", "area_clim_q50", "det_prob_persist", "area_persist"]].copy()
+        res_df["test_year"] = res_df["week"].dt.year
         res_df["det_prob"] = preds_tst["det_prob"]
         res_df["q10"] = preds_tst["q10"]
         res_df["q50"] = preds_tst["q50"]
         res_df["q90"] = preds_tst["q90"]
         res_df["fold"] = f_num
 
-        oof_test_preds.append(res_df)
+        # Per-fold duration models (train/val inside this fold only)
+        dur_models = duration_model.train_duration_models(tr_df, val_df)
+        dur_pred = duration_model.predict_duration(dur_models, tst_df)
+        res_df = res_df.join(dur_pred)
 
-    # Combine out-of-fold test predictions across all 5 folds
-    all_oof_test_df = pd.concat(oof_test_preds, ignore_index=True)
+        # Duration targets (from full frame) + per-fold references at target week
+        target_cols = [f"y_det_h{h}" for h in config.DURATION_HORIZONS]
+        res_df = res_df.merge(
+            full_duration_targets.set_index(["county", "week"])[target_cols],
+            left_on=["county", "week"], right_index=True, how="left",
+        )
+        res_df = res_df.join(metrics.duration_climatology_reference(tr_df, tst_df))
+        res_df = res_df.join(metrics.duration_persistence_reference(tr_df, tst_df, feats_df))
 
-    # 4. Overall 5-Fold Test Metrics
-    print("\n[4/8] Computing overall out-of-fold 5-Fold Test performance...")
-    eval_table = metrics.evaluate_all_outputs(all_oof_test_df)
+        oof_rows.append(res_df)
 
-    print("\n" + "-" * 105)
-    print(f"OVERALL 5-FOLD TEST PERFORMANCE SUMMARY (Out-of-Fold Test Years: 2004, 2009, 2014, 2019, 2024)")
-    print("-" * 105)
-    display_cols = [
-        "model", "accuracy", "precision", "recall", "f1_score", "csi",
-        "brier_score", "bss_vs_climatology", "bss_vs_persistence",
-        "mean_pinball_loss", "coverage_flood_weeks", "mae_flood_weeks"
-    ]
-    print(eval_table[display_cols].to_string(index=False))
-    print("-" * 105)
+        # Per-fold advisory tier thresholds (estimated on this fold's train window)
+        thresh_stats = advisory.climatology_threshold_stats(tr_df)
+        advisories_f = advisory.generate_advisories(res_df, thresh_stats)
+        movement_f = advisory.generate_movement_advice(
+            advisories_f,
+            dur_pred.assign(week=tst_df["week"], county=tst_df["county"]),
+        )
+        advisory_rows.append(advisories_f)
+        movement_rows.append(movement_f)
 
-    # 5. Per-County Detailed Statistics
-    print("\n[5/8] Computing detailed county-level performance breakdown...")
-    county_table = metrics.evaluate_county_metrics(all_oof_test_df, model_name="lightgbm")
+    all_oof_df = pd.concat(oof_rows, ignore_index=True)
+
+    # 4. Protocol metrics: per-fold + pooled summary, duration, breakdowns
+    print("\n[3/7] Computing protocol metrics (Brier/BSS, pinball, coverage, flood-week MAE/bias)...")
+    eval_table = metrics.evaluate_summary_metrics(all_oof_df)
+    duration_table, duration_reliability = metrics.evaluate_duration_metrics(all_oof_df)
+    reliability_det = metrics.reliability_diagram_data(all_oof_df["y_det"], all_oof_df["det_prob"])
+    county_table = metrics.evaluate_county_metrics(all_oof_df)
+    monthly_table = metrics.evaluate_monthly_metrics(all_oof_df)
+
+    advisories_df = pd.concat(advisory_rows, ignore_index=True)
+    movement_df = pd.concat(movement_rows, ignore_index=True)
+
+    # 5. Data provenance report (real vs synthetic_fallback per source)
+    provenance_df = data_loader.get_provenance_report()
+
+    print("\n" + "=" * 95)
+    print(f"DATA PROVENANCE (allow synthetic fallback: {config.ALLOW_SYNTHETIC_FALLBACK})")
+    print("=" * 95)
+    print(provenance_df.to_string(index=False))
+    print("-" * 95)
 
     print("\n" + "=" * 115)
-    print("DETAILED COUNTY-LEVEL PERFORMANCE BREAKDOWN (LIGHTGBM MODEL — 5-FOLD TEST YEARS)")
+    print("OUT-OF-FOLD PROTOCOL METRICS — 3 EXPANDING-WINDOW FOLDS + POOLED (test years: 2010-11, 2016-17, 2022-24)")
     print("=" * 115)
-    c_cols = [
-        "county", "n_samples", "flood_weeks", "flood_rate_pct", "accuracy", "precision",
-        "recall", "f1_score", "csi", "brier_score", "bss_vs_climatology",
-        "bss_vs_persistence", "coverage_flood_weeks", "mae_flood_weeks", "bias_flood_weeks"
-    ]
-    print(county_table[c_cols].to_string(index=False))
+    print(eval_table[_SUMMARY_COLS].to_string(index=False))
     print("=" * 115)
-
-    # 6. Per-Month Detailed Statistics
-    print("\n[6/8] Computing detailed monthly breakdown (Rainy Season vs Dry Season)...")
-    monthly_table = metrics.evaluate_monthly_metrics(all_oof_test_df, model_name="lightgbm")
 
     print("\n" + "=" * 115)
-    print("DETAILED MONTHLY PERFORMANCE BREAKDOWN (LIGHTGBM MODEL — 5-FOLD TEST YEARS)")
+    print("DURATION METRICS PER HORIZON (Brier vs per-fold climatology & persistence at target week)")
     print("=" * 115)
-    m_cols = [
-        "month_num", "month_name", "season", "n_samples", "flood_weeks", "flood_rate_pct",
-        "accuracy", "precision", "recall", "f1_score", "csi", "brier_score",
-        "bss_vs_climatology", "bss_vs_persistence", "coverage_flood_weeks", "mae_flood_weeks"
-    ]
-    print(monthly_table[m_cols].to_string(index=False))
+    print(duration_table.to_string(index=False))
     print("=" * 115)
 
-    # 7. Train Duration & Advisory Models
-    print("\n[7/8] Training LightGBM duration models and generating advisories...")
-    tr_full, val_full, tst_full = splits.get_temporal_splits(feats_df, purge=True)
-    dur_models = duration_model.train_duration_models(tr_full, val_full)
-    duration_preds_df = duration_model.predict_duration(dur_models, feats_df)
-    duration_preds_df[["week", "county"]] = feats_df[["week", "county"]]
+    print("\n" + "=" * 115)
+    print("COUNTY BREAKDOWN (LIGHTGBM, OOF TEST WEEKS)")
+    print("=" * 115)
+    print(county_table[["county"] + _BREAKDOWN_COLS].to_string(index=False))
+    print("=" * 115)
 
-    advisories_df = advisory.generate_advisories(all_oof_test_df, feats_df)
-    movement_df = advisory.generate_movement_advice(advisories_df, duration_preds_df)
+    print("\n" + "=" * 115)
+    print("MONTHLY BREAKDOWN (LIGHTGBM, OOF TEST WEEKS)")
+    print("=" * 115)
+    print(monthly_table[["month_num", "month_name", "season"] + _BREAKDOWN_COLS].to_string(index=False))
+    print("=" * 115)
 
-    # 8. Save Output Tables to versioned outputs_v2 folder
+    # 6. Save Output Tables to versioned outputs_v3 folder
+    print("\n[4/7] Saving output tables...")
     config.TABLES_DIR.mkdir(parents=True, exist_ok=True)
 
-    preds_path = config.TABLES_DIR / f"5fold_test_predictions_{config.SCOPE}.csv"
-    metrics_path = config.TABLES_DIR / f"5fold_metrics_summary_{config.SCOPE}.csv"
-    county_path = config.TABLES_DIR / f"county_metrics_{config.SCOPE}.csv"
-    monthly_path = config.TABLES_DIR / f"monthly_metrics_{config.SCOPE}.csv"
-    advisories_path = config.TABLES_DIR / "advisories.csv"
-    movement_path = config.TABLES_DIR / "movement_advice.csv"
+    out_files = {
+        "cv_test_predictions_aweil.csv": all_oof_df,
+        "cv_metrics_summary_aweil.csv": eval_table,
+        "duration_metrics_aweil.csv": duration_table,
+        "reliability_det_prob.csv": reliability_det,
+        "county_metrics_aweil.csv": county_table,
+        "monthly_metrics_aweil.csv": monthly_table,
+        "advisories.csv": advisories_df,
+        "movement_advice.csv": movement_df,
+        "data_provenance.csv": provenance_df,
+    }
+    for name, frame in out_files.items():
+        frame.to_csv(config.TABLES_DIR / name, index=False)
+    for h_name, rel_df in duration_reliability.items():
+        rel_df.to_csv(config.TABLES_DIR / f"reliability_duration_{h_name}.csv", index=False)
 
-    all_oof_test_df.to_csv(preds_path, index=False)
-    eval_table.to_csv(metrics_path, index=False)
-    county_table.to_csv(county_path, index=False)
-    monthly_table.to_csv(monthly_path, index=False)
-    advisories_df.to_csv(advisories_path, index=False)
-    movement_df.to_csv(movement_path, index=False)
+    print(f"      -> {config.TABLES_DIR}")
+    for name in list(out_files) + [f"reliability_duration_{k}.csv" for k in duration_reliability]:
+        print(f"         {name}")
 
-    print(f"\n[8/8] Pipeline execution complete! Output files saved to folder:")
-    print(f" -> {config.TABLES_DIR}")
-    print(f"    1. Out-of-fold test predictions: {preds_path.name}")
-    print(f"    2. 5-Fold metrics summary:      {metrics_path.name}")
-    print(f"    3. County breakdown metrics:    {county_path.name}")
-    print(f"    4. Monthly breakdown metrics:   {monthly_path.name}")
-    print(f"    5. Advisories:                 {advisories_path.name}")
-    print(f"    6. Movement advice:             {movement_path.name}")
+    # 7. Final summary
+    pooled_lgbm = eval_table[(eval_table["scope"] == "pooled") & (eval_table["model"] == "lightgbm")].iloc[0]
+    n_advisory_weeks = advisories_df["week"].nunique() if len(advisories_df) else 0
+    print("\n" + "=" * 95)
+    print("PIPELINE COMPLETE — V3 SUMMARY")
+    print("=" * 95)
+    print(f"  OOF test weeks scored: {len(all_oof_df)} "
+          f"({all_oof_df['test_year'].min()}-{all_oof_df['test_year'].max()}, 2025 excluded)")
+    print(f"  Pooled LightGBM: Brier {pooled_lgbm['brier_score']:.4f}, "
+          f"BSS vs clim {pooled_lgbm['bss_vs_climatology']:.3f}, "
+          f"BSS vs pers {pooled_lgbm['bss_vs_persistence']:.3f}, "
+          f"mean pinball {pooled_lgbm['mean_pinball_loss']:.3f}, "
+          f"coverage(flood) {pooled_lgbm['coverage_flood_weeks']:.3f}, "
+          f"MAE(flood) {pooled_lgbm['mae_flood_weeks']:.2f} km2")
+    print(f"  Advisories for {n_advisory_weeks} test weeks; "
+          f"{len(movement_df)} movement recommendations")
+    n_real = int((provenance_df['provenance'] == 'real').sum())
+    n_synth = int((provenance_df['provenance'] == 'synthetic_fallback').sum())
+    print(f"  Provenance: {n_real} real sources, {n_synth} synthetic fallbacks")
     print("=" * 95)
 
 

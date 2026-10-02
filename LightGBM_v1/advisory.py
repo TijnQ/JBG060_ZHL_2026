@@ -57,11 +57,14 @@ def month_phase(month: int) -> str:
     return AG_PHASE_BY_MONTH[int(month)]
 
 
-def climatology_threshold_stats(features_df: pd.DataFrame) -> pd.DataFrame:
-    """Compute per (county, month) training-period flood area thresholds (mean, p80, p95)."""
-    train = features_df[features_df["split"] == "train"]
+def climatology_threshold_stats(train_df: pd.DataFrame) -> pd.DataFrame:
+    """Compute per (county, month) flood area thresholds (mean, p80, p95) from a training window.
+
+    v3: the caller passes the fold's training window, so tier thresholds are
+    estimated per fold and never see validation/test years.
+    """
     stats = (
-        train.groupby(["county", "month"], observed=True)["y_true"]
+        train_df.groupby(["county", "month"], observed=True)["y_true"]
         .agg(
             clim_mean="mean",
             clim_p80=lambda s: float(s.quantile(0.80)),
@@ -160,9 +163,13 @@ def advisory_text(
     return " ".join(parts)
 
 
-def generate_advisories(pred_df: pd.DataFrame, features_df: pd.DataFrame) -> pd.DataFrame:
-    """Generate comprehensive advisories.csv DataFrame."""
-    stats = climatology_threshold_stats(features_df)
+def generate_advisories(pred_df: pd.DataFrame, threshold_stats: pd.DataFrame) -> pd.DataFrame:
+    """Generate comprehensive advisories.csv DataFrame.
+
+    threshold_stats: county-month thresholds (climatology_threshold_stats)
+    estimated on the fold's training window (v3). Output schema is unchanged.
+    """
+    stats = threshold_stats
     hist = _load_exposure_table()
     cattle_map = _cattle_by_county()
 

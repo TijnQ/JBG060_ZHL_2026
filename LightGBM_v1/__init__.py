@@ -1,8 +1,8 @@
 """LightGBM Flood Prediction Pipeline Version 1 (LightGBM_v1).
 
-Modular implementation of flood detection, area quantile forecasting, duration forecasting,
-evaluation metrics (Accuracy, Precision, Recall, F1, CSI, Brier, BSS, Coverage),
-and stakeholder advisories.
+Modular implementation of flood detection, area quantile forecasting, duration
+forecasting, protocol-aligned evaluation metrics (Brier, BSS, pinball, coverage,
+flood-week MAE/bias, reliability, per-fold CV), and stakeholder advisories.
 """
 
 from __future__ import annotations
