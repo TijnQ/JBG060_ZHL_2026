@@ -250,7 +250,10 @@ def load_processed_ET(years: np.ndarray, target_longitude: float, target_latitud
         except FileNotFoundError:
             print(f"  WARNING: no processed .csv files found for year {year} in {base_path}")
 
-    print(data[years[0]].head())
+    if data:
+        first_key = list(data.keys())[0]
+        print(f"Sample processed ET data for year {first_key}:")
+        print(data[first_key].head())
 
     return data
 
@@ -370,13 +373,21 @@ def main():
     files_processed = list(processed_dir.glob("*"))
 
     ## Check whether processing is needed
-    if len(files_raw) != len(files_processed):
-        print("Evaporation-transpiration data not processed yet - running processing")
+    lat_str = f"{target_latitude:.3f}N" if target_latitude >= 0 else f"{abs(target_latitude):.3f}S"
+    lon_str = f"{target_longitude:.3f}E" if target_longitude >= 0 else f"{abs(target_longitude):.3f}W"
+    missing_processed = [
+        y for y in years
+        if not (processed_dir / f'ET_{y}_{lat_str}_{lon_str}_processed.csv').exists()
+    ]
 
+    if missing_processed and len(files_raw) > 0:
+        print(f"Evaporation-transpiration data missing for {len(missing_processed)} year(s) - running processing")
         for year in tqdm(years):
-            process_ET(year)
-    else:
+            process_ET(year, target_longitude=target_longitude, target_latitude=target_latitude)
+    elif len(missing_processed) == 0:
         print("Evaporation-transpiration data already processed - skipping processing")
+    else:
+        print(f"  WARNING: Evaporation-transpiration data missing for {len(missing_processed)} year(s) and no raw files found in {raw_dir}")
 
     ## Then load the processed evaporation-transpiration data
     load_processed_ET(years, target_longitude, target_latitude)

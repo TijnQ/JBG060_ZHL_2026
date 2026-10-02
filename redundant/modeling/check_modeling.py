@@ -336,8 +336,8 @@ def test_features_helpers() -> None:
     )
     check("gauge_chg7 is NaN before day 7", np.isnan(out.loc[idx[3], "gauge_chg7"]))
     check(
-        "net_w7 at day 6 = tp_w7 (sum 21) - et0_w7 (mean 3) = 18",
-        close(out.loc[idx[6], "net_w7"], 18.0),
+        "net_w7 at day 6 = tp_w7 (sum 21) - 7*et0_w7 (sum 21) = 0",
+        close(out.loc[idx[6], "net_w7"], 0.0),
         f"got {out.loc[idx[6], 'net_w7']}",
     )
 

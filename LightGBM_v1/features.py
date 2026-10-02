@@ -113,8 +113,8 @@ def compute_rolling_features(daily: pd.DataFrame) -> pd.DataFrame:
     for w in (7, 14, 30):
         out[f"et0_w{w}"] = daily["et0"].rolling(w, min_periods=min(3, w)).mean()
 
-    out["net_w7"] = out["local_tp_w7"] - out["et0_w7"]
-    out["net_w14"] = out["local_tp_w14"] - out["et0_w14"]
+    out["net_w7"] = out["local_tp_w7"] - (7 * out["et0_w7"])
+    out["net_w14"] = out["local_tp_w14"] - (14 * out["et0_w14"])
 
     return out
 
