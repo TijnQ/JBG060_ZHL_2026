@@ -69,7 +69,7 @@ CV_FOLDS = [
 # Provenance gate (v3): loaders must record real vs synthetic_fallback.
 # When False, any synthetic fallback raises RuntimeError instead of silently
 # substituting generated data.
-ALLOW_SYNTHETIC_FALLBACK = True
+ALLOW_SYNTHETIC_FALLBACK = False
 
 # Embargo rule: For target week starting Monday m, features are dated at most m - 3 days (Friday)
 EMBARGO_DAYS = 3

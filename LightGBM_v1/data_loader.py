@@ -196,6 +196,8 @@ def load_gauge_daily() -> pd.Series:
         except Exception as exc:
             _gate_or_raise("gauge_100205_discharge", f"load failed: {exc}")
         _gate_or_raise("gauge_100205_discharge", f"area id {config.GAUGE_AREA_ID} not in dataset")
+    else:
+        _gate_or_raise("gauge_100205_discharge", f"directory {config.GAUGE_ROOT} does not exist")
 
     dates = pd.date_range("1999-12-01", "2026-01-01", freq="D")
     doy = dates.dayofyear.to_numpy()
@@ -231,6 +233,8 @@ def load_albert_level() -> pd.Series:
         except Exception as exc:
             _gate_or_raise("lake_albert_level", f"load failed: {exc}")
         _gate_or_raise("lake_albert_level", "'Albert' station not in dataset")
+    else:
+        _gate_or_raise("lake_albert_level", f"directory {config.LAKE_ROOT} does not exist")
 
     dates = pd.date_range("1999-12-01", "2026-01-01", freq="D")
     albert_vals = 619.5 + 0.8 * np.sin(2 * np.pi * dates.dayofyear / 365.25)
@@ -261,6 +265,8 @@ def load_et0_daily(years: list[int]) -> pd.Series:
         except Exception as exc:
             _gate_or_raise("et0_aweil", f"load failed: {exc}")
         _gate_or_raise("et0_aweil", "no processed ET frames returned")
+    else:
+        _gate_or_raise("et0_aweil", f"directory {config.ET0_ROOT} does not exist")
 
     dates = pd.date_range(f"{years[0]}-01-01", f"{years[-1]}-12-31", freq="D")
     et0_vals = 5.0 + 1.5 * np.cos(2 * np.pi * dates.dayofyear / 365.25)
