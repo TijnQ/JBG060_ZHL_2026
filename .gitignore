@@ -15,3 +15,5 @@ output
 modeling/outputs/
 TabPFN_v1/outputs/
 LightGBM_v1/outputs/tuning/
+# Large interactive map html (regenerate on demand)
+climatology_maps/outputs/*.html
