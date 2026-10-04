@@ -6,6 +6,7 @@ lightgbm==4.7.0
 xgboost==3.2.0
 catboost==1.2.10
 shap==0.51.0
+optuna==4.9.0
 torch==2.11.0
 torchvision==0.26.0
 tabpfn==9.0.0

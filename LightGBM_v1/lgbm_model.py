@@ -3,11 +3,16 @@
 Trains:
 1. LGBMClassifier for flood detection probability (`det_prob`).
 2. LGBMRegressor (alpha=0.1, 0.5, 0.9) for quantile flood area in km² (`q10`, `q50`, `q90`).
+
+Every train function falls back to the shared default hyperparameter dict
+(`_BASE_PARAMS`) when called with `params=None`, so run.py behavior is exactly
+unchanged; LightGBM_v1.tuning passes explicit per-head overrides.
 """
 
 from __future__ import annotations
 
 import warnings
+
 import lightgbm as lgbm
 import numpy as np
 import pandas as pd
@@ -24,26 +29,41 @@ __all__ = [
     "train_quantile_regressors",
 ]
 
+# Shared default hyperparameters (v3 baseline). Every train function uses these
+# when called with params=None — exactly the hardcoded values run.py has always
+# trained with (plan.md §2).
+_BASE_PARAMS: dict[str, object] = {
+    "n_estimators": 600,
+    "learning_rate": 0.03,
+    "num_leaves": 31,
+    "min_child_samples": 30,
+    "subsample": 0.8,
+    "subsample_freq": 1,
+    "colsample_bytree": 0.8,
+    "random_state": config.SEED,
+    "n_jobs": -1,
+    "verbose": -1,
+}
+
+
+def _merged_params(params: dict[str, object] | None) -> dict[str, object]:
+    """Default hyperparameters with optional per-key overrides (None = defaults)."""
+    return dict(_BASE_PARAMS) if params is None else {**_BASE_PARAMS, **params}
+
 
 def train_detection_classifier(
     X_train: pd.DataFrame,
     y_train_det: pd.Series,
     X_val: pd.DataFrame,
     y_val_det: pd.Series,
+    params: dict[str, object] | None = None,
 ) -> lgbm.LGBMClassifier:
-    """Train LightGBM binary classifier for flood detection probability."""
-    clf = lgbm.LGBMClassifier(
-        n_estimators=600,
-        learning_rate=0.03,
-        num_leaves=31,
-        min_child_samples=30,
-        subsample=0.8,
-        subsample_freq=1,
-        colsample_bytree=0.8,
-        random_state=config.SEED,
-        n_jobs=-1,
-        verbose=-1,
-    )
+    """Train LightGBM binary classifier for flood detection probability.
+
+    `params` overrides individual default hyperparameters (None = the exact
+    default dict used by run.py).
+    """
+    clf = lgbm.LGBMClassifier(**_merged_params(params))
     clf.fit(
         X_train,
         y_train_det,
@@ -59,24 +79,18 @@ def train_quantile_regressors(
     X_val: pd.DataFrame,
     y_val_area: pd.Series,
     quantiles: tuple[float, ...] = config.QUANTILES,
+    params: dict[str, object] | None = None,
 ) -> dict[str, lgbm.LGBMRegressor]:
-    """Train LightGBM quantile regressors for specified quantiles (q10, q50, q90)."""
-    base_params = {
-        "n_estimators": 600,
-        "learning_rate": 0.03,
-        "num_leaves": 31,
-        "min_child_samples": 30,
-        "subsample": 0.8,
-        "subsample_freq": 1,
-        "colsample_bytree": 0.8,
-        "random_state": config.SEED,
-        "n_jobs": -1,
-        "verbose": -1,
-    }
+    """Train LightGBM quantile regressors for specified quantiles (q10, q50, q90).
+
+    `params` overrides individual default hyperparameters (None = the exact
+    default dict used by run.py).
+    """
+    model_params = _merged_params(params)
 
     models = {}
     for alpha in quantiles:
-        reg = lgbm.LGBMRegressor(objective="quantile", alpha=alpha, **base_params)
+        reg = lgbm.LGBMRegressor(objective="quantile", alpha=alpha, **model_params)
         reg.fit(
             X_train,
             y_train_area,
@@ -96,10 +110,17 @@ def build_and_train_lightgbm(
     X_val: pd.DataFrame,
     y_val_area: pd.Series,
     y_val_det: pd.Series,
+    det_params: dict[str, object] | None = None,
+    quant_params: dict[str, object] | None = None,
 ) -> dict[str, object]:
-    """Train all 4 LightGBM models (det_prob classifier + q10, q50, q90 quantile regressors)."""
-    models = train_quantile_regressors(X_train, y_train_area, X_val, y_val_area)
-    det_clf = train_detection_classifier(X_train, y_train_det, X_val, y_val_det)
+    """Train all 4 LightGBM models (det_prob classifier + q10, q50, q90 quantile regressors).
+
+    `det_params` / `quant_params` override individual default hyperparameters of
+    the detection classifier / the 3 quantile regressors (None = the exact
+    default dicts used by run.py).
+    """
+    models = train_quantile_regressors(X_train, y_train_area, X_val, y_val_area, params=quant_params)
+    det_clf = train_detection_classifier(X_train, y_train_det, X_val, y_val_det, params=det_params)
     models["det"] = det_clf
     return models
 

@@ -14,3 +14,4 @@ output
 # Generated modeling outputs (keep the code, not the results)
 modeling/outputs/
 TabPFN_v1/outputs/
+LightGBM_v1/outputs/tuning/
