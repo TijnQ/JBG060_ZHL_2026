@@ -59,11 +59,12 @@ LightGBM_v1/
 ├── duration_model.py      # Multi-horizon binary LightGBM classifiers (1-4 weeks ahead)
 ├── metrics.py             # Protocol metrics (Brier, BSS, pinball, coverage, MAE/bias, reliability)
 ├── advisory.py            # Stakeholder advisories.csv & movement_advice.csv generator
-├── run.py                 # Master execution script orchestrating the end-to-end pipeline
+├── run.py                 # Master execution script (--model lightgbm | lightgbm_baseline | tabpfn)
 └── outputs/
     ├── outputs_v1/        # Execution outputs for initial baseline model
     ├── outputs_v2/        # Execution outputs for 5-fold CV & monthly/county breakdown
-    └── outputs_v3/        # Execution outputs for 3-fold expanding-window CV (current)
+    ├── outputs_v3/        # Execution outputs for 3-fold expanding-window CV (--model lightgbm)
+    └── outputs_baseline/  # Frozen v3 baseline run (--model lightgbm_baseline)
         └── tables/
             ├── cv_test_predictions_aweil.csv
             ├── cv_metrics_summary_aweil.csv
@@ -74,7 +75,9 @@ LightGBM_v1/
             ├── monthly_metrics_aweil.csv
             ├── advisories.csv
             ├── movement_advice.csv
-            └── data_provenance.csv
+            ├── data_provenance.csv
+            ├── feature_importance.csv
+            └── feature_importance_pooled.csv
 ```
 
 ---
@@ -139,7 +142,7 @@ The flood labels come from satellite flood masks with irregular observation cove
 
 ## 6. Explanation of Output Files
 
-All outputs are saved to `LightGBM_v1/outputs/outputs_v3/tables/`:
+All outputs are saved to `LightGBM_v1/outputs/outputs_v3/tables/` — or to `LightGBM_v1/outputs/outputs_baseline/tables/` when running `--model lightgbm_baseline`:
 
 1. **`cv_test_predictions_aweil.csv`** — Out-of-fold predictions for every fold test week (2010–2011, 2016–2017, 2022–2024). Columns: `county`, `week`, `test_year`, `y_true`, `y_det`, `det_prob`, `q10/q50/q90`, per-fold baselines, `fold`, duration predictions `det_prob_h1..h4`, duration targets & per-fold references.
 2. **`cv_metrics_summary_aweil.csv`** — 3 fold rows × 3 models + 3 pooled rows, protocol columns only.
@@ -149,6 +152,8 @@ All outputs are saved to `LightGBM_v1/outputs/outputs_v3/tables/`:
 6. **`advisories.csv`** — Weekly stakeholder advisories for all fold test weeks: `tier` (0–3), agricultural `phase`, exposed hectares, cattle count, plain-language text.
 7. **`movement_advice.csv`** — Duration-based cattle relocation guidance recommending destination counties for high-risk weeks.
 8. **`data_provenance.csv`** — Per-source provenance (`real` / `synthetic_fallback`) with coverage ranges.
+9. **`feature_importance.csv`** *(LightGBM runs only)* — Per-fold split & gain importance for every feature and every model head (`det`, `q10`, `q50`, `q90`), including each feature's share of that head's total importance (`share_pct`).
+10. **`feature_importance_pooled.csv`** *(LightGBM runs only)* — The same importances averaged over the 3 folds; the quick table for reading which features the model actually uses.
 
 ---
 
@@ -157,8 +162,12 @@ All outputs are saved to `LightGBM_v1/outputs/outputs_v3/tables/`:
 ### **Running the Pipeline**
 Execute the master script from the repository root:
 ```bash
-python LightGBM_v1/run.py
+python LightGBM_v1/run.py                             # lightgbm (default) -> outputs_v3
+python LightGBM_v1/run.py --model lightgbm_baseline   # frozen v3 baseline  -> outputs_baseline
+python LightGBM_v1/run.py --model tabpfn              # TabPFN reference
 ```
+
+`--model lightgbm_baseline` runs **exactly the v3 model** (same features, same default hyperparameters) but writes every output table to `LightGBM_v1/outputs/outputs_baseline/tables/`, so the frozen baseline stays clearly separated from the later improved LightGBM model and the two can be diffed table-by-table. Both LightGBM choices also write the feature-importance tables (§6, items 9–10).
 
 ### **Changing Model Version**
 To run an experiment and output to a new version folder (e.g., `outputs_v4`):

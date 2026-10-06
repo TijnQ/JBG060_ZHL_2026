@@ -1,0 +1,13 @@
+scope,model,n_samples,flood_weeks,flood_rate_pct,brier_score,bss_vs_climatology,bss_vs_persistence,mean_pinball_loss,coverage_flood_weeks,coverage_all_weeks,mae_flood_weeks,bias_flood_weeks
+fold_1,lightgbm_baseline,515,105,20.4,0.0606,0.3057,0.2597,0.883,0.762,0.93,11.71,-9.13
+fold_1,climatology,515,105,20.4,0.0872,0.0,-0.0662,1.867,0.0,0.724,17.41,-14.11
+fold_1,persistence,515,105,20.4,0.0818,0.0621,0.0,1.115,0.0,0.75,10.8,-0.14
+fold_2,lightgbm_baseline,515,81,15.7,0.0727,0.313,0.1248,0.144,0.691,0.944,2.22,-1.87
+fold_2,climatology,515,81,15.7,0.1058,0.0,-0.2739,0.578,0.0,0.728,4.65,1.95
+fold_2,persistence,515,81,15.7,0.083,0.215,0.0,0.226,0.025,0.796,2.5,-0.38
+fold_3,lightgbm_baseline,780,188,24.1,0.0639,0.3845,0.2366,0.979,0.793,0.926,10.99,-8.0
+fold_3,climatology,780,188,24.1,0.1038,0.0,-0.2404,2.393,0.0,0.694,19.14,-18.55
+fold_3,persistence,780,188,24.1,0.0837,0.1938,0.0,1.317,0.0,0.713,10.43,-0.53
+pooled,lightgbm_baseline,1810,374,20.7,0.0654,0.3433,0.2112,0.714,0.762,0.932,9.29,-6.99
+pooled,climatology,1810,374,20.7,0.0996,0.0,-0.2011,1.727,0.0,0.712,15.52,-12.87
+pooled,persistence,1810,374,20.7,0.083,0.1674,0.0,0.949,0.005,0.747,8.82,-0.39

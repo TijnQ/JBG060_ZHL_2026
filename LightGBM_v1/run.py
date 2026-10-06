@@ -1,5 +1,13 @@
 """Shared LightGBM/TabPFN runner (v3: 3 expanding-window CV folds).
 
+Model choice (--model):
+- lightgbm           — the current v3 model, saved to outputs/outputs_v3/tables/
+- lightgbm_baseline  — the same frozen v3 model, flagged as the project baseline
+                       and saved to outputs/outputs_baseline/tables/ so the later
+                       improved LightGBM model stays clearly separated
+- tabpfn             — zero-shot TabPFN reference, saved to
+                       TabPFN_v1/outputs/outputs_v3/tables/
+
 Performs:
 1.  Builds the embargoed weekly feature matrix (2000-2025; 2025 stays outside CV)
 2.  3-Fold Expanding-Window Cross-Validation (config.CV_FOLDS; 2025 excluded)
@@ -10,7 +18,9 @@ Performs:
     reliability diagrams (no cutoff-dependent classification metrics)
 5.  Stakeholder advisories & cattle movement advice for every fold test week
 6.  Data provenance report (real vs synthetic_fallback per source)
-7.  Outputs saved to the selected model's outputs/outputs_v3/tables/
+7.  Outputs saved to the selected model's output folder; LightGBM runs also
+    report split & gain feature importance per fold
+    (feature_importance.csv + feature_importance_pooled.csv)
 """
 
 from __future__ import annotations
@@ -51,13 +61,15 @@ _BREAKDOWN_COLS = [
 
 
 def main(model_name: str = "lightgbm") -> None:
-    if model_name not in {"lightgbm", "tabpfn"}:
+    if model_name not in {"lightgbm", "lightgbm_baseline", "tabpfn"}:
         raise ValueError(f"Unknown model: {model_name}")
-    # Use LightGBM by default. The rest of the steps stay the same for both models.
+    # Use LightGBM by default. The rest of the steps stay the same for all models.
     train_forecast = lgbm_model.build_and_train_lightgbm
     predict_forecast = lgbm_model.predict_lightgbm
     duration_backend = duration_model
     tables_dir = config.TABLES_DIR
+    # Feature importance needs the fitted LightGBM boosters; TabPFN has none.
+    collect_importance = True
     if model_name == "tabpfn":
         from LightGBM_v1 import tabpfn_model
         # Switch the model functions and save TabPFN results in its own folder.
@@ -65,6 +77,12 @@ def main(model_name: str = "lightgbm") -> None:
         predict_forecast = tabpfn_model.predict_forecast
         duration_backend = tabpfn_model
         tables_dir = PROJECT_ROOT / "TabPFN_v1" / "outputs" / f"outputs_{config.MODEL_VERSION}" / "tables"
+        collect_importance = False
+    elif model_name == "lightgbm_baseline":
+        # The frozen v3 model is the project baseline: identical model code and
+        # default hyperparameters, but the outputs land in outputs_baseline/ so
+        # the baseline stays clearly separated from the improved LightGBM model.
+        tables_dir = config.BASELINE_TABLES_DIR
     model_label = model_name.upper()
     print("=" * 95)
     print(f"{model_label} PIPELINE RUN — VERSION {config.MODEL_VERSION.upper()} — "
@@ -92,6 +110,7 @@ def main(model_name: str = "lightgbm") -> None:
     oof_rows = []
     advisory_rows = []
     movement_rows = []
+    importance_rows: list[pd.DataFrame] = []
 
     for fold_info in folds:
         f_num = fold_info["fold"]
@@ -118,6 +137,11 @@ def main(model_name: str = "lightgbm") -> None:
             val_df[features.FEATURE_COLUMNS], val_df["y_true"], val_df["y_det"],
         )
         preds_tst = predict_forecast(models_fold, tst_df[features.FEATURE_COLUMNS])
+        if collect_importance:
+            # Read the booster importances before this fold's models are freed.
+            imp_fold = lgbm_model.extract_feature_importance(models_fold, features.FEATURE_COLUMNS)
+            imp_fold.insert(0, "fold", f_num)
+            importance_rows.append(imp_fold)
         del models_fold
 
         res_df = tst_df[["county", "week", "y_true", "y_det",
@@ -157,6 +181,18 @@ def main(model_name: str = "lightgbm") -> None:
         movement_rows.append(movement_f)
 
     all_oof_df = pd.concat(oof_rows, ignore_index=True)
+
+    # Per-fold feature importance pooled to a mean across folds (LightGBM only).
+    importance_detail = pd.concat(importance_rows, ignore_index=True) if importance_rows else None
+    importance_pooled = None
+    if importance_detail is not None:
+        importance_pooled = (
+            importance_detail
+            .groupby(["head", "importance_type", "feature"], as_index=False)
+            .agg(mean_importance=("importance", "mean"), mean_share_pct=("share_pct", "mean"))
+            .sort_values(["head", "importance_type", "mean_share_pct"], ascending=[True, True, False])
+            .reset_index(drop=True)
+        )
 
     # 4. Protocol metrics: per-fold + pooled summary, duration, breakdowns
     print("\n[3/7] Computing protocol metrics (Brier/BSS, pinball, coverage, flood-week MAE/bias)...")
@@ -203,7 +239,29 @@ def main(model_name: str = "lightgbm") -> None:
     print(monthly_table[["month_num", "month_name", "season"] + _BREAKDOWN_COLS].to_string(index=False))
     print("=" * 115)
 
-    # 6. Save Output Tables to versioned outputs_v3 folder
+    if importance_pooled is not None:
+        gain_rows = importance_pooled[importance_pooled["importance_type"] == "gain"]
+        head_labels = {
+            "det": "detection classifier",
+            "q10": "q10 quantile regressor",
+            "q50": "q50 quantile regressor",
+            "q90": "q90 quantile regressor",
+        }
+        print("\n" + "=" * 115)
+        print(f"FEATURE IMPORTANCE ({model_label}, mean over {len(config.CV_FOLDS)} folds — "
+              f"top 10 per model head by gain share)")
+        print("=" * 115)
+        for head in ("det", "q10", "q50", "q90"):
+            head_rows = gain_rows[gain_rows["head"] == head]
+            if head_rows.empty:
+                continue
+            print(f"  {head} ({head_labels[head]}):")
+            for _, row in head_rows.nlargest(10, "mean_share_pct").iterrows():
+                print(f"      {row['feature']:<16} mean gain {row['mean_importance']:>12.1f}   "
+                      f"share {row['mean_share_pct']:>5.1f}%")
+        print("=" * 115)
+
+    # 6. Save Output Tables to the selected model's output folder
     print("\n[4/7] Saving output tables...")
     tables_dir.mkdir(parents=True, exist_ok=True)
 
@@ -218,6 +276,9 @@ def main(model_name: str = "lightgbm") -> None:
         "movement_advice.csv": movement_df,
         "data_provenance.csv": provenance_df,
     }
+    if importance_detail is not None:
+        out_files["feature_importance.csv"] = importance_detail
+        out_files["feature_importance_pooled.csv"] = importance_pooled
     for name, frame in out_files.items():
         frame.to_csv(tables_dir / name, index=False)
     for h_name, rel_df in duration_reliability.items():
@@ -251,5 +312,12 @@ def main(model_name: str = "lightgbm") -> None:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--model", choices=("lightgbm", "tabpfn"), default="lightgbm")
+    parser.add_argument(
+        "--model",
+        choices=("lightgbm", "lightgbm_baseline", "tabpfn"),
+        default="lightgbm",
+        help="lightgbm: current v3 model -> outputs_v3 | "
+             "lightgbm_baseline: frozen v3 baseline -> outputs_baseline | "
+             "tabpfn: TabPFN reference",
+    )
     main(parser.parse_args().model)

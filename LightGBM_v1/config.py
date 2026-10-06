@@ -20,6 +20,12 @@ TABLES_DIR = OUT_DIR / "tables"
 FIGURES_DIR = OUT_DIR / "figures"
 MODELS_DIR = OUT_DIR / "models"
 
+# Frozen v3 baseline (run.py --model lightgbm_baseline): the same v3 model, but
+# its outputs land here instead of outputs_v3 so the baseline stays clearly
+# separated from the later improved LightGBM model (table-by-table diffable).
+BASELINE_OUT_DIR = OUT_ROOT / "outputs_baseline"
+BASELINE_TABLES_DIR = BASELINE_OUT_DIR / "tables"
+
 RAW_DATA = PROJECT_ROOT / "raw_data"
 
 # Data file locations

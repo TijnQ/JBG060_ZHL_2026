@@ -24,6 +24,7 @@ from LightGBM_v1.features import FEATURE_COLUMNS
 
 __all__ = [
     "build_and_train_lightgbm",
+    "extract_feature_importance",
     "predict_lightgbm",
     "train_detection_classifier",
     "train_quantile_regressors",
@@ -144,3 +145,40 @@ def predict_lightgbm(models: dict[str, object], X: pd.DataFrame) -> dict[str, np
         "q50": q50,
         "q90": q90_clean,
     }
+
+
+def extract_feature_importance(
+    models: dict[str, object],
+    feature_names: list[str] | None = None,
+) -> pd.DataFrame:
+    """Split & gain feature importance of fitted LightGBM models (long format).
+
+    One row per (model head, importance type, feature):
+    - `head`: key of the trained model dict (det, q10, q50, q90)
+    - `importance_type`: "split" (split count) or "gain" (total split gain)
+    - `importance`: raw importance value
+    - `share_pct`: the feature's share of that head's total importance (0-100)
+
+    Entries without a LightGBM booster (e.g. non-tree fallback models) are
+    skipped, so the result is empty for the TabPFN backend.
+    """
+    rows: list[dict[str, object]] = []
+    for head, model in models.items():
+        booster = getattr(model, "booster_", None)
+        if booster is None:
+            continue
+        names = list(booster.feature_name())
+        if not names and feature_names is not None:
+            names = list(feature_names)
+        for importance_type in ("split", "gain"):
+            values = booster.feature_importance(importance_type=importance_type)
+            total = float(np.sum(values))
+            for name, value in zip(names, values):
+                rows.append({
+                    "head": head,
+                    "importance_type": importance_type,
+                    "feature": name,
+                    "importance": int(value) if importance_type == "split" else float(value),
+                    "share_pct": (100.0 * float(value) / total) if total > 0 else 0.0,
+                })
+    return pd.DataFrame(rows)

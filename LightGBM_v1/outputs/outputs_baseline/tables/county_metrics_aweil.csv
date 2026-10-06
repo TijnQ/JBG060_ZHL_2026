@@ -1,0 +1,6 @@
+n_samples,flood_weeks,flood_rate_pct,brier_score,bss_vs_climatology,bss_vs_persistence,mean_pinball_loss,coverage_flood_weeks,coverage_all_weeks,mae_flood_weeks,bias_flood_weeks,county
+362,63,17.4,0.0797,0.3116,0.2436,0.283,0.794,0.942,3.75,-2.06,Aweil Centre
+362,126,34.8,0.1097,0.1639,0.1695,1.545,0.778,0.895,12.44,-9.58,Aweil East
+362,34,9.4,0.024,0.6457,0.3561,0.185,0.824,0.975,4.71,-1.99,Aweil North
+362,85,23.5,0.0467,0.4549,0.1769,1.099,0.718,0.912,12.54,-10.81,Aweil South
+362,66,18.2,0.0671,0.3136,0.1947,0.46,0.727,0.936,6.76,-4.42,Aweil West
