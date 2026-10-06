@@ -48,9 +48,14 @@ def train_forecast(X_train, y_train_area, y_train_det,
     return {"area": area_model, "det": detection_model}
 
 
-def predict_forecast(models, X):
-    """Predict flood probability and the three flooded-area estimates."""
-    X = X[FEATURE_COLUMNS]
+def predict_forecast(models, X, feature_columns=None):
+    """Predict flood probability and the three flooded-area estimates.
+
+    `feature_columns` selects the prediction input (None = the frozen v3
+    FEATURE_COLUMNS); run.py passes the selected feature list so the models are
+    queried with exactly the columns they were fitted on.
+    """
+    X = X[list(feature_columns) if feature_columns is not None else list(FEATURE_COLUMNS)]
     values = models["area"].predict(
         X, output_type="quantiles", quantiles=list(config.QUANTILES)
     )
@@ -76,26 +81,36 @@ def predict_forecast(models, X):
     }
 
 
-def train_duration_models(df_train, df_val, horizons=config.DURATION_HORIZONS):
-    """Fit a separate flood detection model for each future week (1 to 4)."""
+def train_duration_models(df_train, df_val, horizons=config.DURATION_HORIZONS, feature_columns=None):
+    """Fit a separate flood detection model for each future week (1 to 4).
+
+    `feature_columns` overrides the model input columns (None = the frozen v3
+    FEATURE_COLUMNS; run.py passes the engineered list for --model lightgbm_fe).
+    """
     # Use LightGBM's function to create the same future flood labels.
     targets = build_duration_targets(df_train, horizons)
+    columns = list(feature_columns) if feature_columns is not None else list(FEATURE_COLUMNS)
     models = {}
     for h in horizons:
         target_column = f"y_det_h{h}"
         # The last rows may have no future label, so leave them out of training.
         valid_rows = targets.dropna(subset=[target_column])
         models[h] = _classifier(
-            valid_rows[FEATURE_COLUMNS],
+            valid_rows[columns],
             valid_rows[target_column].astype(int),
             config.SEED + h,
         )
     return models
 
 
-def predict_duration(duration_models, X):
-    """Return one probability column for each future week."""
+def predict_duration(duration_models, X, feature_columns=None):
+    """Return one probability column for each future week.
+
+    `feature_columns` selects the prediction input (None = the frozen v3
+    FEATURE_COLUMNS; run.py passes the engineered list for --model lightgbm_fe).
+    """
+    columns = list(feature_columns) if feature_columns is not None else list(FEATURE_COLUMNS)
     predictions = pd.DataFrame(index=X.index)
     for h, classifier in duration_models.items():
-        predictions[f"det_prob_h{h}"] = _probability(classifier, X[FEATURE_COLUMNS])
+        predictions[f"det_prob_h{h}"] = _probability(classifier, X[columns])
     return predictions

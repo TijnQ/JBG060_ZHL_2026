@@ -71,7 +71,7 @@ class BackendTests(unittest.TestCase):
                 calls.append((X.copy(), args[2].copy()))
                 return {}
 
-            def predict(models, X):
+            def predict(models, X, *args, **kwargs):
                 return {"det_prob": np.full(len(X), 0.7),
                         "q10": np.zeros(len(X)), "q50": np.ones(len(X)),
                         "q90": np.full(len(X), 2.0)}
@@ -89,7 +89,7 @@ class BackendTests(unittest.TestCase):
                 stack.enter_context(patch.object(module, train_name, side_effect=train))
                 stack.enter_context(patch.object(module, predict_name, side_effect=predict))
                 stack.enter_context(patch.object(duration, "train_duration_models", return_value={}))
-                stack.enter_context(patch.object(duration, "predict_duration", side_effect=lambda models, X:
+                stack.enter_context(patch.object(duration, "predict_duration", side_effect=lambda models, X, *args, **kwargs:
                     pd.DataFrame({f"det_prob_h{h}": 0.7 for h in config.DURATION_HORIZONS}, index=X.index)))
                 stack.enter_context(patch.object(run.advisory, "climatology_threshold_stats", return_value={}))
                 stack.enter_context(patch.object(run.advisory, "generate_advisories", side_effect=lambda df, stats: df))

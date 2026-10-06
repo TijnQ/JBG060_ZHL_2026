@@ -26,6 +26,16 @@ MODELS_DIR = OUT_DIR / "models"
 BASELINE_OUT_DIR = OUT_ROOT / "outputs_baseline"
 BASELINE_TABLES_DIR = BASELINE_OUT_DIR / "tables"
 
+# Feature-engineered model (run.py --model lightgbm_fe): the same LightGBM
+# backend and v3 default hyperparameters, but the engineered feature set from
+# features_fe.py. Outputs land here so the run stays table-by-table diffable
+# against the frozen baseline. MODEL_VERSION stays "v3" — model identity rides
+# on --model, not on a version bump (plan.md §4).
+FE_OUT_DIR = OUT_ROOT / "outputs_fe"
+FE_TABLES_DIR = FE_OUT_DIR / "tables"
+# Write-only audit snapshot of the exact fe feature matrix (never read back).
+FE_FEATURES_DIR = FE_OUT_DIR / "features"
+
 RAW_DATA = PROJECT_ROOT / "raw_data"
 
 # Data file locations

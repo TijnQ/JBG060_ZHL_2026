@@ -35,8 +35,14 @@ def train_duration_models(
     df_train: pd.DataFrame,
     df_val: pd.DataFrame,
     horizons: tuple[int, ...] = config.DURATION_HORIZONS,
+    feature_columns: list[str] | None = None,
 ) -> dict[int, lgbm.LGBMClassifier]:
-    """Train binary LightGBM classifiers for each duration horizon (1..4 weeks ahead)."""
+    """Train binary LightGBM classifiers for each duration horizon (1..4 weeks ahead).
+
+    `feature_columns` overrides the model input columns (None = the frozen v3
+    FEATURE_COLUMNS; run.py passes the engineered list for --model lightgbm_fe).
+    """
+    columns = list(feature_columns) if feature_columns is not None else list(FEATURE_COLUMNS)
     train_with_targets = build_duration_targets(df_train, horizons)
     val_with_targets = build_duration_targets(df_val, horizons)
 
@@ -47,10 +53,10 @@ def train_duration_models(
         tr_valid = train_with_targets.dropna(subset=[target_col])
         val_valid = val_with_targets.dropna(subset=[target_col])
 
-        Xtr = tr_valid[FEATURE_COLUMNS]
+        Xtr = tr_valid[columns]
         ytr = tr_valid[target_col].astype(int)
 
-        Xval = val_valid[FEATURE_COLUMNS]
+        Xval = val_valid[columns]
         yval = val_valid[target_col].astype(int)
 
         clf = lgbm.LGBMClassifier(
@@ -76,9 +82,18 @@ def train_duration_models(
     return models
 
 
-def predict_duration(duration_models: dict[int, lgbm.LGBMClassifier], X: pd.DataFrame) -> pd.DataFrame:
-    """Predict duration probabilities for horizons 1..4 weeks ahead."""
-    X_feat = X[FEATURE_COLUMNS]
+def predict_duration(
+    duration_models: dict[int, lgbm.LGBMClassifier],
+    X: pd.DataFrame,
+    feature_columns: list[str] | None = None,
+) -> pd.DataFrame:
+    """Predict duration probabilities for horizons 1..4 weeks ahead.
+
+    `feature_columns` selects the prediction input (None = the frozen v3
+    FEATURE_COLUMNS; run.py passes the engineered list for --model lightgbm_fe).
+    """
+    columns = list(feature_columns) if feature_columns is not None else list(FEATURE_COLUMNS)
+    X_feat = X[columns]
     out = pd.DataFrame(index=X.index)
 
     for h, clf in duration_models.items():

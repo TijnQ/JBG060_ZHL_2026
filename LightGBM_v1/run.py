@@ -5,6 +5,11 @@ Model choice (--model):
 - lightgbm_baseline  — the same frozen v3 model, flagged as the project baseline
                        and saved to outputs/outputs_baseline/tables/ so the later
                        improved LightGBM model stays clearly separated
+- lightgbm_fe        — feature-engineered counterpart of the baseline
+                       (features_fe.py: + county, + cnty_tp_w7, + cnty_ro_w7,
+                       - year from the model input), same v3 hyperparameters,
+                       saved to outputs/outputs_fe/tables/ with a write-only
+                       feature-matrix audit snapshot in outputs/outputs_fe/features/
 - tabpfn             — zero-shot TabPFN reference, saved to
                        TabPFN_v1/outputs/outputs_v3/tables/
 
@@ -41,6 +46,7 @@ from LightGBM_v1 import (
     data_loader,
     duration_model,
     features,
+    features_fe,
     lgbm_model,
     metrics,
     splits,
@@ -61,13 +67,17 @@ _BREAKDOWN_COLS = [
 
 
 def main(model_name: str = "lightgbm") -> None:
-    if model_name not in {"lightgbm", "lightgbm_baseline", "tabpfn"}:
+    if model_name not in {"lightgbm", "lightgbm_baseline", "lightgbm_fe", "tabpfn"}:
         raise ValueError(f"Unknown model: {model_name}")
     # Use LightGBM by default. The rest of the steps stay the same for all models.
     train_forecast = lgbm_model.build_and_train_lightgbm
     predict_forecast = lgbm_model.predict_lightgbm
     duration_backend = duration_model
     tables_dir = config.TABLES_DIR
+    # Feature matrix + column list: the v3 choices share the frozen v3 build;
+    # the engineered choice swaps both (plan.md §6) without touching the v3 path.
+    build_features = features.build_weekly_features
+    feature_columns = features.FEATURE_COLUMNS
     # Feature importance needs the fitted LightGBM boosters; TabPFN has none.
     collect_importance = True
     if model_name == "tabpfn":
@@ -83,6 +93,14 @@ def main(model_name: str = "lightgbm") -> None:
         # default hyperparameters, but the outputs land in outputs_baseline/ so
         # the baseline stays clearly separated from the improved LightGBM model.
         tables_dir = config.BASELINE_TABLES_DIR
+    elif model_name == "lightgbm_fe":
+        # Feature-engineered counterpart of the frozen baseline (plan.md §3.1):
+        # same LightGBM backend and v3 default hyperparameters, but the
+        # engineered feature set (features_fe.py) and its own output folder so
+        # the run stays table-by-table diffable against outputs_baseline/.
+        tables_dir = config.FE_TABLES_DIR
+        build_features = features_fe.build_weekly_features_fe
+        feature_columns = features_fe.FEATURE_COLUMNS_ENGINEERED
     model_label = model_name.upper()
     print("=" * 95)
     print(f"{model_label} PIPELINE RUN — VERSION {config.MODEL_VERSION.upper()} — "
@@ -91,14 +109,25 @@ def main(model_name: str = "lightgbm") -> None:
 
     # 1. Build the input features using data from Friday or earlier.
     print("\n[1/7] Building weekly feature matrix with Friday 3-day embargo...")
-    feats_df = features.build_weekly_features()
+    feats_df = build_features()
     n_incomplete = int((~feats_df["complete"]).sum())
     if n_incomplete:
         bad_years = sorted(pd.to_datetime(feats_df.loc[~feats_df["complete"], "week"]).dt.year.unique())
         print(f"      Dropped {n_incomplete} incomplete county-weeks (years: {bad_years}) — see provenance report")
     feats_df = feats_df[feats_df["complete"]].reset_index(drop=True)
     feats_df = feats_df.drop(columns=["complete"])
-    print(f"      Total rows: {len(feats_df)}, Total features: {len(features.FEATURE_COLUMNS)}")
+    print(f"      Total rows: {len(feats_df)}, Total features: {len(feature_columns)}")
+    if model_name == "lightgbm_fe":
+        added = [c for c in feature_columns if c not in features.FEATURE_COLUMNS]
+        removed = [c for c in features.FEATURE_COLUMNS if c not in feature_columns]
+        print(f"      Engineered set: + {added} | - {removed} (all other v3 columns identical)")
+        # Write-only audit snapshot (plan.md §6): dump the exact matrix the fe
+        # model sees — engineered columns, dtypes and completeness included —
+        # so runs can be compared without re-deriving features. Never read back.
+        config.FE_FEATURES_DIR.mkdir(parents=True, exist_ok=True)
+        snapshot_path = config.FE_FEATURES_DIR / "weekly_features_fe.csv"
+        feats_df.to_csv(snapshot_path, index=False)
+        print(f"      fe feature-matrix snapshot -> {snapshot_path}")
 
     # Full-frame duration targets (computed once; labels exist through end-2025)
     full_duration_targets = duration_model.build_duration_targets(feats_df)
@@ -133,13 +162,13 @@ def main(model_name: str = "lightgbm") -> None:
 
         # Fit the selected model, then predict the test rows.
         models_fold = train_forecast(
-            tr_df[features.FEATURE_COLUMNS], tr_df["y_true"], tr_df["y_det"],
-            val_df[features.FEATURE_COLUMNS], val_df["y_true"], val_df["y_det"],
+            tr_df[feature_columns], tr_df["y_true"], tr_df["y_det"],
+            val_df[feature_columns], val_df["y_true"], val_df["y_det"],
         )
-        preds_tst = predict_forecast(models_fold, tst_df[features.FEATURE_COLUMNS])
+        preds_tst = predict_forecast(models_fold, tst_df[feature_columns], feature_columns=feature_columns)
         if collect_importance:
             # Read the booster importances before this fold's models are freed.
-            imp_fold = lgbm_model.extract_feature_importance(models_fold, features.FEATURE_COLUMNS)
+            imp_fold = lgbm_model.extract_feature_importance(models_fold, feature_columns)
             imp_fold.insert(0, "fold", f_num)
             importance_rows.append(imp_fold)
         del models_fold
@@ -154,8 +183,8 @@ def main(model_name: str = "lightgbm") -> None:
         res_df["fold"] = f_num
 
         # Per-fold duration models (train/val inside this fold only)
-        dur_models = duration_backend.train_duration_models(tr_df, val_df)
-        dur_pred = duration_backend.predict_duration(dur_models, tst_df)
+        dur_models = duration_backend.train_duration_models(tr_df, val_df, feature_columns=feature_columns)
+        dur_pred = duration_backend.predict_duration(dur_models, tst_df, feature_columns=feature_columns)
         del dur_models
         res_df = res_df.join(dur_pred)
 
@@ -314,10 +343,12 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--model",
-        choices=("lightgbm", "lightgbm_baseline", "tabpfn"),
+        choices=("lightgbm", "lightgbm_baseline", "lightgbm_fe", "tabpfn"),
         default="lightgbm",
         help="lightgbm: current v3 model -> outputs_v3 | "
              "lightgbm_baseline: frozen v3 baseline -> outputs_baseline | "
+             "lightgbm_fe: engineered features (+county, +cnty_tp_w7, "
+             "+cnty_ro_w7, -year) -> outputs_fe | "
              "tabpfn: TabPFN reference",
     )
     main(parser.parse_args().model)

@@ -126,9 +126,20 @@ def build_and_train_lightgbm(
     return models
 
 
-def predict_lightgbm(models: dict[str, object], X: pd.DataFrame) -> dict[str, np.ndarray]:
-    """Generate LightGBM predictions for detection probability and quantile flood area."""
-    X_feat = X[FEATURE_COLUMNS]
+def predict_lightgbm(
+    models: dict[str, object],
+    X: pd.DataFrame,
+    feature_columns: list[str] | None = None,
+) -> dict[str, np.ndarray]:
+    """Generate LightGBM predictions for detection probability and quantile flood area.
+
+    `feature_columns` selects/reorders the prediction input (None = the frozen
+    v3 FEATURE_COLUMNS); run.py passes the engineered list for --model
+    lightgbm_fe so the models are queried with exactly the columns they were
+    fitted on.
+    """
+    columns = list(feature_columns) if feature_columns is not None else list(FEATURE_COLUMNS)
+    X_feat = X[columns]
 
     det_prob = models["det"].predict_proba(X_feat)[:, 1]
 
