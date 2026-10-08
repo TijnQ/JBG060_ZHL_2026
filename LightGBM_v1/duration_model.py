@@ -31,18 +31,43 @@ def build_duration_targets(df: pd.DataFrame, horizons: tuple[int, ...] = config.
     return out
 
 
+# Hardcoded duration hyperparameters (the untuned baseline). `params` overrides
+# per key; random_state is always re-set per horizon (SEED + h) after the merge.
+_DURATION_BASE_PARAMS: dict[str, object] = {
+    "n_estimators": 400,
+    "learning_rate": 0.03,
+    "num_leaves": 31,
+    "min_child_samples": 30,
+    "subsample": 0.8,
+    "subsample_freq": 1,
+    "colsample_bytree": 0.8,
+    "n_jobs": -1,
+    "verbose": -1,
+}
+
+
+def _merged_duration_params(params: dict[str, object] | None) -> dict[str, object]:
+    """Default duration hyperparameters with optional per-key overrides."""
+    return dict(_DURATION_BASE_PARAMS) if params is None else {**_DURATION_BASE_PARAMS, **params}
+
+
 def train_duration_models(
     df_train: pd.DataFrame,
     df_val: pd.DataFrame,
     horizons: tuple[int, ...] = config.DURATION_HORIZONS,
     feature_columns: list[str] | None = None,
+    params: dict[str, object] | None = None,
 ) -> dict[int, lgbm.LGBMClassifier]:
     """Train binary LightGBM classifiers for each duration horizon (1..4 weeks ahead).
 
     `feature_columns` overrides the model input columns (None = the frozen v3
     FEATURE_COLUMNS; run.py passes the engineered list for --model lightgbm_fe).
+    `params` overrides the hardcoded duration hyperparameters per key
+    (params=None keeps today's defaults); random_state is always SEED + h.
     """
     columns = list(feature_columns) if feature_columns is not None else list(FEATURE_COLUMNS)
+    merged = _merged_duration_params(params)
+    merged.pop("random_state", None)  # always SEED + h, per horizon
     train_with_targets = build_duration_targets(df_train, horizons)
     val_with_targets = build_duration_targets(df_val, horizons)
 
@@ -59,18 +84,7 @@ def train_duration_models(
         Xval = val_valid[columns]
         yval = val_valid[target_col].astype(int)
 
-        clf = lgbm.LGBMClassifier(
-            n_estimators=400,
-            learning_rate=0.03,
-            num_leaves=31,
-            min_child_samples=30,
-            subsample=0.8,
-            subsample_freq=1,
-            colsample_bytree=0.8,
-            random_state=config.SEED + h,
-            n_jobs=-1,
-            verbose=-1,
-        )
+        clf = lgbm.LGBMClassifier(**merged, random_state=config.SEED + h)
         clf.fit(
             Xtr,
             ytr,

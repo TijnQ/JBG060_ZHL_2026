@@ -1,32 +1,9 @@
 """Optuna hyperparameter tuning module for LightGBM_v1 pipeline.
 
-Tunes the existing LightGBM pipeline (detection classifier + 3 quantile
-regressors) on the frozen 3 expanding-window CV folds — one study per feature
-set — and (optionally) evaluates the winning parameters on the frozen protocol
-test years with a run.py-format metrics table (plan.md; evaluation_metrics.md).
-
-Design summary (plan.md v3):
-- Two prefixed hyperparameter groups per trial: `det_*` for the LGBMClassifier
-  and `quant_*` for the three LGBMRegressor quantile models. 7 searched
-  parameters per head, 14 sampled values per trial (§6).
-- Composite, climatology-normalized objective (§7):
-      r_det(f) = Brier(model) / Brier(county-month climatology)
-      r_q(f)   = mean pinball(model) / mean pinball(degenerate climatology)
-      score(f) = 0.5 * r_det(f) + 0.5 * r_q(f)   (folds f = 1..3, minimized)
-  1.0 = climatology parity, < 1.0 = added skill. The groups are separable:
-  each head is optimized against its own frozen protocol metric.
-- Test years are never touched during the search (D4); `--evaluate` refits the
-  winner and scores them exactly once through the run.py fold loop (§10).
-- Single-metric objectives `brier` / `pinball` sample and train only one head
-  (~4x cheaper trials); the other head keeps today's hardcoded defaults.
-
-Feature sets (§4.3): register engineered sets with ONE entry in FEATURE_SETS
-(baseline is built-in), or call tune_lightgbm(feats_df=..., feature_columns=...)
-directly. Feature authors keep the Friday embargo invariant (§4.2).
-
 Usage:
     python -m LightGBM_v1.tuning --list-feature-sets
     python -m LightGBM_v1.tuning --feature-set baseline --n-trials 50 --evaluate
+    python -m LightGBM_v1.tuning --feature-set fe --objective all_heads --n-trials 100 --evaluate
 """
 
 from __future__ import annotations
@@ -51,6 +28,7 @@ import optuna
 from LightGBM_v1 import (
     baselines,
     config,
+    duration_model,
     features,
     features_fe,
     lgbm_model,
@@ -64,28 +42,41 @@ __all__ = [
     "tune_lightgbm",
 ]
 
-# --- Tuning configuration (plan.md §6, §7, §9, §12) ----------------------------
+# --- Tuning configuration ----------------------------
 
 TUNING_DIR = config.OUT_ROOT / "tuning"
 DEFAULT_STORAGE = f"sqlite:///{TUNING_DIR / 'studies.db'}"
 DEFAULT_N_TRIALS = 50
 DEFAULT_TIMEOUT = 3600
 
-OBJECTIVES = ("composite", "brier", "pinball")
+OBJECTIVES = ("composite", "brier", "pinball", "dur_brier", "all_heads")
 
-# Fixed n_estimators cap (§6.2): early stopping (patience 100) picks the
+# Trial-#0 anchor for all_heads sub-studies: today's hardcoded defaults per
+# head. reg_* are clamped to the search-space floor (LightGBM's effective
+# default is 0.0, which lies outside the log range [1e-3, 10]).
+_HEAD_DEFAULTS: dict[str, float] = {
+    "learning_rate": 0.03,
+    "num_leaves": 31,
+    "min_child_samples": 30,
+    "colsample_bytree": 0.8,
+    "subsample": 0.8,
+    "reg_lambda": 1e-3,
+    "reg_alpha": 1e-3,
+}
+
+# Fixed n_estimators cap : early stopping (patience 100) picks the
 # effective tree count; the smoke test audits that no fit pins at this cap.
 N_ESTIMATORS_CAP = 1200
 
-# Numerical floor for climatology-normalized denominators (§7).
+# Numerical floor for climatology-normalized denominators .
 _EPS = 1e-6
 
-# Contract columns every feature set must provide (§4.1).
+# Contract columns every feature set must provide.
 CONTRACT_COLUMNS = ("county", "week", "y_true", "y_det", "month")
 
 # Columns emitted by metrics.evaluate_summary_metrics — identical to
 # outputs/outputs_v3/tables/cv_metrics_summary_aweil.csv so the tuned table
-# can be diffed/joined against the untuned one (§9).
+# can be diffed/joined against the untuned one.
 _SUMMARY_COLS = [
     "scope", "model", "n_samples", "flood_weeks", "flood_rate_pct",
     "brier_score", "bss_vs_climatology", "bss_vs_persistence",
@@ -93,7 +84,7 @@ _SUMMARY_COLS = [
     "mae_flood_weeks", "bias_flood_weeks",
 ]
 
-# The 7 searched hyperparameters per head (sklearn-API names, §6.1), sampled
+# The 7 searched hyperparameters per head (sklearn-API names, sampled
 # twice per trial with `det_` / `quant_` prefixes. Everything else stays at
 # today's values (see _full_head_params).
 _SEARCH_SPACE: tuple[tuple[str, str, dict], ...] = (
@@ -106,18 +97,18 @@ _SEARCH_SPACE: tuple[tuple[str, str, dict], ...] = (
     ("reg_alpha", "suggest_float", {"low": 1e-3, "high": 10.0, "log": True}),
 )
 
-# Feature-set registry (§4.3): each entry returns (feats_df, feature_columns).
+# Feature-set registry: each entry returns (feats_df, feature_columns).
 # Add ONE line per engineered feature set — no other code changes needed.
 FEATURE_SETS: dict[str, Callable[[], tuple[pd.DataFrame, list[str]]]] = {
     "baseline": lambda: (features.build_weekly_features(), features.FEATURE_COLUMNS),
-    # Engineered set (plan.md §3.1): derived from the frozen v3 matrix —
+    # Engineered set: derived from the frozen v3 matrix —
     # + county, + cnty_tp_w7, + cnty_ro_w7, - year (features_fe.py).
     "fe": lambda: (features_fe.build_weekly_features_fe(), features_fe.FEATURE_COLUMNS_ENGINEERED),
 }
 
 
 def _default_study_name(feature_set: str) -> str:
-    """Deterministic default study name, e.g. 'lgbm_aweil_baseline_v3' (plan.md §9)."""
+    """Deterministic default study name, e.g. 'lgbm_aweil_baseline_v3'."""
     return f"lgbm_aweil_{feature_set}_{config.MODEL_VERSION}"
 
 
@@ -129,7 +120,7 @@ def _resolve_feature_set(feature_set: str) -> tuple[pd.DataFrame, list[str]]:
 
 
 def _sample_head_params(trial: optuna.Trial, prefix: str) -> dict[str, float]:
-    """Sample one head's 7 hyperparameters with `<prefix>_` param names (plan.md §6.1)."""
+    """Sample one head's 7 hyperparameters with `<prefix>_` param names"""
     params: dict[str, float] = {}
     for name, suggest_name, kwargs in _SEARCH_SPACE:
         params[name] = getattr(trial, suggest_name)(f"{prefix}_{name}", **kwargs)
@@ -137,7 +128,7 @@ def _sample_head_params(trial: optuna.Trial, prefix: str) -> dict[str, float]:
 
 
 def _full_head_params(searched: dict[str, float] | None, seed: int) -> dict[str, object] | None:
-    """Complete per-head LightGBM params: searched values + fixed §6.2 values.
+    """Complete per-head LightGBM params: searched values + fixed values.
 
     Returns None when `searched` is empty (the head is not tuned by the study's
     objective and keeps today's hardcoded defaults via params=None).
@@ -156,8 +147,27 @@ def _full_head_params(searched: dict[str, float] | None, seed: int) -> dict[str,
     }
 
 
+def _full_dur_params(searched: dict[str, float] | None, seed: int) -> dict[str, object] | None:
+    """_full_head_params for the duration head, minus random_state.
+
+    duration_model.train_duration_models always sets random_state per horizon
+    (SEED + h) after merging, so the tuner never supplies one.
+    """
+    params = _full_head_params(searched, seed)
+    if params is not None:
+        params.pop("random_state", None)
+    return params
+
+
+def _enqueue_head_defaults(study: optuna.Study, prefix: str) -> None:
+    """Enqueue today's hardcoded defaults as trial #0 (anchor; fresh studies only)."""
+    if study.trials:
+        return  # resume: never re-enqueue
+    study.enqueue_trial({f"{prefix}_{k}": v for k, v in _HEAD_DEFAULTS.items()})
+
+
 def _prepare_features(feats_df: pd.DataFrame, feature_columns: list[str]) -> tuple[pd.DataFrame, list[str]]:
-    """Enforce the plan.md §4.1 input contract; return cleaned (feats_df, feature_columns).
+    """Enforce input; return cleaned (feats_df, feature_columns).
 
     - required contract columns must exist;
     - missing `y_true_lag1` / `y_det_lag1` are auto-derived (per-county shift(1)
@@ -214,11 +224,16 @@ def _fit_and_score_fold(
     feature_columns: list[str],
     det_params: dict[str, object] | None,
     quant_params: dict[str, object] | None,
+    dur_params: dict[str, object] | None = None,
 ) -> dict[str, float]:
-    """Fit both heads on one fold and score the validation year (plan.md §5, §7).
+    """Fit the requested heads on one fold and score the validation year.
 
     Climatology references are estimated strictly inside the fold's training
     window. A head with params=None is skipped (single-metric objectives).
+    Duration targets are built WITHIN the fold frame (train and validation
+    separately), so horizon labels never cross the fold boundary (no leakage
+    into early stopping); the last h weeks of the validation window carry no
+    label and are excluded from scoring.
     Returns climatology-normalized ratios, raw metrics, and per-fit
     best_iteration values (for the early-stopping audit).
     """
@@ -257,6 +272,35 @@ def _fit_and_score_fold(
         out["pinball_clim"] = pinball_clim
         for key in ("q10", "q50", "q90"):
             out[f"best_iter_{key}"] = _best_iteration(regs[key])
+
+    if dur_params is not None:
+        # train_duration_models builds the shift(-h) targets within each frame
+        # it receives — passing the fold's train/val slices keeps every target
+        # inside the fold (leak-safe, unlike run.py's full-frame merge).
+        models = duration_model.train_duration_models(
+            tr_df, val_df, feature_columns=feature_columns, params=dur_params
+        )
+        prob_df = duration_model.predict_duration(models, val_df, feature_columns=feature_columns)
+        val_targets = duration_model.build_duration_targets(val_df)
+        clim_h = metrics.duration_climatology_reference(tr_df, val_df)
+        ratios = []
+        for h in config.DURATION_HORIZONS:
+            y = val_targets[f"y_det_h{h}"]
+            mask = y.notna().to_numpy(dtype=bool)
+            if not mask.any():
+                raise ValueError(f"No labeled rows for horizon h{h} in fold {fold['fold']}.")
+            y_v = y.to_numpy(dtype=float)[mask]
+            p = prob_df[f"det_prob_h{h}"].to_numpy(dtype=float)[mask]
+            clim_p = clim_h[f"det_prob_clim_h{h}"].to_numpy(dtype=float)[mask]
+            brier_model = metrics.brier_score(y_v, p)
+            brier_clim = metrics.brier_score(y_v, clim_p)
+            r = brier_model / max(brier_clim, _EPS)
+            out[f"r_dur_h{h}"] = r
+            out[f"brier_dur_model_h{h}"] = brier_model
+            out[f"brier_dur_clim_h{h}"] = brier_clim
+            out[f"best_iter_dur_h{h}"] = _best_iteration(models[h])
+            ratios.append(r)
+        out["r_dur"] = float(np.mean(ratios))
     return out
 
 
@@ -266,33 +310,39 @@ def _make_objective(
     objective_name: str,
     seed: int,
 ) -> Callable[[optuna.Trial], float]:
-    """Build the Optuna objective closure (plan.md §5, §7)."""
+    """Build the Optuna objective closure."""
 
     def objective(trial: optuna.Trial) -> float:
         det_searched: dict[str, float] | None = None
         quant_searched: dict[str, float] | None = None
+        dur_searched: dict[str, float] | None = None
         if objective_name in ("composite", "brier"):
             det_searched = _sample_head_params(trial, "det")
         if objective_name in ("composite", "pinball"):
             quant_searched = _sample_head_params(trial, "quant")
+        if objective_name == "dur_brier":
+            dur_searched = _sample_head_params(trial, "dur")
 
         det_params = _full_head_params(det_searched, seed)
         quant_params = _full_head_params(quant_searched, seed)
+        dur_params = _full_dur_params(dur_searched, seed)
 
         scores: list[float] = []
         for step, fold in enumerate(folds):
-            res = _fit_and_score_fold(fold, feature_columns, det_params, quant_params)
+            res = _fit_and_score_fold(fold, feature_columns, det_params, quant_params, dur_params)
 
             if objective_name == "brier":
                 score = float(res["r_det"])
             elif objective_name == "pinball":
                 score = float(res["r_q"])
+            elif objective_name == "dur_brier":
+                score = float(res["r_dur"])
             else:
                 score = 0.5 * float(res["r_det"]) + 0.5 * float(res["r_q"])
             scores.append(score)
 
             # Per-fold user-attrs: r_det_f<f>, r_q_f<f>, brier_*_f<f>,
-            # pinball_*_f<f>, best_iter_*_f<f> (plan.md §7, §9).
+            # pinball_*_f<f>, best_iter_*_f<f>.
             for key, value in res.items():
                 trial.set_user_attr(f"{key}_f{fold['fold']}", value)
             trial.set_user_attr(f"score_f{fold['fold']}", score)
@@ -320,8 +370,10 @@ def _get_or_create_study(
     study = optuna.create_study(
         study_name=study_name,
         direction="minimize",
-        sampler=optuna.samplers.TPESampler(seed=seed),
-        pruner=optuna.pruners.MedianPruner(n_warmup_steps=1, n_min_trials=1),
+        # multivariate+group TPE: each head is a 7-dim block, and correlated
+        # sampling finds far better optima than the independent default.
+        sampler=optuna.samplers.TPESampler(multivariate=True, group=True, seed=seed),
+        pruner=optuna.pruners.NopPruner(),
         storage=storage,
         load_if_exists=True,
     )
@@ -358,6 +410,7 @@ def _write_best_params_json(
     """Dump the winning parameters (searched + fixed) and per-fold scores (plan.md §9)."""
     det_searched = {k.removeprefix("det_"): v for k, v in best_trial.params.items() if k.startswith("det_")}
     quant_searched = {k.removeprefix("quant_"): v for k, v in best_trial.params.items() if k.startswith("quant_")}
+    dur_searched = {k.removeprefix("dur_"): v for k, v in best_trial.params.items() if k.startswith("dur_")}
     per_fold: dict[str, dict[str, object]] = {}
     for f_num in (1, 2, 3):
         fold_attrs = {k: v for k, v in best_trial.user_attrs.items() if k.endswith(f"_f{f_num}")}
@@ -370,10 +423,15 @@ def _write_best_params_json(
         "objective": objective_name,
         "n_trials": len(study.trials),
         "best_value": best_trial.value,
-        "best_params": {"det": det_searched or None, "quantiles": quant_searched or None},
+        "best_params": {
+            "det": det_searched or None,
+            "quantiles": quant_searched or None,
+            "duration": dur_searched or None,
+        },
         "lightgbm_params": {
             "det": _full_head_params(det_searched, seed),
             "quantiles": _full_head_params(quant_searched, seed),
+            "duration": _full_dur_params(dur_searched, seed),
         },
         "per_fold": per_fold,
         "seed": seed,
@@ -384,6 +442,184 @@ def _write_best_params_json(
     out = TUNING_DIR / f"best_params_{study_name}.json"
     out.write_text(json.dumps(payload, indent=2) + "\n")
     return out
+
+
+def _write_all_heads_params_json(
+    study_name: str,
+    feature_set: str,
+    seed: int,
+    studies: dict[str, optuna.Study],
+    best_trials: dict[str, optuna.trial.Trial | optuna.trial.FrozenTrial],
+    winners: dict[str, dict[str, float]],
+) -> Path:
+    """Merge the three all_heads winners into ONE run.py-ready params JSON.
+
+    Schema matches the single-study writer (best_params / lightgbm_params keyed
+    `det` / `quantiles`) and adds the `duration` group plus provenance
+    (source_studies / n_trials / best_value), so a params-intake in run.py can
+    read one artifact for all three heads.
+    """
+    per_fold: dict[str, dict[str, object]] = {}
+    for head in studies:
+        folds_out: dict[str, dict[str, object]] = {}
+        for f_num in (1, 2, 3):
+            fold_attrs = {k: v for k, v in best_trials[head].user_attrs.items() if k.endswith(f"_f{f_num}")}
+            if fold_attrs:
+                folds_out[f"fold_{f_num}"] = {k.removesuffix(f"_f{f_num}"): v for k, v in fold_attrs.items()}
+        per_fold[head] = folds_out
+
+    payload = {
+        "study_name": study_name,
+        "feature_set": feature_set,
+        "objective": "all_heads",
+        "source_studies": {head: studies[head].study_name for head in studies},
+        "n_trials": {head: len(studies[head].trials) for head in studies},
+        "best_value": {head: best_trials[head].value for head in studies},
+        "best_params": {
+            "det": winners["det"],
+            "quantiles": winners["quantiles"],
+            "duration": winners["duration"],
+        },
+        "lightgbm_params": {
+            "det": _full_head_params(winners["det"], seed),
+            "quantiles": _full_head_params(winners["quantiles"], seed),
+            "duration": _full_dur_params(winners["duration"], seed),
+        },
+        "per_fold": per_fold,
+        "seed": seed,
+        "optuna_version": optuna.__version__,
+        "created_utc": datetime.now(timezone.utc).isoformat(),
+    }
+    TUNING_DIR.mkdir(parents=True, exist_ok=True)
+    out = TUNING_DIR / f"best_params_{study_name}_all_heads.json"
+    out.write_text(json.dumps(payload, indent=2) + "\n")
+    return out
+
+
+def _tune_all_heads(
+    feats_df: pd.DataFrame,
+    feature_columns: list[str],
+    feature_set: str,
+    study_name: str | None,
+    n_trials: int,
+    storage: str | None,
+    timeout: int | None,
+    n_jobs: int,
+    seed: int,
+    evaluate: bool,
+) -> dict[str, optuna.Study]:
+    """Run the three single-head studies (all_heads) and merge their winners.
+
+    Stage 1 `brier` tunes the det head (3 fits/trial), stage 2 `pinball` the
+    quantile head (9 fits/trial), stage 3 `dur_brier` the duration head
+    (12 fits/trial). Each stage is its own resumable study
+    (`<base>_brier` / `<base>_pinball` / `<base>_dur`) sharing one feature
+    matrix; `n_trials` and `timeout` apply per stage. Each fresh study gets
+    today's hardcoded defaults enqueued as its trial #0 anchor. The winners
+    are merged into ONE JSON (best_params_<base>_all_heads.json) with the
+    param groups `det` / `quantiles` / `duration` that run.py consumes.
+    """
+    base = study_name or _default_study_name(feature_set)
+    head_prefix = {"det": "det", "quantiles": "quant", "duration": "dur"}
+    sub_specs = (
+        ("det", "brier", f"{base}_brier"),
+        ("quantiles", "pinball", f"{base}_pinball"),
+        ("duration", "dur_brier", f"{base}_dur"),
+    )
+    folds = splits.get_cv_folds(feats_df)
+    storage = storage or DEFAULT_STORAGE
+    optuna.logging.set_verbosity(optuna.logging.INFO)
+
+    studies: dict[str, optuna.Study] = {}
+    winners: dict[str, dict[str, float]] = {}
+    best_trials: dict[str, optuna.trial.Trial | optuna.trial.FrozenTrial] = {}
+    for stage, (head, sub_objective, sub_name) in enumerate(sub_specs, start=1):
+        study = _get_or_create_study(sub_name, storage, sub_objective, feature_set, seed)
+        _enqueue_head_defaults(study, head_prefix[head])
+        studies[head] = study
+
+        print("=" * 100)
+        print(
+            f"OPTUNA TUNING — study '{sub_name}' | objective={sub_objective} | head={head} "
+            f"| feature set '{feature_set}' (all_heads stage {stage}/3)"
+        )
+        print(
+            f"  {len(folds)} folds (val years 2009/2015/2021), {len(feats_df)} usable rows, "
+            f"{len(feature_columns)} features, 7 sampled params/trial"
+        )
+        print(f"  storage: {storage}")
+        print("=" * 100)
+
+        study.optimize(
+            _make_objective(folds, feature_columns, sub_objective, seed),
+            n_trials=n_trials,
+            timeout=timeout,
+            n_jobs=n_jobs,
+            gc_after_trial=True,
+        )
+
+        trials_csv = _write_trials_csv(study, sub_name)
+        print(f"\n  All trials CSV -> {trials_csv}")
+
+        completed = [t for t in study.trials if t.state == optuna.trial.TrialState.COMPLETE]
+        pruned = sum(1 for t in study.trials if t.state == optuna.trial.TrialState.PRUNED)
+        failed = sum(1 for t in study.trials if t.state == optuna.trial.TrialState.FAIL)
+        print(f"  Trials: {len(completed)} complete, {pruned} pruned, {failed} failed")
+        if not completed:
+            raise RuntimeError(
+                f"all_heads stage '{sub_name}' finished with no completed trials; "
+                "delete that study (or investigate the failures) before merging."
+            )
+
+        prefix = head_prefix[head]
+        best_trial = study.best_trial
+        best_trials[head] = best_trial
+        winners[head] = {
+            k.removeprefix(f"{prefix}_"): v for k, v in best_trial.params.items() if k.startswith(f"{prefix}_")
+        }
+
+    merged_json = _write_all_heads_params_json(base, feature_set, seed, studies, best_trials, winners)
+
+    print("=" * 100)
+    print(f"ALL_HEADS MERGE — base study '{base}' | feature set '{feature_set}'")
+    score_key = {"det": "r_det", "quantiles": "r_q", "duration": "r_dur"}
+    for head, sub_objective, sub_name in sub_specs:
+        best_trial = best_trials[head]
+        print(
+            f"  [{head}] study '{sub_name}' ({sub_objective}) — best trial #{best_trial.number}, "
+            f"{sub_objective} score {best_trial.value:.4f} (1.0 = climatology parity, lower is better)"
+        )
+        for f_num in (1, 2, 3):
+            key = f"{score_key[head]}_f{f_num}"
+            if key in best_trial.user_attrs:
+                print(f"      fold {f_num}: {score_key[head]}={best_trial.user_attrs[key]:.3f}")
+    print(f"  Merged best params JSON -> {merged_json}")
+    print("=" * 100)
+
+    if evaluate:
+        eval_table = _evaluate_params(
+            _full_head_params(winners["det"], seed),
+            _full_head_params(winners["quantiles"], seed),
+            feats_df=feats_df,
+            feature_columns=feature_columns,
+            feature_set=feature_set,
+            seed=seed,
+            out_csv=TUNING_DIR / f"cv_metrics_tuned_{base}_all_heads.csv",
+            header=base,
+        )
+        pooled = eval_table[(eval_table["scope"] == "pooled") & (eval_table["model"] == "lightgbm")].iloc[0]
+        print(
+            f"  Pooled tuned (det+quantiles): Brier {pooled['brier_score']:.4f}, "
+            f"BSS clim {pooled['bss_vs_climatology']:.3f}, BSS pers {pooled['bss_vs_persistence']:.3f}, "
+            f"pinball {pooled['mean_pinball_loss']:.3f}, "
+            f"coverage(flood) {pooled['coverage_flood_weeks']:.3f}, "
+            f"MAE(flood) {pooled['mae_flood_weeks']:.2f} km2"
+        )
+        print(
+            "  Note: duration test metrics come from the full run.py pipeline once its "
+            "params intake lands (not part of this evaluation)."
+        )
+    return studies
 
 
 def tune_lightgbm(
@@ -398,13 +634,19 @@ def tune_lightgbm(
     n_jobs: int = 1,
     seed: int = config.SEED,
     evaluate: bool = False,
-) -> optuna.Study:
-    """Run one Optuna study for one feature set (plan.md §5).
+) -> optuna.Study | dict[str, optuna.Study]:
+    """Run one Optuna study for one feature set.
 
     Either pass `feats_df` + `feature_columns` directly, or pick a registered
     `feature_set` (the registry is used only when feats_df is None). The study
     is stored in an SQLite RDB and can be resumed by re-running with the same
     study name; `--evaluate` then scores the winner on the frozen test years.
+
+    objective="all_heads" instead runs three single-head studies
+    (`<base>_brier`, `<base>_pinball`, `<base>_dur`) on one shared feature
+    matrix and merges their winners into best_params_<base>_all_heads.json;
+    it returns the mapping {det, quantiles, duration} -> study (single
+    objectives return the one study).
     """
     if objective not in OBJECTIVES:
         raise ValueError(f"objective must be one of {OBJECTIVES}, got: {objective}")
@@ -420,6 +662,20 @@ def tune_lightgbm(
         f"({time.perf_counter() - t0:.1f}s)"
     )
 
+    if objective == "all_heads":
+        return _tune_all_heads(
+            feats_df=feats_df,
+            feature_columns=feature_columns,
+            feature_set=feature_set,
+            study_name=study_name,
+            n_trials=n_trials,
+            storage=storage,
+            timeout=timeout,
+            n_jobs=n_jobs,
+            seed=seed,
+            evaluate=evaluate,
+        )
+
     folds = splits.get_cv_folds(feats_df)
     study_name = study_name or _default_study_name(feature_set)
     storage = storage or DEFAULT_STORAGE
@@ -427,20 +683,21 @@ def tune_lightgbm(
 
     print("=" * 100)
     print(f"OPTUNA TUNING — study '{study_name}' | objective={objective} | feature set '{feature_set}'")
+    sampled = {"composite": 14, "brier": 7, "pinball": 7, "dur_brier": 7}[objective]
     print(
         f"  {len(folds)} folds (val years 2009/2015/2021), {len(feats_df)} usable rows, "
-        f"{len(feature_columns)} features, 14 sampled params/trial"
+        f"{len(feature_columns)} features, {sampled} sampled params/trial"
     )
     print(f"  storage: {storage}")
     print("=" * 100)
 
     optuna.logging.set_verbosity(optuna.logging.INFO)
+    # No `catch`: a failing trial must fail loudly, not silently become FAIL.
     study.optimize(
         _make_objective(folds, feature_columns, objective, seed),
         n_trials=n_trials,
         timeout=timeout,
         n_jobs=n_jobs,
-        catch=(Exception,),
         gc_after_trial=True,
     )
 
@@ -468,6 +725,8 @@ def tune_lightgbm(
             parts.append(f"r_det={best_trial.user_attrs[f'r_det_f{f_num}']:.3f}")
         if f"r_q_f{f_num}" in best_trial.user_attrs:
             parts.append(f"r_q={best_trial.user_attrs[f'r_q_f{f_num}']:.3f}")
+        if f"r_dur_f{f_num}" in best_trial.user_attrs:
+            parts.append(f"r_dur={best_trial.user_attrs[f'r_dur_f{f_num}']:.3f}")
         if f"score_f{f_num}" in best_trial.user_attrs:
             parts.append(f"score={best_trial.user_attrs[f'score_f{f_num}']:.3f}")
         print("   ", "  ".join(parts))
@@ -489,26 +748,23 @@ def tune_lightgbm(
     return study
 
 
-def evaluate_best_params(
-    study: optuna.Study,
-    feats_df: pd.DataFrame | None = None,
-    feature_columns: list[str] | None = None,
-    feature_set: str | None = None,
-    seed: int = config.SEED,
-    out_csv: str | Path | None = None,
+def _evaluate_params(
+    det_params: dict[str, object] | None,
+    quant_params: dict[str, object] | None,
+    feats_df: pd.DataFrame | None,
+    feature_columns: list[str] | None,
+    feature_set: str | None,
+    seed: int,
+    out_csv: str | Path,
+    header: str,
 ) -> pd.DataFrame:
-    """Refit the winning parameter groups and score the frozen TEST years (plan.md §10).
+    """Refit the given head params and score the frozen TEST years.
 
     Reproduces the run.py fold loop (minus the duration/advisory steps): per
     fold, fit on train, early-stop on val, predict the test year once, then
-    score with metrics.evaluate_summary_metrics. The untuned head of a
-    single-metric study keeps today's hardcoded defaults (params=None).
+    score with metrics.evaluate_summary_metrics. Shared by evaluate_best_params
+    (single studies) and the all_heads merge (combined winners).
     """
-    det_searched = {k.removeprefix("det_"): v for k, v in study.best_params.items() if k.startswith("det_")}
-    quant_searched = {k.removeprefix("quant_"): v for k, v in study.best_params.items() if k.startswith("quant_")}
-    det_params = _full_head_params(det_searched, seed)
-    quant_params = _full_head_params(quant_searched, seed)
-
     t0 = time.perf_counter()
     if feats_df is None:
         feature_set = feature_set or "baseline"
@@ -544,40 +800,69 @@ def evaluate_best_params(
     all_oof_df = pd.concat(oof_rows, ignore_index=True)
     eval_table = metrics.evaluate_summary_metrics(all_oof_df)
 
-    if out_csv is None:
-        out_csv = TUNING_DIR / f"cv_metrics_tuned_{study.study_name}.csv"
     out_csv = Path(out_csv)
     out_csv.parent.mkdir(parents=True, exist_ok=True)
     eval_table.to_csv(out_csv, index=False)
 
     print("=" * 100)
-    print(f"TEST-YEAR EVALUATION of best params from study '{study.study_name}' "
-          f"(untuned head falls back to defaults)")
+    print(f"TEST-YEAR EVALUATION — '{header}' (untuned heads fall back to defaults)")
     print(f"  Fold loop + scoring took {time.perf_counter() - t0:.1f}s | metrics table -> {out_csv}")
     print(eval_table[_SUMMARY_COLS].to_string(index=False))
     print("=" * 100)
     return eval_table
 
 
+def evaluate_best_params(
+    study: optuna.Study,
+    feats_df: pd.DataFrame | None = None,
+    feature_columns: list[str] | None = None,
+    feature_set: str | None = None,
+    seed: int = config.SEED,
+    out_csv: str | Path | None = None,
+) -> pd.DataFrame:
+    """Refit the winning parameter groups and score the frozen TEST years.
+
+    Reproduces the run.py fold loop (minus the duration/advisory steps): per
+    fold, fit on train, early-stop on val, predict the test year once, then
+    score with metrics.evaluate_summary_metrics. The untuned heads of a
+    single-metric study keep today's hardcoded defaults (params=None).
+    """
+    det_searched = {k.removeprefix("det_"): v for k, v in study.best_params.items() if k.startswith("det_")}
+    quant_searched = {k.removeprefix("quant_"): v for k, v in study.best_params.items() if k.startswith("quant_")}
+    return _evaluate_params(
+        _full_head_params(det_searched, seed),
+        _full_head_params(quant_searched, seed),
+        feats_df=feats_df,
+        feature_columns=feature_columns,
+        feature_set=feature_set,
+        seed=seed,
+        out_csv=out_csv if out_csv is not None else TUNING_DIR / f"cv_metrics_tuned_{study.study_name}.csv",
+        header=study.study_name,
+    )
+
+
 def main() -> None:
-    """CLI entry point (plan.md §12)."""
+    """CLI entry point."""
     parser = argparse.ArgumentParser(
-        description="Optuna hyperparameter tuning for the LightGBM_v1 pipeline (plan.md).",
+        description="Optuna hyperparameter tuning for the LightGBM_v1 pipeline.",
     )
     parser.add_argument("--feature-set", default="baseline", choices=sorted(FEATURE_SETS),
                         help="Registered feature set to tune (default: baseline).")
     parser.add_argument("--n-trials", type=int, default=DEFAULT_N_TRIALS,
-                        help=f"Max trials (default: {DEFAULT_N_TRIALS}).")
+                        help=f"Max trials per study (all_heads: per stage; default: {DEFAULT_N_TRIALS}).")
     parser.add_argument("--evaluate", action="store_true",
                         help="After tuning, refit the winner and score the frozen test years (§10).")
     parser.add_argument("--objective", choices=OBJECTIVES, default="composite",
-                        help="Objective (default: composite; part of a study's identity).")
+                        help="Objective (default: composite; part of a study's identity). "
+                             "all_heads runs the three single-head studies (<base>_brier, "
+                             "<base>_pinball, <base>_dur) and merges the winners into one JSON.")
     parser.add_argument("--study-name", default=None,
-                        help="Study name (default: lgbm_aweil_<feature-set>_<version>).")
+                        help="Study name (default: lgbm_aweil_<feature-set>_<version>; "
+                             "all_heads uses it as the base name for the three sub-studies).")
     parser.add_argument("--storage", default=None,
                         help=f"Optuna storage URL (default: {DEFAULT_STORAGE}).")
     parser.add_argument("--timeout", type=int, default=DEFAULT_TIMEOUT,
-                        help=f"Study timeout in seconds (default: {DEFAULT_TIMEOUT}).")
+                        help=f"Timeout in seconds per study (all_heads: per stage; default: {DEFAULT_TIMEOUT}).")
     parser.add_argument("--n-jobs", type=int, default=1,
                         help="Parallel trials (default: 1; LightGBM already uses all cores).")
     parser.add_argument("--seed", type=int, default=config.SEED,
