@@ -13,6 +13,15 @@ Model choice (--model):
 - tabpfn             — zero-shot TabPFN reference, saved to
                        TabPFN_v1/outputs/outputs_v3/tables/
 
+Hyperparameter set (--params, LightGBM models only; default "baseline"):
+- baseline        — the frozen v3 defaults (run.py behavior unchanged)
+- baseline_optuna — Optuna winners tuned on the baseline features
+- fe_baseline     — the same v3 defaults, named for the fe grid cell
+- fe_optuna       — Optuna winners tuned on the engineered features
+Optuna sets route the run to their own output folder
+(e.g. lightgbm_fe --params fe_optuna -> outputs/outputs_fe_optuna/tables/)
+so the frozen outputs_v3/outputs_baseline/outputs_fe tables stay untouched.
+
 Performs:
 1.  Builds the embargoed weekly feature matrix (2000-2025; 2025 stays outside CV)
 2.  3-Fold Expanding-Window Cross-Validation (config.CV_FOLDS; 2025 excluded)
@@ -66,9 +75,13 @@ _BREAKDOWN_COLS = [
 ]
 
 
-def main(model_name: str = "lightgbm") -> None:
+def main(model_name: str = "lightgbm", params_name: str = "baseline") -> None:
     if model_name not in {"lightgbm", "lightgbm_baseline", "lightgbm_fe", "tabpfn"}:
         raise ValueError(f"Unknown model: {model_name}")
+    # Named hyperparameter set (lgbm_model.PARAM_SETS). LightGBM models thread
+    # its per-head entries into training; TabPFN has no tunable params and
+    # ignores it (validated here anyway so a typo fails fast).
+    param_set = lgbm_model.get_param_set(params_name)
     # Use LightGBM by default. The rest of the steps stay the same for all models.
     train_forecast = lgbm_model.build_and_train_lightgbm
     predict_forecast = lgbm_model.predict_lightgbm
@@ -101,10 +114,33 @@ def main(model_name: str = "lightgbm") -> None:
         tables_dir = config.FE_TABLES_DIR
         build_features = features_fe.build_weekly_features_fe
         feature_columns = features_fe.FEATURE_COLUMNS_ENGINEERED
+
+    # Optuna-tuned param sets never overwrite the frozen default-set folders:
+    # route the run to its own tables dir, deduplicating the feature-set word
+    # (lightgbm_baseline --params baseline_optuna -> outputs_baseline_optuna;
+    # cross combos stay unambiguous, e.g. -> outputs_fe_baseline_optuna).
+    if params_name.endswith("_optuna") and model_name != "tabpfn":
+        stem = tables_dir.parent.name.removeprefix("outputs_")
+        suffix = params_name if params_name.startswith(f"{stem}_") else f"{stem}_{params_name}"
+        tables_dir = config.OUT_ROOT / f"outputs_{suffix}" / "tables"
+
+    # Per-head LightGBM kwargs from the named set (None = the frozen v3
+    # defaults); TabPFN has no tunable hyperparameters, so all three stay None
+    # there and the historic kwarg-free call shape is preserved.
+    det_params = param_set["det"] if model_name != "tabpfn" else None
+    quant_params = param_set["quantiles"] if model_name != "tabpfn" else None
+    dur_params = param_set["duration"] if model_name != "tabpfn" else None
+
     model_label = model_name.upper()
     print("=" * 95)
     print(f"{model_label} PIPELINE RUN — VERSION {config.MODEL_VERSION.upper()} — "
           f"{len(config.CV_FOLDS)} EXPANDING-WINDOW FOLDS, PROTOCOL METRICS")
+    if params_name.endswith("_optuna") and model_name != "tabpfn":
+        print(f"  Hyperparameters: {params_name} (tables -> {tables_dir})")
+    else:
+        print(f"  Hyperparameters: {params_name}")
+    if model_name == "tabpfn" and params_name != "baseline":
+        print("  note: --params has no effect on the tabpfn backend")
     print("=" * 95)
 
     # 1. Build the input features using data from Friday or earlier.
@@ -160,11 +196,21 @@ def main(model_name: str = "lightgbm") -> None:
         val_df = fold_df.loc[val_df.index]
         tst_df = fold_df.loc[tst_df.index]
 
-        # Fit the selected model, then predict the test rows.
-        models_fold = train_forecast(
-            tr_df[feature_columns], tr_df["y_true"], tr_df["y_det"],
-            val_df[feature_columns], val_df["y_true"], val_df["y_det"],
-        )
+        # Fit the selected model, then predict the test rows. The per-head
+        # kwargs are only forwarded when a non-default param set is active so
+        # the historic params=None call (and mocks of train_forecast) keep
+        # working unchanged.
+        if det_params is None and quant_params is None:
+            models_fold = train_forecast(
+                tr_df[feature_columns], tr_df["y_true"], tr_df["y_det"],
+                val_df[feature_columns], val_df["y_true"], val_df["y_det"],
+            )
+        else:
+            models_fold = train_forecast(
+                tr_df[feature_columns], tr_df["y_true"], tr_df["y_det"],
+                val_df[feature_columns], val_df["y_true"], val_df["y_det"],
+                det_params=det_params, quant_params=quant_params,
+            )
         preds_tst = predict_forecast(models_fold, tst_df[feature_columns], feature_columns=feature_columns)
         if collect_importance:
             # Read the booster importances before this fold's models are freed.
@@ -182,8 +228,14 @@ def main(model_name: str = "lightgbm") -> None:
         res_df["q90"] = preds_tst["q90"]
         res_df["fold"] = f_num
 
-        # Per-fold duration models (train/val inside this fold only)
-        dur_models = duration_backend.train_duration_models(tr_df, val_df, feature_columns=feature_columns)
+        # Per-fold duration models (train/val inside this fold only); the
+        # duration head's hyperparameters come from the same named set
+        # (None = the hardcoded _DURATION_BASE_PARAMS).
+        if dur_params is None:
+            dur_models = duration_backend.train_duration_models(tr_df, val_df, feature_columns=feature_columns)
+        else:
+            dur_models = duration_backend.train_duration_models(
+                tr_df, val_df, feature_columns=feature_columns, params=dur_params)
         dur_pred = duration_backend.predict_duration(dur_models, tst_df, feature_columns=feature_columns)
         del dur_models
         res_df = res_df.join(dur_pred)
@@ -351,4 +403,17 @@ if __name__ == "__main__":
              "+cnty_ro_w7, -year) -> outputs_fe | "
              "tabpfn: TabPFN reference",
     )
-    main(parser.parse_args().model)
+    parser.add_argument(
+        "--params",
+        choices=tuple(lgbm_model.PARAM_SETS),
+        default="baseline",
+        help="hyperparameter set (LightGBM models only): "
+             "baseline: frozen v3 defaults (unchanged behavior) | "
+             "baseline_optuna: Optuna winners tuned on the baseline features | "
+             "fe_baseline: the same v3 defaults (fe grid cell) | "
+             "fe_optuna: Optuna winners tuned on the engineered features. "
+             "Optuna sets save to their own outputs_<model>_<params>/tables "
+             "folder instead of the frozen per-model folders.",
+    )
+    args = parser.parse_args()
+    main(args.model, args.params)

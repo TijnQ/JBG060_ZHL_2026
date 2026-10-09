@@ -7,6 +7,11 @@ Trains:
 Every train function falls back to the shared default hyperparameter dict
 (`_BASE_PARAMS`) when called with `params=None`, so run.py behavior is exactly
 unchanged; LightGBM_v1.tuning passes explicit per-head overrides.
+
+`PARAM_SETS` is the named 2x2 hyperparameter registry (feature set x tuning
+status) that run.py exposes via --params: "baseline" / "fe_baseline" resolve to
+params=None (the frozen v3 defaults), while "baseline_optuna" / "fe_optuna"
+carry the per-head Optuna winners from outputs/tuning/.
 """
 
 from __future__ import annotations
@@ -23,8 +28,10 @@ from LightGBM_v1 import config
 from LightGBM_v1.features import FEATURE_COLUMNS
 
 __all__ = [
+    "PARAM_SETS",
     "build_and_train_lightgbm",
     "extract_feature_importance",
+    "get_param_set",
     "predict_lightgbm",
     "train_detection_classifier",
     "train_quantile_regressors",
@@ -50,6 +57,119 @@ _BASE_PARAMS: dict[str, object] = {
 def _merged_params(params: dict[str, object] | None) -> dict[str, object]:
     """Default hyperparameters with optional per-key overrides (None = defaults)."""
     return dict(_BASE_PARAMS) if params is None else {**_BASE_PARAMS, **params}
+
+
+# --- Named hyperparameter sets (run.py --params) ------------------------------
+#
+# The 2x2 grid of (feature set x hyperparameters) the project compares:
+#
+#   |                    | v3 defaults   | Optuna winners     |
+#   |--------------------|---------------|--------------------|
+#   | baseline features  | "baseline"    | "baseline_optuna"  |
+#   | fe features        | "fe_baseline" | "fe_optuna"        |
+#
+# - "baseline" / "fe_baseline": params=None -> the frozen v3 defaults
+#   (_BASE_PARAMS / _DURATION_BASE_PARAMS), exactly what run.py has always
+#   trained. The values are identical; "fe_baseline" exists so the grid stays
+#   explicit (config.py: the fe model shares the v3 default hyperparameters).
+# - "baseline_optuna" / "fe_optuna": per-head winners from
+#   outputs/tuning/best_params_lgbm_aweil_{baseline,fe}_v3_all_heads.json
+#   (3 sub-studies x 50 trials each; created 2026-10-09 / 2026-10-08), passed
+#   through the same override merge, so they reproduce the tuning evaluation
+#   (outputs/tuning/cv_metrics_tuned_lgbm_aweil_*_all_heads.csv) exactly.
+#
+# Cross combos (e.g. fe features + baseline_optuna) are allowed — that is the
+# point of exposing the grid as a run.py argument.
+_TUNED_FRAME: dict[str, object] = {
+    # Fixed per-head frame from tuning.py _full_head_params: n_estimators is a
+    # cap (early stopping, patience 100, picks the effective tree count);
+    # max_depth/min_split_gain sit at LightGBM's defaults. random_state is
+    # intentionally NOT pinned here: train_detection_classifier /
+    # train_quantile_regressors fill config.SEED and train_duration_models
+    # fills config.SEED + horizon — identical to the tuning runs (seed 2026).
+    "n_estimators": 1200,
+    "max_depth": -1,
+    "subsample_freq": 1,
+    "min_split_gain": 0.0,
+    "n_jobs": -1,
+    "verbose": -1,
+}
+
+PARAM_SETS: dict[str, dict[str, dict[str, object] | None]] = {
+    "baseline": {"det": None, "quantiles": None, "duration": None},
+    "fe_baseline": {"det": None, "quantiles": None, "duration": None},
+    "baseline_optuna": {
+        "det": {
+            **_TUNED_FRAME,
+            "learning_rate": 0.03374301288709528,
+            "num_leaves": 53,
+            "min_child_samples": 64,
+            "colsample_bytree": 0.8993876625797363,
+            "subsample": 0.9886512030503938,
+            "reg_lambda": 0.510583075898472,
+            "reg_alpha": 8.298099464514976,
+        },
+        "quantiles": {
+            **_TUNED_FRAME,
+            "learning_rate": 0.026942206158197972,
+            "num_leaves": 27,
+            "min_child_samples": 43,
+            "colsample_bytree": 0.7649486780786229,
+            "subsample": 0.8277284857284459,
+            "reg_lambda": 0.001135390334129899,
+            "reg_alpha": 9.877305340862936,
+        },
+        "duration": {
+            **_TUNED_FRAME,
+            "learning_rate": 0.022392518725672314,
+            "num_leaves": 12,
+            "min_child_samples": 24,
+            "colsample_bytree": 0.525534269901265,
+            "subsample": 0.7900295130662434,
+            "reg_lambda": 0.007715079128989936,
+            "reg_alpha": 5.889468580783452,
+        },
+    },
+    "fe_optuna": {
+        "det": {
+            **_TUNED_FRAME,
+            "learning_rate": 0.07996982194675185,
+            "num_leaves": 121,
+            "min_child_samples": 55,
+            "colsample_bytree": 0.7304549344692116,
+            "subsample": 0.6423607389514663,
+            "reg_lambda": 0.0211950325646498,
+            "reg_alpha": 8.11172392180777,
+        },
+        "quantiles": {
+            **_TUNED_FRAME,
+            "learning_rate": 0.05782526811115778,
+            "num_leaves": 53,
+            "min_child_samples": 39,
+            "colsample_bytree": 0.958157827274865,
+            "subsample": 0.9305883837704264,
+            "reg_lambda": 0.0435619394614929,
+            "reg_alpha": 4.669366259624795,
+        },
+        "duration": {
+            **_TUNED_FRAME,
+            "learning_rate": 0.018519653007639282,
+            "num_leaves": 15,
+            "min_child_samples": 40,
+            "colsample_bytree": 0.5041866990950903,
+            "subsample": 0.9980197319153823,
+            "reg_lambda": 0.02135985663554151,
+            "reg_alpha": 0.019594141859569845,
+        },
+    },
+}
+
+
+def get_param_set(name: str) -> dict[str, dict[str, object] | None]:
+    """Resolve a named hyperparameter set (run.py --params); None = v3 defaults."""
+    if name not in PARAM_SETS:
+        raise ValueError(f"Unknown param set '{name}'. Available: {sorted(PARAM_SETS)}")
+    return PARAM_SETS[name]
 
 
 def train_detection_classifier(
