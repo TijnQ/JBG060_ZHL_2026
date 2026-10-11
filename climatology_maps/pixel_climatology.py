@@ -97,15 +97,20 @@ def pixel_area_km2(latitude) -> np.ndarray:
 
 
 def snap_to_grid(longitude, latitude) -> tuple[np.ndarray, np.ndarray]:
-    """Normalise coordinates to the product's canonical cell centres.
+    """Snap coordinates to the product's canonical cell centres.
 
     The compact Parquet stores cell centres at (k + 0.5) * GRID_STEP_DEGREES
-    with ~7 significant decimals (mod step == 0.5). Rounding to 6 decimals
-    removes float noise without re-centring the point, so neighbouring cells
-    never collide (0.001 deg is far below one 0.002083 deg cell).
+    with float32 precision (~7 significant decimals), so the stored values can
+    differ from the ideal centre in the 6th decimal. Rounding in place would
+    put neighbouring cells on *different* canonical keys than the render grid
+    (built from the ideal formula) and they would never merge. Instead we
+    recover the cell index k = round(v/step - 0.5) and rebuild the centre with
+    the same formula the grid uses — both paths then agree exactly.
     """
-    lo = np.round(np.asarray(longitude, dtype=float), 6)
-    la = np.round(np.asarray(latitude, dtype=float), 6)
+    lo_k = np.round(np.asarray(longitude, dtype=float) / GRID_STEP_DEGREES - 0.5)
+    la_k = np.round(np.asarray(latitude, dtype=float) / GRID_STEP_DEGREES - 0.5)
+    lo = np.round((lo_k + 0.5) * GRID_STEP_DEGREES, 6)
+    la = np.round((la_k + 0.5) * GRID_STEP_DEGREES, 6)
     return lo, la
 
 
