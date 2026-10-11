@@ -17,3 +17,11 @@ TabPFN_v1/outputs/
 LightGBM_v1/outputs/tuning/
 # Large interactive map html (regenerate on demand)
 climatology_maps/outputs/*.html
+# Pixel-climatology caches + weekly forecast-map outputs (regenerate on demand)
+climatology_maps/outputs/climatology_data/
+climatology_maps/outputs/forecast_maps/
+
+# Local-only course data & credentials (never pushed)
+Data_overview.xlsx
+data-JBG060-2026.zip
+cookies.txt
