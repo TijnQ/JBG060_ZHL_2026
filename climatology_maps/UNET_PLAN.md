@@ -10,6 +10,58 @@
 
 ---
 
+## 0. Is a U-Net even worth it? (hypothesis, with numbers)
+
+**Short answer:** worth a *bounded* experiment, not a foregone win. Expect a
+small/noisy pooled gain over the LightGBM×climatology map, with a real chance
+of winning where climatology is weakest — heavy anomaly years and 1-week
+(spatial) persistence.
+
+Dataset-size facts that drive the hypothesis:
+
+| Fact | Number | Implication |
+|---|---|---|
+| Calendar weeks 2000–2025 | 1,357 | training material is weekly samples |
+| Flood weeks in region | 567 (42 %) | rare event → class imbalance (~5 % of pixels ever wet) |
+| **Distinct flood events** | **357** (~2.7 / county / yr; mean 2.5–6.4 wks) | adjacent weeks are near-copies → effective sample ≈ events, not weeks |
+| Distinct wet pixels | 28,925 of 584,304 (5 %) | small positive class; most pixels never flood |
+| County-level LightGBM (fe) | Brier 0.065, **BSS vs clim 0.35**, vs persist 0.22, flood-week MAE 8.7 km² | learnable signal exists at county level but is modest and currently thrown away spatially |
+| Inter-annual variability (Oct–Nov area, CV) | 1.4–1.9 per county | heavy vs light years differ ~2× — the regime where static priors fail most |
+
+Why a U-Net may NOT beat climatology disagg:
+* **Small effective sample size** (≈357 events, autocorrelated, dominated by
+  2022–24) vs millions of parameters → the easy local optimum is "memorize the
+  monthly wetland map", i.e. rediscover what `freq_given` already encodes,
+  plus overfitting the OOF test years.
+* **Placement is terrain-driven** and the climatology pattern already captures
+  it; the learnable spatial *residual* (deviation given this week's forcing)
+  is small and noisy.
+* **No elevation / distance-to-river in the dataset** — the single most
+  informative static feature is missing, so the net would rediscover the
+  wetland map with one hand tied.
+
+Why it is still worth trying:
+* The county model's **BSS 0.35 proves learnable signal exists**, and a U-Net
+  can express something climatology structurally cannot: "upstream rain this
+  week → wet area expands corridor-wise".
+* Heavy years (CV 1.4–1.9 (std/mean) of annual flooded area) grow far beyond
+  the historical core — **the tails are where a learned expansion model beats
+  any static prior**, and those are the years that matter most.
+* **Duration/persistence is the county pipeline's weakest spot** (h1–h4 heads
+  barely beat references); a U-Net fed last week's mask + this week's forcing
+  has a clear, cheap win there.
+* Cost of finding out is small: coarse-grid U-Net ≈ 1–2 GPU-hours on the
+  3090; the OOF protocol and map renderers already exist.
+
+Prior on the final verdict: **pooled BSS ≈ +0.0–0.1, heavy-year BSS ≈
++0.1–0.25; keep/kill should be decided on the anomaly split, not the pooled
+number.** Two ablations that maximize information per GPU-hour: (1) report
+BSS pooled *and* split into heavy vs normal years; (2) train with and without
+last-week's mask as input, to isolate short-lead spatial persistence value.
+Optional but high-value: add a free SRTM DEM (~90 m) as an input channel.
+
+---
+
 ## 1. Goal & position in the pipeline
 
 LightGBM predicts one number per county per week (`det_prob`, `q50/q90` area);
