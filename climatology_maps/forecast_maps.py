@@ -235,6 +235,7 @@ def render_week_png(
     boundaries: gpd.GeoDataFrame,
     cmap: str = "YlOrRd",
     title_suffix: str = "",
+    border_color: str = "black",
 ) -> Path:
     """One static PNG for one (week, metric) at native grid resolution."""
     matrix, lons, lats = pivot_raster(frame, metric)
@@ -250,8 +251,10 @@ def render_week_png(
     span_lon = max_lon - min_lon
     span_lat = max_lat - min_lat
     fig, ax = plt.subplots(figsize=(9.5, 10.5))
+    # pivot_raster orders rows by ascending latitude and imshow with
+    # origin="lower" draws row 0 (south) at the bottom -> no vertical flip.
     im = ax.imshow(
-        matrix[::-1, :],
+        matrix,
         extent=(min_lon - 0.5 * span_lon / len(lons), max_lon + 0.5 * span_lon / len(lons),
                 min_lat - 0.5 * span_lat / len(lats), max_lat + 0.5 * span_lat / len(lats)),
         origin="lower",
@@ -260,12 +263,12 @@ def render_week_png(
         vmax=1.0,
         aspect="equal",
     )
-    boundaries.boundary.plot(ax=ax, color="white", linewidth=0.8, alpha=0.9)
+    boundaries.boundary.plot(ax=ax, color=border_color, linewidth=1.0, alpha=0.95)
     # County name labels
     for _, row in boundaries.iterrows():
         ax.annotate(row["county"], xy=row.geometry.representative_point().coords[0],
                     ha="center", va="center", fontsize=7, color="white",
-                    bbox=dict(boxstyle="round,pad=0.15", fc="black", ec="none", alpha=0.45))
+                    bbox=dict(boxstyle="round,pad=0.15", fc="black", ec="none", alpha=0.6))
     ax.set_xlim(min_lon - 0.02, max_lon + 0.02)
     ax.set_ylim(min_lat - 0.02, max_lat + 0.02)
     ax.set_axis_off()
@@ -281,6 +284,36 @@ def render_week_png(
     return out_path
 
 
+def _boundary_traces(boundaries: gpd.GeoDataFrame) -> list[go.Scatter]:
+    """Dark county-border lines + county-name labels for the interactive map.
+
+    Stays in the base figure, so it is shown in every animated frame (the
+    frames only replace the heatmap trace).
+    """
+    xs, ys = [], []
+    for geom in boundaries.geometry:
+        def ring(r):
+            coords = np.asarray(r.coords)
+            xs.extend(coords[:, 0]); ys.extend(coords[:, 1])
+            xs.append(None); ys.append(None)  # break between rings
+        polys = geom.geoms if geom.geom_type == "MultiPolygon" else [geom]
+        for p in polys:
+            ring(p.exterior)
+            for hole in p.interiors:
+                ring(hole)
+    border = go.Scatter(
+        x=xs, y=ys, mode="lines", line=dict(color="black", width=1.4),
+        hoverinfo="skip", showlegend=False,
+    )
+    label = go.Scatter(
+        x=[g.representative_point().x for _, g in boundaries.geometry.items()],
+        y=[g.representative_point().y for _, g in boundaries.geometry.items()],
+        text=list(boundaries["county"]), mode="text",
+        textfont=dict(color="black", size=10), hoverinfo="skip", showlegend=False,
+    )
+    return [border, label]
+
+
 def render_interactive_html(
     coarse_frames: dict[pd.Timestamp, np.ndarray],
     lons: np.ndarray,
@@ -288,6 +321,7 @@ def render_interactive_html(
     metric: str,
     out_path: str | Path,
     title: str = "Aweil flood risk by week",
+    boundaries: gpd.GeoDataFrame | None = None,
 ) -> Path:
     """Plotly animated heatmap: one frame per week, slider + play button.
 
@@ -331,7 +365,8 @@ def render_interactive_html(
         dict(label="Pause", method="animate", args=[[None], dict(frame={"duration": 0})]),
     ]
 
-    fig = go.Figure(data=[base], frames=go_frames)
+    fig = go.Figure(data=[base] + (_boundary_traces(boundaries) if boundaries is not None else []),
+                    frames=go_frames)
     fig.update_layout(
         title=title,
         xaxis=dict(title="longitude", showgrid=False, zeroline=False, scaleanchor="y", scaleratio=1),
@@ -460,6 +495,7 @@ def main() -> None:
             outdir / "forecast_maps_interactive.html",
             title=f"Aweil flood risk by week — {METRIC_TITLES[args.metric]}"
                   + (f" (horizon h{args.horizon})" if args.horizon else ""),
+            boundaries=boundaries,
         )
 
     peak = summary.sort_values("implied_area_km2", ascending=False).head(5)
