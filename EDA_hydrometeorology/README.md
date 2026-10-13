@@ -8,7 +8,7 @@ This EDA focuses on Northern Bahr el Ghazal's five Aweil counties. It tests the 
 2. Put the supplied data in the repository's `raw_data/` folder and make sure the processed ET file can be created in `processing_data/evapotranspiration/`.
 3. Open [`hydrometeorology_eda.ipynb`](hydrometeorology_eda.ipynb) in VS Code with the Python and Jupyter extensions.
 4. Select the project environment as the kernel and run all cells.
-5. Results are written to [`outputs/tables/`](outputs/tables/) and [`outputs/figures/`](outputs/figures/).
+5. Results are written to [`outputs_county/tables/`](outputs_county/tables/) and [`outputs_county/figures/`](outputs_county/figures/).
 
 The notebook processes 2024 by default so Run All completes quickly on the project environment. It produces a lag-correlation heatmap, a weekly rainfall/moisture/flood-signal chart, and four seasonal crop/rangeland exposure maps for August versus October-November. Change `YEARS` in the setup cell to `np.arange(2015, 2026)` for the recommended multi-year analysis.
 
@@ -58,7 +58,7 @@ The main outputs are:
   - `outputs_county/tables/aweil_monthly_agricultural_exposure.csv`: monthly exposure percentages split by county and recurring/unusual flood type.
   - `outputs_county/tables/aweil_flood_observation_quality.csv`: July-September detected-pixel coverage and cloud summary.
 
-- `outputs_country/` (Whole of South Sudan):
+- `outputs_country/` (Whole of South Sudan; **legacy synthetic output** — these tables/figures were produced while `hydrometeorology_eda_country.py` still silently substituted generated data when raw inputs were missing; that fallback has been removed and the script now raises — rerun it on real raw data to regenerate):
   - `outputs_country/figures/south_sudan_water_budget_climatology.png`: monthly precipitation vs reference evapotranspiration ($P - ET_0$) water surplus/deficit and runoff coefficient.
   - `outputs_country/figures/south_sudan_forecast_signals.png`: weekly nationwide rainfall, seven-day net moisture and active flood pixels.
   - `outputs_country/figures/south_sudan_seasonal_agricultural_exposure_maps.png`: August versus October-November crop and rangeland exposure across all 78 South Sudan counties.

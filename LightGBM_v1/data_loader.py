@@ -4,11 +4,10 @@ Fetches real flood mask label records, AgERA5 rainfall/runoff datasets,
 Dartmouth gauge 100205 readings, Lake Albert levels, and evapotranspiration data.
 
 v3: every loader records where its data came from in the PROVENANCE registry
-("real" or "synthetic_fallback" plus first/last valid date). Synthetic
-fallbacks are gated on config.ALLOW_SYNTHETIC_FALLBACK; with the gate closed,
-a missing real source raises RuntimeError instead of silently substituting
-generated data. get_provenance_report() returns the registry as a DataFrame
-for the run log (printed to the console at the end of every run).
+("real" plus first/last valid date). There is no synthetic fallback: any
+missing real source raises immediately instead of substituting generated
+data. get_provenance_report() returns the registry as a DataFrame for the
+run log (printed to the console at the end of every run).
 """
 
 from __future__ import annotations
@@ -47,13 +46,12 @@ def _silence(fn, *args, **kwargs):
     return result
 
 
-def _gate_or_raise(source: str, detail: str = "") -> None:
-    """Refuse to substitute synthetic data when the provenance gate is closed."""
-    if not config.ALLOW_SYNTHETIC_FALLBACK:
-        raise RuntimeError(
-            f"Data source '{source}' has no usable real data ({detail}) and "
-            "config.ALLOW_SYNTHETIC_FALLBACK is False — refusing to substitute synthetic data."
-        )
+def _raise_missing(source: str, detail: str = "") -> None:
+    """Fail loudly: synthetic data is never substituted for a missing source."""
+    raise RuntimeError(
+        f"Data source '{source}' has no usable real data ({detail}) — "
+        "missing inputs raise instead of being substituted with generated data."
+    )
 
 
 def _record(source: str, provenance: str, index: pd.Index | np.ndarray, note: str = "") -> None:
@@ -146,31 +144,9 @@ def load_era5_dataset(years: list[int] | None = None) -> xr.Dataset:
                     "AgERA5 .nc files under raw_data/rainfall and runoff")
             return ds
         except Exception as exc:  # real files present but unreadable
-            _gate_or_raise("era5_rainfall_runoff", f"load failed: {exc}")
+            _raise_missing("era5_rainfall_runoff", f"load failed: {exc}")
     else:
-        _gate_or_raise("era5_rainfall_runoff", f"no .nc files in {era5_dir}")
-
-    # Fallback signal dataset for environments where raw .nc files are not present
-    dates = pd.date_range(f"{years[0]}-01-01", f"{years[-1]}-12-31", freq="D")
-    lats = np.linspace(7.0, 11.0, 16)
-    lons = np.linspace(25.0, 29.0, 16)
-
-    day_of_year = dates.dayofyear.to_numpy()
-    rain_season = np.maximum(0.0, np.sin((day_of_year - 120) * np.pi / 150)) ** 3
-    tp_data = rain_season[:, None, None] * (15.0 + 5.0 * np.random.rand(len(dates), len(lats), len(lons)))
-    ro_data = tp_data * 0.15
-
-    ds = xr.Dataset(
-        {
-            "tp": (("valid_time", "latitude", "longitude"), tp_data),
-            "ro": (("valid_time", "latitude", "longitude"), ro_data),
-        },
-        coords={"valid_time": dates, "latitude": lats, "longitude": lons},
-    )
-    _era5_cache[key] = ds
-    _record("era5_rainfall_runoff", "synthetic_fallback", dates,
-            "generated sinusoidal seasonal signal — NOT real data")
-    return ds
+        _raise_missing("era5_rainfall_runoff", f"no .nc files in {era5_dir}")
 
 
 def era5_box_daily(dataset: xr.Dataset, box: dict[str, float]) -> pd.DataFrame:
@@ -194,18 +170,10 @@ def load_gauge_daily() -> pd.Series:
                 _record("gauge_100205_discharge", "real", s.index)
                 return s
         except Exception as exc:
-            _gate_or_raise("gauge_100205_discharge", f"load failed: {exc}")
-        _gate_or_raise("gauge_100205_discharge", f"area id {config.GAUGE_AREA_ID} not in dataset")
+            _raise_missing("gauge_100205_discharge", f"load failed: {exc}")
+        _raise_missing("gauge_100205_discharge", f"area id {config.GAUGE_AREA_ID} not in dataset")
     else:
-        _gate_or_raise("gauge_100205_discharge", f"directory {config.GAUGE_ROOT} does not exist")
-
-    dates = pd.date_range("1999-12-01", "2026-01-01", freq="D")
-    doy = dates.dayofyear.to_numpy()
-    gauge_vals = 300.0 + 1200.0 * np.maximum(0.0, np.sin((doy - 150) * np.pi / 160)) ** 2
-    s = pd.Series(gauge_vals, index=dates, name="gauge")
-    _record("gauge_100205_discharge", "synthetic_fallback", s.index,
-            "generated sinusoidal seasonal signal — NOT real data")
-    return s
+        _raise_missing("gauge_100205_discharge", f"directory {config.GAUGE_ROOT} does not exist")
 
 
 def load_albert_level() -> pd.Series:
@@ -231,17 +199,10 @@ def load_albert_level() -> pd.Series:
                     _record("lake_albert_level", "real", s.index)
                     return s
         except Exception as exc:
-            _gate_or_raise("lake_albert_level", f"load failed: {exc}")
-        _gate_or_raise("lake_albert_level", "'Albert' station not in dataset")
+            _raise_missing("lake_albert_level", f"load failed: {exc}")
+        _raise_missing("lake_albert_level", "'Albert' station not in dataset")
     else:
-        _gate_or_raise("lake_albert_level", f"directory {config.LAKE_ROOT} does not exist")
-
-    dates = pd.date_range("1999-12-01", "2026-01-01", freq="D")
-    albert_vals = 619.5 + 0.8 * np.sin(2 * np.pi * dates.dayofyear / 365.25)
-    s = pd.Series(albert_vals, index=dates, name="albert")
-    _record("lake_albert_level", "synthetic_fallback", s.index,
-            "generated sinusoidal seasonal signal — NOT real data")
-    return s
+        _raise_missing("lake_albert_level", f"directory {config.LAKE_ROOT} does not exist")
 
 
 def load_et0_daily(years: list[int]) -> pd.Series:
@@ -263,17 +224,10 @@ def load_et0_daily(years: list[int]) -> pd.Series:
                 _record("et0_aweil", "real", s.index)
                 return s
         except Exception as exc:
-            _gate_or_raise("et0_aweil", f"load failed: {exc}")
-        _gate_or_raise("et0_aweil", "no processed ET frames returned")
+            _raise_missing("et0_aweil", f"load failed: {exc}")
+        _raise_missing("et0_aweil", "no processed ET frames returned")
     else:
-        _gate_or_raise("et0_aweil", f"directory {config.ET0_ROOT} does not exist")
-
-    dates = pd.date_range(f"{years[0]}-01-01", f"{years[-1]}-12-31", freq="D")
-    et0_vals = 5.0 + 1.5 * np.cos(2 * np.pi * dates.dayofyear / 365.25)
-    s = pd.Series(et0_vals, index=dates, name="et0")
-    _record("et0_aweil", "synthetic_fallback", s.index,
-            "generated sinusoidal seasonal signal — NOT real data")
-    return s
+        _raise_missing("et0_aweil", f"directory {config.ET0_ROOT} does not exist")
 
 
 def get_provenance_report() -> pd.DataFrame:

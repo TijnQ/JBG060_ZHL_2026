@@ -21,6 +21,14 @@ Optuna sets route the run to their own output folder
 (e.g. lightgbm_fe --params fe_optuna -> outputs/outputs_fe_optuna/tables/)
 so the frozen outputs_v3/outputs_baseline/outputs_fe tables stay untouched.
 
+Run mode (--mode, default "cv"):
+- cv     — the 3-fold expanding-window CV protocol described above (main)
+- final  — retrain the chosen configuration once on all data (train
+           2000-2024, early-stop on 2025) and forecast the latest
+           feature-complete week: det_prob + q10/q50/q90 plus duration
+           horizons h1/h2 -> outputs/outputs_final_fit/tables/
+           final_forecast_aweil.csv (final_fit)
+
 Performs:
 1.  Builds the embargoed weekly feature matrix (2000-2025; 2025 stays outside CV)
 2.  3-Fold Expanding-Window Cross-Validation (config.CV_FOLDS; 2025 excluded)
@@ -29,7 +37,7 @@ Performs:
 4.  Protocol-aligned metrics (evaluation_metrics.md): Brier / BSS, mean pinball,
     interval coverage, flood-week MAE/bias, per-horizon duration Brier,
     reliability diagrams (no cutoff-dependent classification metrics)
-5.  Data provenance report (real vs synthetic_fallback per source, console only)
+5.  Data provenance report (one row per real source, console only)
 6.  Outputs saved to the selected model's output folder; LightGBM runs also
     report pooled (mean-over-folds) split & gain feature importance
     (feature_importance_pooled.csv)
@@ -72,7 +80,12 @@ _BREAKDOWN_COLS = [
 ]
 
 
-def main(model_name: str = "lightgbm", params_name: str = "baseline") -> None:
+def _resolve_backend(model_name: str, params_name: str):
+    """Resolve model functions, feature build, output folder and params.
+
+    Single source of truth shared by the CV run (main) and the final-fit run
+    (final_fit), so both always select the identical backend wiring.
+    """
     if model_name not in {"lightgbm", "lightgbm_baseline", "lightgbm_fe", "tabpfn"}:
         raise ValueError(f"Unknown model: {model_name}")
     # Named hyperparameter set (lgbm_model.PARAM_SETS). LightGBM models thread
@@ -128,6 +141,33 @@ def main(model_name: str = "lightgbm", params_name: str = "baseline") -> None:
     quant_params = param_set["quantiles"] if model_name != "tabpfn" else None
     dur_params = param_set["duration"] if model_name != "tabpfn" else None
 
+    return (train_forecast, predict_forecast, duration_backend, build_features,
+            feature_columns, tables_dir, collect_importance,
+            det_params, quant_params, dur_params)
+
+
+def _complete_feature_frame(build_features) -> pd.DataFrame:
+    """Build the weekly feature matrix and drop incomplete county-weeks.
+
+    Shared by the CV run and the final-fit run. Incomplete rows only occur at
+    the data start (rolling/lag warm-up), so the gate doubles as an honesty
+    check: no row — the forecast row included — ever carries partial windows.
+    """
+    feats_df = build_features()
+    n_incomplete = int((~feats_df["complete"]).sum())
+    if n_incomplete:
+        bad_years = sorted(pd.to_datetime(feats_df.loc[~feats_df["complete"], "week"]).dt.year.unique())
+        print(f"      Dropped {n_incomplete} incomplete county-weeks (years: {bad_years}) — see provenance report")
+    feats_df = feats_df[feats_df["complete"]].reset_index(drop=True)
+    feats_df = feats_df.drop(columns=["complete"])
+    return feats_df
+
+
+def main(model_name: str = "lightgbm", params_name: str = "baseline") -> None:
+    (train_forecast, predict_forecast, duration_backend, build_features,
+     feature_columns, tables_dir, collect_importance,
+     det_params, quant_params, dur_params) = _resolve_backend(model_name, params_name)
+
     model_label = model_name.upper()
     print("=" * 95)
     print(f"{model_label} PIPELINE RUN — VERSION {config.MODEL_VERSION.upper()} — "
@@ -142,13 +182,7 @@ def main(model_name: str = "lightgbm", params_name: str = "baseline") -> None:
 
     # 1. Build the input features using data from Friday or earlier.
     print("\n[1/7] Building weekly feature matrix with Friday 3-day embargo...")
-    feats_df = build_features()
-    n_incomplete = int((~feats_df["complete"]).sum())
-    if n_incomplete:
-        bad_years = sorted(pd.to_datetime(feats_df.loc[~feats_df["complete"], "week"]).dt.year.unique())
-        print(f"      Dropped {n_incomplete} incomplete county-weeks (years: {bad_years}) — see provenance report")
-    feats_df = feats_df[feats_df["complete"]].reset_index(drop=True)
-    feats_df = feats_df.drop(columns=["complete"])
+    feats_df = _complete_feature_frame(build_features)
     print(f"      Total rows: {len(feats_df)}, Total features: {len(feature_columns)}")
     if model_name == "lightgbm_fe":
         added = [c for c in feature_columns if c not in features.FEATURE_COLUMNS]
@@ -262,11 +296,11 @@ def main(model_name: str = "lightgbm", params_name: str = "baseline") -> None:
     county_table = metrics.evaluate_county_metrics(all_oof_df)
     monthly_table = metrics.evaluate_monthly_metrics(all_oof_df)
 
-    # 5. Data provenance report (real vs synthetic_fallback per source)
+    # 5. Data provenance report (one row per real source)
     provenance_df = data_loader.get_provenance_report()
 
     print("\n" + "=" * 95)
-    print(f"DATA PROVENANCE (allow synthetic fallback: {config.ALLOW_SYNTHETIC_FALLBACK})")
+    print("DATA PROVENANCE (real sources only — missing inputs raise)")
     print("=" * 95)
     print(provenance_df.to_string(index=False))
     print("-" * 95)
@@ -354,8 +388,103 @@ def main(model_name: str = "lightgbm", params_name: str = "baseline") -> None:
           f"coverage(flood) {pooled_lgbm['coverage_flood_weeks']:.3f}, "
           f"MAE(flood) {pooled_lgbm['mae_flood_weeks']:.2f} km2")
     n_real = int((provenance_df['provenance'] == 'real').sum())
-    n_synth = int((provenance_df['provenance'] == 'synthetic_fallback').sum())
-    print(f"  Provenance: {n_real} real sources, {n_synth} synthetic fallbacks")
+    print(f"  Provenance: {n_real} real sources (missing inputs raise; no synthetic fallback)")
+    print("=" * 95)
+
+
+def final_fit(model_name: str = "lightgbm_fe", params_name: str = "fe_baseline") -> None:
+    """Final-fit mode: retrain the chosen configuration on all data and issue
+    the operational forecast (run.py --mode final).
+
+    Instead of the 3-fold CV the model is fit once — the expanding-window
+    protocol taken one fold further: train on everything before the final year
+    (2000-2024), early-stopping on the final year (2025). It then forecasts
+    the latest feature-complete week (2025-12-29 with inputs through Dec 2025):
+    det_prob + q10/q50/q90 for that week plus the duration heads
+    det_prob_h1/h2 (the honest forecast of the following two weeks; h3/h4 lose
+    to climatology and persistence in duration_metrics_aweil.csv). Later weeks
+    are not forecast: they would need weather beyond the inputs that exist,
+    and partial rolling windows would silently change what the features mean.
+    The output feeds climatology_maps.forecast_maps --predictions.
+    """
+    if model_name == "tabpfn":
+        raise ValueError("final_fit supports the LightGBM models only (tabpfn was a one-shot reference)")
+    (train_forecast, predict_forecast, duration_backend, build_features,
+     feature_columns, _tables_dir, _collect_importance,
+     det_params, quant_params, dur_params) = _resolve_backend(model_name, params_name)
+
+    print("=" * 95)
+    print(f"{model_name.upper()} FINAL FIT — HYPERPARAMETERS: {params_name}")
+    print("=" * 95)
+
+    # 1. Feature matrix; the completeness gate also guarantees the forecast
+    # row carries no partial rolling windows.
+    print("\n[1/4] Building weekly feature matrix with Friday 3-day embargo...")
+    feats_df = _complete_feature_frame(build_features)
+    print(f"      Total rows: {len(feats_df)}, Total features: {len(feature_columns)}")
+
+    # 2. Train on everything before the final year, early-stop on the final
+    # year (first week purged — same boundary rule as the CV folds).
+    train_df, val_df, final_year = splits.final_fit_split(feats_df)
+    first_year = feats_df["week"].min().year
+    print(f"\n[2/4] Final fit: train {first_year}-{final_year - 1} ({len(train_df)} rows) | "
+          f"early-stop year {final_year} ({len(val_df)} rows)")
+
+    # 3. Fit the four heads + duration classifiers (same params-None call
+    # shapes as main, so the historic call signatures stay unchanged).
+    print("\n[3/4] Training detection/quantile heads + duration classifiers...")
+    if det_params is None and quant_params is None:
+        models = train_forecast(
+            train_df[feature_columns], train_df["y_true"], train_df["y_det"],
+            val_df[feature_columns], val_df["y_true"], val_df["y_det"],
+        )
+    else:
+        models = train_forecast(
+            train_df[feature_columns], train_df["y_true"], train_df["y_det"],
+            val_df[feature_columns], val_df["y_true"], val_df["y_det"],
+            det_params=det_params, quant_params=quant_params,
+        )
+    if dur_params is None:
+        dur_models = duration_backend.train_duration_models(train_df, val_df, feature_columns=feature_columns)
+    else:
+        dur_models = duration_backend.train_duration_models(
+            train_df, val_df, feature_columns=feature_columns, params=dur_params)
+
+    # 4. Forecast the latest feature-complete week (last Monday of the grid).
+    forecast_week = feats_df["week"].max()
+    forecast_df = feats_df[feats_df["week"] == forecast_week]
+    preds = predict_forecast(models, forecast_df[feature_columns], feature_columns=feature_columns)
+    dur_pred = duration_backend.predict_duration(dur_models, forecast_df, feature_columns=feature_columns)
+
+    out = forecast_df[["county", "week"]].copy()
+    out["det_prob"] = preds["det_prob"]
+    out["q10"] = preds["q10"]
+    out["q50"] = preds["q50"]
+    out["q90"] = preds["q90"]
+    # Duration horizons h1/h2 only (see docstring).
+    out["det_prob_h1"] = dur_pred["det_prob_h1"]
+    out["det_prob_h2"] = dur_pred["det_prob_h2"]
+
+    out_path = config.FINAL_FIT_TABLES_DIR / "final_forecast_aweil.csv"
+    config.FINAL_FIT_TABLES_DIR.mkdir(parents=True, exist_ok=True)
+    out.to_csv(out_path, index=False)
+
+    # 5. Provenance report + compact summary
+    provenance_df = data_loader.get_provenance_report()
+    print("\n" + "=" * 95)
+    print("DATA PROVENANCE (real sources only — missing inputs raise)")
+    print("=" * 95)
+    print(provenance_df.to_string(index=False))
+    print("-" * 95)
+
+    print("\n" + "=" * 95)
+    print("FINAL FIT COMPLETE")
+    print("=" * 95)
+    print(f"  Forecast week: {forecast_week.date()} (latest feature-complete week —")
+    print("  later weeks would need weather data beyond Dec 2025; see main.ipynb section 9)")
+    print(f"  Trained {first_year}-{final_year - 1}, early stopping on {final_year} (no post-2025 data exists)")
+    print(out.to_string(index=False))
+    print(f"  -> {out_path}")
     print("=" * 95)
 
 
@@ -383,5 +512,18 @@ if __name__ == "__main__":
              "Optuna sets save to their own outputs_<model>_<params>/tables "
              "folder instead of the frozen per-model folders.",
     )
+    parser.add_argument(
+        "--mode",
+        choices=("cv", "final"),
+        default="cv",
+        help="cv: 3-fold expanding-window CV protocol (default) | "
+             "final: retrain once (train to the year before the last, "
+             "early-stop on the final year) and forecast the latest "
+             "feature-complete week -> outputs_final_fit/tables/"
+             "final_forecast_aweil.csv",
+    )
     args = parser.parse_args()
-    main(args.model, args.params)
+    if args.mode == "final":
+        final_fit(args.model, args.params)
+    else:
+        main(args.model, args.params)

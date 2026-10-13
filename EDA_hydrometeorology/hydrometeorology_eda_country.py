@@ -1,4 +1,9 @@
-"""Nationwide South Sudan Hydrometeorological Analysis (outputs_country)."""
+"""Nationwide South Sudan Hydrometeorological Analysis (outputs_country).
+
+All inputs are real data only: if a required raw source is missing or
+unreadable, main() raises instead of substituting generated data (the old
+synthetic-fallback dataset builder was removed).
+"""
 
 from pathlib import Path
 from contextlib import redirect_stdout
@@ -7,7 +12,6 @@ import importlib
 import os
 import sys
 
-import geopandas as gpd
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -44,121 +48,6 @@ ET_LON, ET_LAT = 30.725, 9.475
 plt.style.use('seaborn-v0_8-whitegrid')
 
 
-def build_country_hydrometeorological_dataset(counties: gpd.GeoDataFrame):
-    """Build realistic nationwide hydrometeorological time series and county exposure data for South Sudan."""
-    dates = pd.date_range('2024-01-01', '2024-12-31', freq='D')
-    d_seq = np.arange(len(dates))
-    
-    # 1. Seasonal hydrometeorological rainfall and runoff cycles (May - October rainy season)
-    seasonal_rain_base = np.maximum(0, np.sin((d_seq - 120) * np.pi / 180)) * 6.5
-    local_rain = seasonal_rain_base + np.random.gamma(1.5, 0.8, len(dates))
-    # Add major storm events in July-August
-    storm_days = [190, 205, 218, 230, 242]
-    for sd in storm_days:
-        local_rain[sd:sd+4] += np.array([12, 25, 18, 8])
-        
-    local_runoff = np.maximum(0, (local_rain - 2.5) * 0.35) + np.random.gamma(0.8, 0.3, len(dates))
-    
-    # Upstream rainfall/runoff (shifted earlier in upper basin)
-    upstream_rain_base = np.maximum(0, np.sin((d_seq - 110) * np.pi / 180)) * 7.0
-    upstream_rain = upstream_rain_base + np.random.gamma(1.4, 0.8, len(dates))
-    upstream_runoff = np.maximum(0, (upstream_rain - 2.0) * 0.4)
-    
-    # ET0 (reference evapotranspiration, lower in wet season, higher in dry season)
-    et_mm = 5.5 - 2.0 * np.maximum(0, np.sin((d_seq - 120) * np.pi / 180)) + np.random.normal(0, 0.2, len(dates))
-    et_mm = np.clip(et_mm, 2.0, 7.0)
-
-    # River discharge (Bahr el Ghazal / White Nile propagation, lagged peak in Aug-Oct)
-    discharge_base = 350 + 450 * np.maximum(0, np.sin((d_seq - 140) * np.pi / 180))**1.8
-    discharge = discharge_base + np.random.normal(0, 15, len(dates))
-
-    # Active flood pixels: driven by antecedent rainfall + discharge with ~7 day lag
-    smoothed_moisture = pd.Series(local_rain - et_mm).rolling(14, min_periods=1).sum()
-    flood_signal = np.maximum(0, smoothed_moisture.shift(7).fillna(0)) * 2.8 + (discharge - 350) * 0.15
-    active_flood_pixels = np.round(flood_signal + np.random.poisson(3, len(dates))).astype(int)
-
-    local_daily = pd.DataFrame({'date': dates, 'precipitation_mm': local_rain, 'runoff_mm': local_runoff}).set_index('date')
-    upstream_daily = pd.DataFrame({'date': dates, 'precipitation_mm': upstream_rain, 'runoff_mm': upstream_runoff}).set_index('date')
-    et = pd.DataFrame({'date': dates, 'et_mm': et_mm})
-    discharge_series = pd.Series(discharge, index=dates)
-
-    # 2. Observations across ALL 78 counties in South Sudan
-    county_names = counties['county'].tolist()
-    obs_rows = []
-    np.random.seed(42)
-    
-    # Assign higher flood vulnerability to central/northern wetland counties (Unity, Upper Nile, Jonglei, Warrap, NBGS)
-    for idx, cname in enumerate(county_names):
-        centroid = counties.geometry.iloc[idx].centroid
-        # Wetlands around Sudd (lat 6-10, lon 28-32) have higher flood risk
-        dist_sudd = np.sqrt((centroid.y - 8.0)**2 + (centroid.x - 30.5)**2)
-        vulnerability = np.exp(-dist_sudd / 3.5)
-        
-        n_obs = int(20 + 180 * vulnerability + np.random.randint(0, 20))
-        # Detections concentrated in wet months (July-November)
-        month_probs = np.array([0.02, 0.02, 0.03, 0.04, 0.06, 0.08, 0.18, 0.22, 0.18, 0.12, 0.04, 0.01])
-        obs_months = np.random.choice(np.arange(1, 13), size=n_obs, p=month_probs)
-        
-        for m in obs_months:
-            day = np.random.randint(1, 28)
-            obs_date = pd.Timestamp(2024, m, day)
-            obs_rows.append({
-                'date': obs_date,
-                'lat': centroid.y + np.random.uniform(-0.1, 0.1),
-                'lon': centroid.x + np.random.uniform(-0.1, 0.1),
-                'cloud_frac': np.random.uniform(0.05, 0.45),
-                'flood_type': np.random.choice(['recurring', 'unusual'], p=[0.65, 0.35]),
-                'county': cname,
-            })
-            
-    observations = pd.DataFrame(obs_rows)
-
-    # 3. Baseline & Exposure across ALL 78 counties
-    baseline_rows = []
-    exposure_rows = []
-    
-    for idx, cname in enumerate(county_names):
-        centroid = counties.geometry.iloc[idx].centroid
-        dist_sudd = np.sqrt((centroid.y - 8.0)**2 + (centroid.x - 30.5)**2)
-        vulnerability = float(np.exp(-dist_sudd / 3.5))
-        
-        area_ha = float(counties.geometry.iloc[idx].area * (111.32**2) * 100) # approx ha
-        crop_ha = max(1500, area_ha * np.random.uniform(0.05, 0.18))
-        range_ha = max(5000, area_ha * np.random.uniform(0.25, 0.60))
-        
-        baseline_rows.append({
-            'county': cname,
-            'crop_hectares': crop_ha,
-            'rangeland_hectares': range_ha,
-        })
-        
-        # Exposure by season
-        for m, phase in [(8, 'vegetative growth and flowering'), (10, 'maturation and harvest'), (11, 'maturation and harvest')]:
-            for ft in ['recurring', 'unusual']:
-                factor = 1.4 if ft == 'recurring' else 0.8
-                phase_mult = 1.2 if m == 8 else 0.9
-                crop_exp_pct = np.clip((vulnerability * 22.0 * factor * phase_mult) + np.random.uniform(0.5, 3.0), 0.2, 48.0)
-                range_exp_pct = np.clip((vulnerability * 35.0 * factor * phase_mult) + np.random.uniform(1.0, 5.0), 0.5, 65.0)
-                
-                exposure_rows.append({
-                    'county': cname,
-                    'phase': phase,
-                    'month': m,
-                    'flood_type': ft,
-                    'detected_pixels': int(np.round(crop_exp_pct * 4.5)),
-                    'crop_exposed_hectares': crop_ha * (crop_exp_pct / 100.0),
-                    'rangeland_exposed_hectares': range_ha * (range_exp_pct / 100.0),
-                })
-                
-    baseline = pd.DataFrame(baseline_rows)
-    exposure = pd.DataFrame(exposure_rows)
-    exposure = exposure.merge(baseline, on='county', how='left')
-    exposure['crop_exposed_percent'] = 100 * exposure['crop_exposed_hectares'] / exposure['crop_hectares']
-    exposure['rangeland_exposed_percent'] = 100 * exposure['rangeland_exposed_hectares'] / exposure['rangeland_hectares']
-
-    return local_daily, upstream_daily, et, discharge_series, observations, exposure
-
-
 def main():
     print("Executing nationwide South Sudan hydrometeorological EDA (outputs_country)...")
 
@@ -174,9 +63,8 @@ def main():
         'lon_min': max(20.0, country_bbox['lon_min'] - 3.0), 'lon_max': country_bbox['lon_min'],
     }
 
-    try:
-        with redirect_stdout(StringIO()):
-            era5 = load_rainfall_runoff(YEARS)
+    with redirect_stdout(StringIO()):
+        era5 = load_rainfall_runoff(YEARS)
         local_daily = era5_daily_table(era5, country_bbox).set_index('date')
         upstream_daily = era5_daily_table(era5, upstream_bbox).set_index('date')
         for year in YEARS:
@@ -192,8 +80,6 @@ def main():
         exposure = exposure.merge(baseline, on='county', how='left')
         exposure['crop_exposed_percent'] = 100 * exposure['crop_exposed_hectares'] / exposure['crop_hectares']
         exposure['rangeland_exposed_percent'] = 100 * exposure['rangeland_exposed_hectares'] / exposure['rangeland_hectares']
-    except Exception:
-        local_daily, upstream_daily, et, discharge, observations, exposure = build_country_hydrometeorological_dataset(counties)
 
     moisture = rolling_moisture_features(local_daily.reset_index(), et)
 

@@ -7,9 +7,9 @@ at the grid cell nearest to Aweil, Northern Bahr el Ghazal (9.475N, 30.725E).
 Input : raw_data/evapotranspiration/ET_{year}/   one daily .nc file per day
 Output: processing_data/evapotranspiration/ET_{year}_9.475N_30.725E_processed.csv
 
-LightGBM_v1/data_loader.load_et0_daily() reads exactly these CSVs and, with
-config.ALLOW_SYNTHETIC_FALLBACK = False, refuses to run without them - so this
-script is the reproducible preprocessing step for the et0 feature block.
+LightGBM_v1/data_loader.load_et0_daily() reads exactly these CSVs and refuses
+to run without them (missing inputs raise) - so this script is the
+reproducible preprocessing step for the et0 feature block.
 
 Usage:
     .venv/bin/python process_et_NBeG.py                # all years from config.YEARS

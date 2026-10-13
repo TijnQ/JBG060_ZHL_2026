@@ -36,6 +36,11 @@ FE_TABLES_DIR = FE_OUT_DIR / "tables"
 # Write-only audit snapshot of the exact fe feature matrix (never read back).
 FE_FEATURES_DIR = FE_OUT_DIR / "features"
 
+# Final-fit mode (run.py --mode final): one operational product, overwritten
+# per run and independent of the chosen config — the forecast table for the
+# latest feature-complete week (main.ipynb section 9).
+FINAL_FIT_TABLES_DIR = OUT_ROOT / "outputs_final_fit" / "tables"
+
 RAW_DATA = PROJECT_ROOT / "raw_data"
 
 # Data file locations
@@ -81,11 +86,6 @@ CV_FOLDS = [
     {"fold": 2, "train_years": (2000, 2014), "val_year": 2015, "test_years": (2016, 2017)},
     {"fold": 3, "train_years": (2000, 2020), "val_year": 2021, "test_years": (2022, 2024)},
 ]
-
-# Provenance gate (v3): loaders must record real vs synthetic_fallback.
-# When False, any synthetic fallback raises RuntimeError instead of silently
-# substituting generated data.
-ALLOW_SYNTHETIC_FALLBACK = False
 
 # Embargo rule: For target week starting Monday m, features are dated at most m - 3 days (Friday)
 EMBARGO_DAYS = 3

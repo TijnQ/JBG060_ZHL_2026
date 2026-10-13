@@ -15,6 +15,7 @@ from LightGBM_v1 import config
 
 __all__ = [
     "feature_cutoff",
+    "final_fit_split",
     "get_cv_folds",
 ]
 
@@ -59,3 +60,17 @@ def get_cv_folds(df: pd.DataFrame) -> list[dict[str, pd.DataFrame | int | str]]:
             "test_years": f"{te_lo}-{te_hi}",
         })
     return folds
+
+
+def final_fit_split(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame, int]:
+    """Final-fit split (run.py --mode final): train on everything before the
+    last year, early-stop on the last year — the expanding-window CV logic
+    taken one fold further. The first week of the final year is purged so no
+    lag feature or label window crosses the train/val boundary (same rule as
+    the CV folds). Returns (train_df, val_df, final_year).
+    """
+    years = pd.to_datetime(df["week"]).dt.year
+    final_year = int(years.max())
+    train_df = df[years < final_year].copy()
+    val_df = _purge_first_week(df[years == final_year].copy())
+    return train_df, val_df, final_year

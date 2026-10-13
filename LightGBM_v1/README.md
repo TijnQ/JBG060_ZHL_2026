@@ -40,7 +40,7 @@ v3 fixes three evaluation-honesty problems found in the v2 design, following `ev
 
 ### 2.2 Data Provenance
 
-Every data loader records its source in a provenance registry (`data_loader.PROVENANCE`): `real` or `synthetic_fallback`, plus first/last valid date. Synthetic fallbacks are gated by `config.ALLOW_SYNTHETIC_FALLBACK` (currently `True`); set it to `False` and any missing real source raises `RuntimeError` instead of silently substituting generated data. Each run prints the provenance report to the console — check it before interpreting results.
+Every data loader records its source in a provenance registry (`data_loader.PROVENANCE`), plus first/last valid date. There is no synthetic fallback: a missing real source raises (`RuntimeError`/`FileNotFoundError`) instead of silently substituting generated data. Each run prints the provenance report to the console — check it before interpreting results.
 
 ---
 
@@ -49,8 +49,8 @@ Every data loader records its source in a provenance registry (`data_loader.PROV
 ```
 LightGBM_v1/
 ├── __init__.py            # Package initialization
-├── config.py              # Paths, MODEL_VERSION, CV_FOLDS, embargo, provenance gate, scope
-├── data_loader.py         # Signal & label loaders with provenance registry (real vs synthetic_fallback)
+├── config.py              # Paths, MODEL_VERSION, CV_FOLDS, embargo, scope
+├── data_loader.py         # Signal & label loaders with provenance registry (real sources only)
 ├── splits.py              # 3 expanding-window CV folds & boundary purging
 ├── features.py            # 50 rolling hydro features enforcing the Friday 3-day embargo cutoff
 ├── features_fe.py         # Feature-engineered set for --model lightgbm_fe (v3 + per-county ERA5 + county)
@@ -83,12 +83,11 @@ LightGBM_v1/
 ### **`config.py`**
 - Centralizes project paths, seed (`SEED=2026`), versioning (`MODEL_VERSION="v3"`), geographic scope, and embargo settings (`EMBARGO_DAYS=3`).
 - Defines `CV_FOLDS`: 3 expanding-window folds (see table above).
-- `ALLOW_SYNTHETIC_FALLBACK`: provenance gate for synthetic data substitution.
 
 ### **`data_loader.py`**
 - `load_boundaries()`, `load_flood_labels()`: Admin-2 GeoJSON boundaries and weekly county detected flood area (km²) from committed satellite EDA datasets.
 - `load_era5_dataset()`, `load_gauge_daily()`, `load_albert_level()`, `load_et0_daily()`: AgERA5 precipitation/runoff, Dartmouth gauge 100205 discharge, Lake Albert levels, reference evapotranspiration.
-- `PROVENANCE` + `get_provenance_report()`: real-vs-synthetic registry per source, printed to the console every run.
+- `PROVENANCE` + `get_provenance_report()`: registry of real sources per loader, printed to the console every run (missing sources raise before this point).
 
 ### **`splits.py`**
 - `get_cv_folds()`: builds the 3 expanding-window folds from `config.CV_FOLDS`; purges the first week of each val/test window.
@@ -161,11 +160,14 @@ python LightGBM_v1/run.py                             # lightgbm (default) -> ou
 python LightGBM_v1/run.py --model lightgbm_baseline   # frozen v3 baseline  -> outputs_baseline
 python LightGBM_v1/run.py --model lightgbm_fe         # feature-engineered  -> outputs_fe
 python LightGBM_v1/run.py --model tabpfn              # TabPFN reference
+python LightGBM_v1/run.py --mode final --model lightgbm_fe   # final fit -> outputs_final_fit
 ```
 
 `--model lightgbm_baseline` runs **exactly the v3 model** (same features, same default hyperparameters) but writes every output table to `LightGBM_v1/outputs/outputs_baseline/tables/`, so the frozen baseline stays clearly separated from the later improved LightGBM model and the two can be diffed table-by-table. Both LightGBM choices also write the pooled feature-importance table (§6, item 6).
 
 `--model lightgbm_fe` is the feature-engineered model (§4 `features_fe.py`): the v3 features plus per-county 7-day precipitation/runoff (`cnty_tp_w7`, `cnty_ro_w7`) and the `county` identity (categorical), with `year` removed. Same folds, embargo, hyperparameters and metrics; outputs go to `outputs_fe/`. Tune it with `python -m LightGBM_v1.tuning --feature-set fe --n-trials 50 --evaluate` (registry entry `"fe"` in `tuning.py`).
+
+`--mode final` (default `cv`) switches to the final-fit mode (`run.final_fit`): instead of the 3-fold CV the chosen configuration is retrained once — train on everything before the final year (2000-2024), early-stopping on the final year (2025) — and it forecasts the latest feature-complete week (2025-12-29 with inputs through Dec 2025): `det_prob`, `q10/q50/q90` plus duration horizons h1/h2 in `outputs/outputs_final_fit/tables/final_forecast_aweil.csv` (feeds `climatology_maps.forecast_maps --predictions`). CV output folders stay untouched.
 
 ### **Changing Model Version**
 To run an experiment and output to a new version folder (e.g., `outputs_v4`):

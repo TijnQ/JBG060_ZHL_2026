@@ -106,5 +106,5 @@ Anything in `.gitignore` (`raw_data/`, `climatology_maps/outputs/*`,
   time; only tiny max-aggregated mats are kept for the HTML. Peak RSS ~0.7 GB.
   (A previous version held all weekly frames in RAM and froze an 8 GB laptop.)
 * If the big machine is missing a `raw_data` source, check provenance:
-  `LightGBM_v1` fails loudly when `ALLOW_SYNTHETIC_FALLBACK = False`
-  (config.py) instead of silently using fake data.
+  `LightGBM_v1` fails loudly instead of silently using fake data
+  (the synthetic-fallback option was removed entirely).

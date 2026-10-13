@@ -36,15 +36,14 @@ JBG060-2026/
 |   |-- eda_quality_hydrometeorology/  # ERA5/ET/discharge/lake input-quality EDA
 |   `-- eda_quality_flood/              # Flood-mask EDA (country + NBeG state)
 |-- EDA_hydrometeorology/          # Hydro-meteorology vs flood EDA (Aweil + nationwide)
-|   |-- outputs/                   # Aweil tables/figures (REAL data)
-|   `-- outputs_country/           # nationwide tables (SYNTHETIC fallback - see its README)
+|   |-- outputs_county/            # Aweil tables/figures (REAL data)
+|   `-- outputs_country/           # nationwide tables (LEGACY synthetic output - regeneration requires real raw data)
 |-- literature/                    # Supporting papers and data documentation
 |-- LightGBM_v1/                    # LightGBM Flood Prediction Pipeline v1/v2 (see LightGBM_v1/README.md)
 |-- modeling/                      # Model-development testing ground: one folder per method
 |-- raw_data/                      # Downloaded separately and ignored by Git
 |-- MODEL_RESEARCH.md              # Living research notes on model choice and framework
-|-- requirements.txt               # Pinned Python dependencies
-|-- requirements-ml.txt            # Pinned ML stack for modeling/ (install separately)
+|-- requirements.txt               # Pinned Python dependencies (incl. the model stack: lightgbm, optuna, scikit-learn, tabpfn)
 |-- .gitignore
 `-- README.md
 ```
