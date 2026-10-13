@@ -8,8 +8,7 @@ Model choice (--model):
 - lightgbm_fe        — feature-engineered counterpart of the baseline
                        (features_fe.py: + county, + cnty_tp_w7, + cnty_ro_w7,
                        - year from the model input), same v3 hyperparameters,
-                       saved to outputs/outputs_fe/tables/ with a write-only
-                       feature-matrix audit snapshot in outputs/outputs_fe/features/
+                       saved to outputs/outputs_fe/tables/
 - tabpfn             — zero-shot TabPFN reference, saved to
                        TabPFN_v1/outputs/outputs_v3/tables/
 
@@ -25,16 +24,15 @@ so the frozen outputs_v3/outputs_baseline/outputs_fe tables stay untouched.
 Performs:
 1.  Builds the embargoed weekly feature matrix (2000-2025; 2025 stays outside CV)
 2.  3-Fold Expanding-Window Cross-Validation (config.CV_FOLDS; 2025 excluded)
-3.  Per-fold honest references: climatology & persistence baselines and advisory
-    tier thresholds estimated strictly inside each fold's training window
+3.  Per-fold honest references: climatology & persistence baselines estimated
+    strictly inside each fold's training window
 4.  Protocol-aligned metrics (evaluation_metrics.md): Brier / BSS, mean pinball,
     interval coverage, flood-week MAE/bias, per-horizon duration Brier,
     reliability diagrams (no cutoff-dependent classification metrics)
-5.  Stakeholder advisories & cattle movement advice for every fold test week
-6.  Data provenance report (real vs synthetic_fallback per source)
-7.  Outputs saved to the selected model's output folder; LightGBM runs also
-    report split & gain feature importance per fold
-    (feature_importance.csv + feature_importance_pooled.csv)
+5.  Data provenance report (real vs synthetic_fallback per source, console only)
+6.  Outputs saved to the selected model's output folder; LightGBM runs also
+    report pooled (mean-over-folds) split & gain feature importance
+    (feature_importance_pooled.csv)
 """
 
 from __future__ import annotations
@@ -49,7 +47,6 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from LightGBM_v1 import (
-    advisory,
     baselines,
     config,
     data_loader,
@@ -157,13 +154,6 @@ def main(model_name: str = "lightgbm", params_name: str = "baseline") -> None:
         added = [c for c in feature_columns if c not in features.FEATURE_COLUMNS]
         removed = [c for c in features.FEATURE_COLUMNS if c not in feature_columns]
         print(f"      Engineered set: + {added} | - {removed} (all other v3 columns identical)")
-        # Write-only audit snapshot (plan.md §6): dump the exact matrix the fe
-        # model sees — engineered columns, dtypes and completeness included —
-        # so runs can be compared without re-deriving features. Never read back.
-        config.FE_FEATURES_DIR.mkdir(parents=True, exist_ok=True)
-        snapshot_path = config.FE_FEATURES_DIR / "weekly_features_fe.csv"
-        feats_df.to_csv(snapshot_path, index=False)
-        print(f"      fe feature-matrix snapshot -> {snapshot_path}")
 
     # Full-frame duration targets (computed once; labels exist through end-2025)
     full_duration_targets = duration_model.build_duration_targets(feats_df)
@@ -173,8 +163,6 @@ def main(model_name: str = "lightgbm", params_name: str = "baseline") -> None:
     folds = splits.get_cv_folds(feats_df)
 
     oof_rows = []
-    advisory_rows = []
-    movement_rows = []
     importance_rows: list[pd.DataFrame] = []
 
     for fold_info in folds:
@@ -251,16 +239,6 @@ def main(model_name: str = "lightgbm", params_name: str = "baseline") -> None:
 
         oof_rows.append(res_df)
 
-        # Per-fold advisory tier thresholds (estimated on this fold's train window)
-        thresh_stats = advisory.climatology_threshold_stats(tr_df)
-        advisories_f = advisory.generate_advisories(res_df, thresh_stats)
-        movement_f = advisory.generate_movement_advice(
-            advisories_f,
-            dur_pred.assign(week=tst_df["week"], county=tst_df["county"]),
-        )
-        advisory_rows.append(advisories_f)
-        movement_rows.append(movement_f)
-
     all_oof_df = pd.concat(oof_rows, ignore_index=True)
 
     # Per-fold feature importance pooled to a mean across folds (LightGBM only).
@@ -283,9 +261,6 @@ def main(model_name: str = "lightgbm", params_name: str = "baseline") -> None:
     reliability_det = metrics.reliability_diagram_data(all_oof_df["y_det"], all_oof_df["det_prob"])
     county_table = metrics.evaluate_county_metrics(all_oof_df)
     monthly_table = metrics.evaluate_monthly_metrics(all_oof_df)
-
-    advisories_df = pd.concat(advisory_rows, ignore_index=True)
-    movement_df = pd.concat(movement_rows, ignore_index=True)
 
     # 5. Data provenance report (real vs synthetic_fallback per source)
     provenance_df = data_loader.get_provenance_report()
@@ -353,12 +328,8 @@ def main(model_name: str = "lightgbm", params_name: str = "baseline") -> None:
         "reliability_det_prob.csv": reliability_det,
         "county_metrics_aweil.csv": county_table,
         "monthly_metrics_aweil.csv": monthly_table,
-        "advisories.csv": advisories_df,
-        "movement_advice.csv": movement_df,
-        "data_provenance.csv": provenance_df,
     }
-    if importance_detail is not None:
-        out_files["feature_importance.csv"] = importance_detail
+    if importance_pooled is not None:
         out_files["feature_importance_pooled.csv"] = importance_pooled
     for name, frame in out_files.items():
         frame.to_csv(tables_dir / name, index=False)
@@ -371,7 +342,6 @@ def main(model_name: str = "lightgbm", params_name: str = "baseline") -> None:
 
     # 7. Final summary
     pooled_lgbm = eval_table[(eval_table["scope"] == "pooled") & (eval_table["model"] == model_name)].iloc[0]
-    n_advisory_weeks = advisories_df["week"].nunique() if len(advisories_df) else 0
     print("\n" + "=" * 95)
     print("PIPELINE COMPLETE — V3 SUMMARY")
     print("=" * 95)
@@ -383,8 +353,6 @@ def main(model_name: str = "lightgbm", params_name: str = "baseline") -> None:
           f"mean pinball {pooled_lgbm['mean_pinball_loss']:.3f}, "
           f"coverage(flood) {pooled_lgbm['coverage_flood_weeks']:.3f}, "
           f"MAE(flood) {pooled_lgbm['mae_flood_weeks']:.2f} km2")
-    print(f"  Advisories for {n_advisory_weeks} test weeks; "
-          f"{len(movement_df)} movement recommendations")
     n_real = int((provenance_df['provenance'] == 'real').sum())
     n_synth = int((provenance_df['provenance'] == 'synthetic_fallback').sum())
     print(f"  Provenance: {n_real} real sources, {n_synth} synthetic fallbacks")

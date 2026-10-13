@@ -15,9 +15,8 @@ The pipeline produces three core predictions per county and per week:
 2. **`q10 / q50 / q90`**: Quantile flood area in km² (Pessimistic $q10$, Median $q50$, Worst-case $q90$).
 3. **Multi-Horizon Duration**: Probability that flooding is detected 1, 2, 3, and 4 weeks ahead.
 
-These predictions feed into rule-based stakeholder layers to generate:
-- **`advisories.csv`**: Risk Tiers (0 to 3), agricultural crop phase, and exposed hectares.
-- **`movement_advice.csv`**: Multi-week cattle relocation recommendations pointing herders to safe destination counties.
+These predictions feed Level 2 (`climatology_maps/`), which allocates the county-level
+forecasts onto the pixel flood maps for the cattle/crop exposure risk products.
 
 ---
 
@@ -26,7 +25,7 @@ These predictions feed into rule-based stakeholder layers to generate:
 v3 fixes three evaluation-honesty problems found in the v2 design, following `evaluation_metrics.md`:
 
 1. **3 expanding-window CV folds** (replacing 5 folds of 5-year blocks). Walk-forward design with an expanding training window, 1 validation year, and 2–3 held-out test years per fold. Every flood season 2009–2024 is used for validation/test exactly once.
-2. **Per-fold references**: climatology & persistence baselines and advisory tier thresholds are estimated *inside each fold's training window* and never see validation/test years.
+2. **Per-fold references**: climatology & persistence baselines are estimated *inside each fold's training window* and never see validation/test years.
 3. **Protocol-aligned metrics**: the cutoff-dependent classification family (accuracy, precision, recall, F1, CSI, FAR) is removed from the headline summary — it throws the forecast probability away. Headline detection accuracy is the **Brier Score** with skill scores vs climatology and persistence, plus reliability diagrams. Area metrics are pinball loss, interval coverage, and flood-week MAE/bias. Duration gets its own Brier metric per horizon.
 
 ### 2.1 Cross-Validation Folds (`config.CV_FOLDS`)
@@ -41,7 +40,7 @@ v3 fixes three evaluation-honesty problems found in the v2 design, following `ev
 
 ### 2.2 Data Provenance
 
-Every data loader records its source in a provenance registry (`data_loader.PROVENANCE`): `real` or `synthetic_fallback`, plus first/last valid date. Synthetic fallbacks are gated by `config.ALLOW_SYNTHETIC_FALLBACK` (currently `True`); set it to `False` and any missing real source raises `RuntimeError` instead of silently substituting generated data. Each run prints the provenance report and writes it to `tables/data_provenance.csv` — check it before interpreting results.
+Every data loader records its source in a provenance registry (`data_loader.PROVENANCE`): `real` or `synthetic_fallback`, plus first/last valid date. Synthetic fallbacks are gated by `config.ALLOW_SYNTHETIC_FALLBACK` (currently `True`); set it to `False` and any missing real source raises `RuntimeError` instead of silently substituting generated data. Each run prints the provenance report to the console — check it before interpreting results.
 
 ---
 
@@ -59,14 +58,13 @@ LightGBM_v1/
 ├── lgbm_model.py          # LightGBM detection classifier & q10/q50/q90 quantile area regressors
 ├── duration_model.py      # Multi-horizon binary LightGBM classifiers (1-4 weeks ahead)
 ├── metrics.py             # Protocol metrics (Brier, BSS, pinball, coverage, MAE/bias, reliability)
-├── advisory.py            # Stakeholder advisories.csv & movement_advice.csv generator
 ├── run.py                 # Master execution script (--model lightgbm | lightgbm_baseline | lightgbm_fe | tabpfn)
 └── outputs/
     ├── outputs_v1/        # Execution outputs for initial baseline model
     ├── outputs_v2/        # Execution outputs for 5-fold CV & monthly/county breakdown
     ├── outputs_v3/        # Execution outputs for 3-fold expanding-window CV (--model lightgbm)
     ├── outputs_baseline/  # Frozen v3 baseline run (--model lightgbm_baseline)
-    └── outputs_fe/        # Feature-engineered run (--model lightgbm_fe): same tables + features/weekly_features_fe.csv snapshot
+    └── outputs_fe/        # Feature-engineered run (--model lightgbm_fe): same tables
         └── tables/
             ├── cv_test_predictions_aweil.csv
             ├── cv_metrics_summary_aweil.csv
@@ -75,10 +73,6 @@ LightGBM_v1/
             ├── reliability_duration_h1..h4.csv
             ├── county_metrics_aweil.csv
             ├── monthly_metrics_aweil.csv
-            ├── advisories.csv
-            ├── movement_advice.csv
-            ├── data_provenance.csv
-            ├── feature_importance.csv
             └── feature_importance_pooled.csv
 ```
 
@@ -94,7 +88,7 @@ LightGBM_v1/
 ### **`data_loader.py`**
 - `load_boundaries()`, `load_flood_labels()`: Admin-2 GeoJSON boundaries and weekly county detected flood area (km²) from committed satellite EDA datasets.
 - `load_era5_dataset()`, `load_gauge_daily()`, `load_albert_level()`, `load_et0_daily()`: AgERA5 precipitation/runoff, Dartmouth gauge 100205 discharge, Lake Albert levels, reference evapotranspiration.
-- `PROVENANCE` + `get_provenance_report()`: real-vs-synthetic registry per source, written to `data_provenance.csv` every run.
+- `PROVENANCE` + `get_provenance_report()`: real-vs-synthetic registry per source, printed to the console every run.
 
 ### **`splits.py`**
 - `get_cv_folds()`: builds the 3 expanding-window folds from `config.CV_FOLDS`; purges the first week of each val/test window.
@@ -147,18 +141,14 @@ The flood labels come from satellite flood masks with irregular observation cove
 
 ## 6. Explanation of Output Files
 
-All outputs are saved to `LightGBM_v1/outputs/outputs_v3/tables/` — to `LightGBM_v1/outputs/outputs_baseline/tables/` when running `--model lightgbm_baseline` — and to `LightGBM_v1/outputs/outputs_fe/tables/` when running `--model lightgbm_fe` (which additionally writes the model-input snapshot `outputs_fe/features/weekly_features_fe.csv`):
+All outputs are saved to `LightGBM_v1/outputs/outputs_v3/tables/` — to `LightGBM_v1/outputs/outputs_baseline/tables/` when running `--model lightgbm_baseline` — and to `LightGBM_v1/outputs/outputs_fe/tables/` when running `--model lightgbm_fe`:
 
 1. **`cv_test_predictions_aweil.csv`** — Out-of-fold predictions for every fold test week (2010–2011, 2016–2017, 2022–2024). Columns: `county`, `week`, `test_year`, `y_true`, `y_det`, `det_prob`, `q10/q50/q90`, per-fold baselines, `fold`, duration predictions `det_prob_h1..h4`, duration targets & per-fold references.
 2. **`cv_metrics_summary_aweil.csv`** — 3 fold rows × 3 models + 3 pooled rows, protocol columns only.
 3. **`duration_metrics_aweil.csv`** — Per (fold, horizon) + pooled: Brier and BSS vs the two per-fold references.
 4. **`reliability_det_prob.csv` / `reliability_duration_h1..h4.csv`** — Binned reliability tables (pooled OOF).
 5. **`county_metrics_aweil.csv` / `monthly_metrics_aweil.csv`** — Per-county and per-month (Jan–Dec, rainy vs dry) protocol breakdowns.
-6. **`advisories.csv`** — Weekly stakeholder advisories for all fold test weeks: `tier` (0–3), agricultural `phase`, exposed hectares, cattle count, plain-language text.
-7. **`movement_advice.csv`** — Duration-based cattle relocation guidance recommending destination counties for high-risk weeks.
-8. **`data_provenance.csv`** — Per-source provenance (`real` / `synthetic_fallback`) with coverage ranges.
-9. **`feature_importance.csv`** *(LightGBM runs only)* — Per-fold split & gain importance for every feature and every model head (`det`, `q10`, `q50`, `q90`), including each feature's share of that head's total importance (`share_pct`).
-10. **`feature_importance_pooled.csv`** *(LightGBM runs only)* — The same importances averaged over the 3 folds; the quick table for reading which features the model actually uses.
+6. **`feature_importance_pooled.csv`** *(LightGBM runs only)* — Split & gain importance for every feature and every model head (`det`, `q10`, `q50`, `q90`), averaged over the 3 folds; the quick table for reading which features the model actually uses.
 
 ---
 
@@ -173,9 +163,9 @@ python LightGBM_v1/run.py --model lightgbm_fe         # feature-engineered  -> o
 python LightGBM_v1/run.py --model tabpfn              # TabPFN reference
 ```
 
-`--model lightgbm_baseline` runs **exactly the v3 model** (same features, same default hyperparameters) but writes every output table to `LightGBM_v1/outputs/outputs_baseline/tables/`, so the frozen baseline stays clearly separated from the later improved LightGBM model and the two can be diffed table-by-table. Both LightGBM choices also write the feature-importance tables (§6, items 9–10).
+`--model lightgbm_baseline` runs **exactly the v3 model** (same features, same default hyperparameters) but writes every output table to `LightGBM_v1/outputs/outputs_baseline/tables/`, so the frozen baseline stays clearly separated from the later improved LightGBM model and the two can be diffed table-by-table. Both LightGBM choices also write the pooled feature-importance table (§6, item 6).
 
-`--model lightgbm_fe` is the feature-engineered model (§4 `features_fe.py`): the v3 features plus per-county 7-day precipitation/runoff (`cnty_tp_w7`, `cnty_ro_w7`) and the `county` identity (categorical), with `year` removed. Same folds, embargo, hyperparameters and metrics; outputs go to `outputs_fe/` and step [1/7] also dumps the exact model-input snapshot to `outputs_fe/features/weekly_features_fe.csv` for audit. Tune it with `python -m LightGBM_v1.tuning --feature-set fe --n-trials 50 --evaluate` (registry entry `"fe"` in `tuning.py`).
+`--model lightgbm_fe` is the feature-engineered model (§4 `features_fe.py`): the v3 features plus per-county 7-day precipitation/runoff (`cnty_tp_w7`, `cnty_ro_w7`) and the `county` identity (categorical), with `year` removed. Same folds, embargo, hyperparameters and metrics; outputs go to `outputs_fe/`. Tune it with `python -m LightGBM_v1.tuning --feature-set fe --n-trials 50 --evaluate` (registry entry `"fe"` in `tuning.py`).
 
 ### **Changing Model Version**
 To run an experiment and output to a new version folder (e.g., `outputs_v4`):

@@ -8,7 +8,7 @@ v3: every loader records where its data came from in the PROVENANCE registry
 fallbacks are gated on config.ALLOW_SYNTHETIC_FALLBACK; with the gate closed,
 a missing real source raises RuntimeError instead of silently substituting
 generated data. get_provenance_report() returns the registry as a DataFrame
-for the run log and data_provenance.csv.
+for the run log (printed to the console at the end of every run).
 """
 
 from __future__ import annotations

@@ -91,9 +91,6 @@ class BackendTests(unittest.TestCase):
                 stack.enter_context(patch.object(duration, "train_duration_models", return_value={}))
                 stack.enter_context(patch.object(duration, "predict_duration", side_effect=lambda models, X, *args, **kwargs:
                     pd.DataFrame({f"det_prob_h{h}": 0.7 for h in config.DURATION_HORIZONS}, index=X.index)))
-                stack.enter_context(patch.object(run.advisory, "climatology_threshold_stats", return_value={}))
-                stack.enter_context(patch.object(run.advisory, "generate_advisories", side_effect=lambda df, stats: df))
-                stack.enter_context(patch.object(run.advisory, "generate_movement_advice", return_value=pd.DataFrame()))
                 stack.enter_context(patch.object(run.data_loader, "get_provenance_report",
                                                 return_value=pd.DataFrame({"provenance": ["real"]})))
                 stack.enter_context(patch("pathlib.Path.mkdir"))

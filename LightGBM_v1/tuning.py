@@ -760,7 +760,7 @@ def _evaluate_params(
 ) -> pd.DataFrame:
     """Refit the given head params and score the frozen TEST years.
 
-    Reproduces the run.py fold loop (minus the duration/advisory steps): per
+    Reproduces the run.py fold loop (minus the duration step): per
     fold, fit on train, early-stop on val, predict the test year once, then
     score with metrics.evaluate_summary_metrics. Shared by evaluate_best_params
     (single studies) and the all_heads merge (combined winners).
@@ -822,7 +822,7 @@ def evaluate_best_params(
 ) -> pd.DataFrame:
     """Refit the winning parameter groups and score the frozen TEST years.
 
-    Reproduces the run.py fold loop (minus the duration/advisory steps): per
+    Reproduces the run.py fold loop (minus the duration step): per
     fold, fit on train, early-stop on val, predict the test year once, then
     score with metrics.evaluate_summary_metrics. The untuned heads of a
     single-metric study keep today's hardcoded defaults (params=None).

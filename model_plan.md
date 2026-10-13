@@ -57,6 +57,10 @@ Task B never contradicts Task A. Its map is always presented as: "IF the county 
 - **`movement_advice.csv` (identified gap - still to build)** - *where to move to:* rank destination areas by their flood risk over the next 1-4 weeks (from Task A's duration/horizon predictions) x available rangeland x accessibility. Nothing in the repo does this yet.
 - **ZHL bulletin** - a one-pager: the weekly map + `advisories.csv` + `movement_advice.csv`.
 
+> **Status (2026-10):** `advisories.csv` and `movement_advice.csv` are no longer produced — the
+> county-week bulletin tables were superseded by the Level-2 pixel risk products
+> (`climatology_maps/risk_maps.py`: per-pixel flood maps overlaid with cattle & crop exposure).
+
 ---
 
 ## 3. Why do we need both levels? (the dummy-proof version)

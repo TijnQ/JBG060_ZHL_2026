@@ -13,8 +13,8 @@
 | Model output | Grain | Feeds into |
 |---|---|---|
 | `det_prob` — P(flood detected in county this week) | county-week | headline of the bulletin, exposure weighting |
-| `q10 / q50 / q90` — flood area in km² | county-week | advisory **tiers** and exposed-hectare calculation |
-| Duration — P(still flooded in 1/2/3/4 weeks) | county-week × horizon | `movement_advice.csv` (where to move to) |
+| `q10 / q50 / q90` — flood area in km² | county-week | spatial allocation in Level 2 (which pixels get the water) |
+| Duration — P(still flooded in 1/2/3/4 weeks) | county-week × horizon | Level-2 risk products (how long exposure persists) |
 
 We evaluate at **two levels**: the model outputs (1–3, technical metrics) and the final advice
 (4, stakeholder metrics). Both must be reported.
@@ -49,7 +49,7 @@ headline: accuracy needs a yes/no cutoff and throws the confidence away.
 
 **Reliability diagram** — "can the number be trusted?" Group all predictions by stated probability
 (all weeks said 60–70%, all said 20–30%, …) and plot how often flooding *actually* happened per group.
-Points on the diagonal = honest; below the diagonal = overconfident (tiers would trigger too often).
+Points on the diagonal = honest; below the diagonal = overconfident (flood alarms would fire too often).
 This is where the censoring problem becomes visible: under-prediction clustered in peak-cloud weeks
 is the missed-observation signal (see §7).
 
@@ -78,7 +78,7 @@ median area** as reference:
    zeros make coverage near-automatic), with the all-weeks number next to it.
 3. **MAE and bias on flood weeks only** (`y_true > 0`). Across all weeks the error looks beautifully
    tiny because ~79% of county-weeks are ≈ 0 km²; the honest error figure is conditional on flooding.
-   Bias matters specifically: systematically under-predicting area = systematically under-tiering.
+   Bias matters specifically: systematically under-predicting area = systematically under-predicting exposure.
 
 ### 3.3 Duration (1–4 week horizons)
 
@@ -93,6 +93,11 @@ Same probabilistic metrics as §3.1 — Brier score + reliability diagram — co
 Principle: **a baseline must predict the same kind of thing as the model** — probabilities to be
 scored with the Brier score, km² to be scored with pinball/MAE. Every learned model must beat these
 before it earns a place in the report (same keep/kill rule as the `baselines.py` docstring).
+
+> **Status (2026-10):** the rule-based advisory **tiers** (the county-month mean/p80/p95 *tier
+> thresholds* mentioned below) are retired — `advisories.csv` / `movement_advice.csv` are no longer
+> produced. The climatology & persistence **baselines** (§4.1–4.2) stay: they remain the skill
+> references in every metrics table.
 
 ### 4.1 Climatology — "what usually happens here, at this time of year"
 
