@@ -101,7 +101,7 @@ _SEARCH_SPACE: tuple[tuple[str, str, dict], ...] = (
 # Add ONE line per engineered feature set — no other code changes needed.
 FEATURE_SETS: dict[str, Callable[[], tuple[pd.DataFrame, list[str]]]] = {
     "baseline": lambda: (features.build_weekly_features(), features.FEATURE_COLUMNS),
-    # Engineered set: derived from the frozen v3 matrix —
+    # Engineered set: derived from the frozen baseline matrix —
     # + county, + cnty_tp_w7, + cnty_ro_w7, - year (features_fe.py).
     "fe": lambda: (features_fe.build_weekly_features_fe(), features_fe.FEATURE_COLUMNS_ENGINEERED),
 }

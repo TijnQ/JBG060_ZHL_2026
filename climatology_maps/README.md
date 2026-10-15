@@ -115,6 +115,14 @@ the same HDX source).
 
 # custom prediction file (any csv with county/week/det_prob/q10/q50/q90)
 .venv/bin/python -m climatology_maps.forecast_maps --predictions PATH
+
+# OPERATIONAL PRODUCT (--mode final): downscale the Level-1 final-fit forecast
+# (LightGBM_v1/outputs/outputs_final_fit/tables/final_forecast_aweil.csv, written
+# by `python -m LightGBM_v1.run --mode final`) -> outputs/outputs_final_fit/
+.venv/bin/python -m climatology_maps.forecast_maps --mode final
+
+# the same product 2 weeks ahead (only h1/h2 ship in the final table)
+.venv/bin/python -m climatology_maps.forecast_maps --mode final --horizon 2 --metric prob
 ```
 
 Run the small self-checks (no raw data needed):
@@ -126,7 +134,8 @@ Run the small self-checks (no raw data needed):
 
 Outputs land in `climatology_maps/outputs/`: `*.png`, `*_interactive.html`,
 `climatology_<metric>.csv` (county climatology), `forecast_maps/` (weekly maps,
-`week_summary.csv`) and `climatology_data/` (pixel-climatology cache). The
+`week_summary.csv`), `outputs_final_fit/` (the operational `--mode final`
+product) and `climatology_data/` (pixel-climatology cache). The
 interactive `*.html` files are large and are **gitignored** — regenerate them on
 demand. See `RUN_ON_BIG_MACHINE.md` for running the heavy model training and map
 generation on the RTX 3090 machine.

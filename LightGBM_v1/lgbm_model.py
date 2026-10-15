@@ -10,7 +10,7 @@ unchanged; LightGBM_v1.tuning passes explicit per-head overrides.
 
 `PARAM_SETS` is the named 2x2 hyperparameter registry (feature set x tuning
 status) that run.py exposes via --params: "baseline" / "fe_baseline" resolve to
-params=None (the frozen v3 defaults), while "baseline_optuna" / "fe_optuna"
+params=None (the frozen baseline defaults), while "baseline_optuna" / "fe_optuna"
 carry the per-head Optuna winners from outputs/tuning/.
 """
 
@@ -37,7 +37,7 @@ __all__ = [
     "train_quantile_regressors",
 ]
 
-# Shared default hyperparameters (v3 baseline). Every train function uses these
+# Shared default hyperparameters (the project baseline). Every train function uses these
 # when called with params=None — exactly the hardcoded values run.py has always
 # trained with (plan.md §2).
 _BASE_PARAMS: dict[str, object] = {
@@ -63,15 +63,15 @@ def _merged_params(params: dict[str, object] | None) -> dict[str, object]:
 #
 # The 2x2 grid of (feature set x hyperparameters) the project compares:
 #
-#   |                    | v3 defaults   | Optuna winners     |
-#   |--------------------|---------------|--------------------|
-#   | baseline features  | "baseline"    | "baseline_optuna"  |
-#   | fe features        | "fe_baseline" | "fe_optuna"        |
+#   |                    | Baseline defaults | Optuna winners     |
+#   |--------------------|-------------------|--------------------|
+#   | baseline features  | "baseline"        | "baseline_optuna"  |
+#   | fe features        | "fe_baseline"     | "fe_optuna"        |
 #
-# - "baseline" / "fe_baseline": params=None -> the frozen v3 defaults
+# - "baseline" / "fe_baseline": params=None -> the frozen baseline defaults
 #   (_BASE_PARAMS / _DURATION_BASE_PARAMS), exactly what run.py has always
 #   trained. The values are identical; "fe_baseline" exists so the grid stays
-#   explicit (config.py: the fe model shares the v3 default hyperparameters).
+#   explicit (config.py: the fe model shares the baseline default hyperparameters).
 # - "baseline_optuna" / "fe_optuna": per-head winners from
 #   outputs/tuning/best_params_lgbm_aweil_{baseline,fe}_v3_all_heads.json
 #   (3 sub-studies x 50 trials each; created 2026-10-09 / 2026-10-08), passed
@@ -166,7 +166,7 @@ PARAM_SETS: dict[str, dict[str, dict[str, object] | None]] = {
 
 
 def get_param_set(name: str) -> dict[str, dict[str, object] | None]:
-    """Resolve a named hyperparameter set (run.py --params); None = v3 defaults."""
+    """Resolve a named hyperparameter set (run.py --params); None = baseline defaults."""
     if name not in PARAM_SETS:
         raise ValueError(f"Unknown param set '{name}'. Available: {sorted(PARAM_SETS)}")
     return PARAM_SETS[name]
@@ -254,7 +254,7 @@ def predict_lightgbm(
     """Generate LightGBM predictions for detection probability and quantile flood area.
 
     `feature_columns` selects/reorders the prediction input (None = the frozen
-    v3 FEATURE_COLUMNS); run.py passes the engineered list for --model
+    baseline FEATURE_COLUMNS); run.py passes the engineered list for --model
     lightgbm_fe so the models are queried with exactly the columns they were
     fitted on.
     """

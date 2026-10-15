@@ -1,9 +1,9 @@
-"""Data loader module for LightGBM_v1 pipeline (v3: provenance-tracked).
+"""Data loader module for LightGBM_v1 pipeline (baseline: provenance-tracked).
 
 Fetches real flood mask label records, AgERA5 rainfall/runoff datasets,
 Dartmouth gauge 100205 readings, Lake Albert levels, and evapotranspiration data.
 
-v3: every loader records where its data came from in the PROVENANCE registry
+Baseline: every loader records where its data came from in the PROVENANCE registry
 ("real" plus first/last valid date). There is no synthetic fallback: any
 missing real source raises immediately instead of substituting generated
 data. get_provenance_report() returns the registry as a DataFrame for the
@@ -32,7 +32,7 @@ __all__ = [
     "load_gauge_daily",
 ]
 
-# v3 provenance registry: source name -> {source, provenance, coverage_start,
+# Baseline provenance registry: source name -> {source, provenance, coverage_start,
 # coverage_end, note}. Populated as loaders run; see get_provenance_report().
 PROVENANCE: dict[str, dict] = {}
 

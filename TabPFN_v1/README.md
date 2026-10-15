@@ -1,4 +1,4 @@
-# TabPFN using the LightGBM v3 protocol
+# TabPFN using the LightGBM baseline protocol
 
 Run from the repository root with the project environment:
 

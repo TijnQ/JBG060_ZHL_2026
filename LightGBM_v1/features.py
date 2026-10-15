@@ -145,7 +145,7 @@ def build_weekly_features() -> pd.DataFrame:
     frame["month_sin"] = np.sin(2 * np.pi * frame["month"] / 12)
     frame["month_cos"] = np.cos(2 * np.pi * frame["month"] / 12)
 
-    # v3: boundary purging happens per fold in splits.get_cv_folds.
+    # Baseline: boundary purging happens per fold in splits.get_cv_folds.
     # County-weeks with any missing hydro feature (e.g. partial 2025 coverage)
     # are flagged incomplete; run.py drops and reports them. 2025 weeks stay
     # outside all CV folds (no fold trains, validates, or tests on 2025).

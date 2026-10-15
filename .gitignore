@@ -21,6 +21,7 @@ climatology_maps/outputs/*.html
 # the forecast-map PNG gallery IS committed so it can be shown without re-running.
 climatology_maps/outputs/climatology_data/
 climatology_maps/outputs/forecast_maps/*.html
+climatology_maps/outputs/outputs_final_fit/*.html
 
 # Local-only course data & credentials (never pushed)
 Data_overview.xlsx

@@ -15,8 +15,10 @@ import pandas as pd
 
 from climatology_maps.pixel_climatology import pixel_area_km2
 from climatology_maps.forecast_maps import (
+    _validate_final_horizon,
     compose_week,
     county_month_assets,
+    load_final_predictions,
     pivot_raster,
 )
 
@@ -140,6 +142,63 @@ def test_pivot_raster_has_nan_outside_domain() -> None:
     assert np.isnan(z).any(), "expected a NaN hole where a cell is outside the domain"
     assert 27.2 in lons and 9.0 in lats  # row/column still present
     print("  ok: raster has NaN outside the domain (rendered as no data)")
+
+
+def test_load_final_predictions_sorts_and_reports_horizons() -> None:
+    import tempfile
+    from pathlib import Path
+
+    with tempfile.TemporaryDirectory() as tmp:
+        path = Path(tmp) / "final_forecast_aweil.csv"
+        pd.DataFrame([
+            {"county": "B", "week": "2025-12-29", "det_prob": 0.1, "q10": 0.0,
+             "q50": 0.01, "q90": 0.05, "det_prob_h1": 0.08, "det_prob_h2": 0.06},
+            {"county": "A", "week": "2025-12-29", "det_prob": 0.2, "q10": 0.0,
+             "q50": 0.02, "q90": 0.09, "det_prob_h1": 0.15, "det_prob_h2": 0.12},
+        ]).to_csv(path, index=False)
+        df, horizons = load_final_predictions(path)
+    assert horizons == [1, 2], horizons
+    assert list(df["county"]) == ["A", "B"]  # sorted by county, then week
+    assert (df["week"] == pd.Timestamp("2025-12-29")).all()
+    print("  ok: final table loads, sorts by county/week, reports duration heads h1/h2")
+
+
+def test_load_final_predictions_missing_columns_raise() -> None:
+    import tempfile
+    from pathlib import Path
+
+    with tempfile.TemporaryDirectory() as tmp:
+        path = Path(tmp) / "bad.csv"
+        pd.DataFrame([{"county": "A", "week": "2025-12-29", "det_prob": 0.2}]).to_csv(
+            path, index=False)
+        try:
+            load_final_predictions(path)
+        except ValueError as exc:
+            assert "q50" in str(exc) and "q90" in str(exc), exc
+        else:
+            raise AssertionError("expected ValueError for missing columns")
+    print("  ok: final table with missing columns raises a clear ValueError")
+
+
+def test_final_horizon_guard_rejects_heads_the_table_lacks() -> None:
+    # h0 (same week) always exists; the final table ships h1/h2 only.
+    _validate_final_horizon([1, 2], 0)
+    _validate_final_horizon([1, 2], 1)
+    _validate_final_horizon([1, 2], 2)
+    for bad in (3, 4):
+        try:
+            _validate_final_horizon([1, 2], bad)
+        except SystemExit as exc:
+            assert "h3/h4" in str(exc), exc
+        else:
+            raise AssertionError(f"expected SystemExit for h{bad}")
+    try:
+        _validate_final_horizon([], 1)
+    except SystemExit:
+        pass
+    else:
+        raise AssertionError("expected SystemExit when the table ships no heads")
+    print("  ok: final-mode horizon guard accepts h0/h1/h2, rejects h3/h4 and empty")
 
 
 if __name__ == "__main__":

@@ -51,7 +51,7 @@ def train_forecast(X_train, y_train_area, y_train_det,
 def predict_forecast(models, X, feature_columns=None):
     """Predict flood probability and the three flooded-area estimates.
 
-    `feature_columns` selects the prediction input (None = the frozen v3
+    `feature_columns` selects the prediction input (None = the frozen baseline
     FEATURE_COLUMNS); run.py passes the selected feature list so the models are
     queried with exactly the columns they were fitted on.
     """
@@ -84,7 +84,7 @@ def predict_forecast(models, X, feature_columns=None):
 def train_duration_models(df_train, df_val, horizons=config.DURATION_HORIZONS, feature_columns=None):
     """Fit a separate flood detection model for each future week (1 to 4).
 
-    `feature_columns` overrides the model input columns (None = the frozen v3
+    `feature_columns` overrides the model input columns (None = the frozen baseline
     FEATURE_COLUMNS; run.py passes the engineered list for --model lightgbm_fe).
     """
     # Use LightGBM's function to create the same future flood labels.
@@ -106,7 +106,7 @@ def train_duration_models(df_train, df_val, horizons=config.DURATION_HORIZONS, f
 def predict_duration(duration_models, X, feature_columns=None):
     """Return one probability column for each future week.
 
-    `feature_columns` selects the prediction input (None = the frozen v3
+    `feature_columns` selects the prediction input (None = the frozen baseline
     FEATURE_COLUMNS; run.py passes the engineered list for --model lightgbm_fe).
     """
     columns = list(feature_columns) if feature_columns is not None else list(FEATURE_COLUMNS)

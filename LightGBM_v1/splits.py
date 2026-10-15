@@ -1,4 +1,4 @@
-"""Temporal splits for LightGBM_v1 pipeline (v3: 3 expanding-window CV folds).
+"""Temporal splits for LightGBM_v1 pipeline (baseline: 3 expanding-window CV folds).
 
 Walk-forward cross-validation with an expanding training window: each fold
 trains on everything before its validation year, validates on one

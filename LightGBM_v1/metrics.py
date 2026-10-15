@@ -1,4 +1,4 @@
-"""Evaluation metrics module for LightGBM_v1 pipeline (v3: protocol-aligned).
+"""Evaluation metrics module for LightGBM_v1 pipeline (baseline: protocol-aligned).
 
 The metric set is exactly the protocol frozen in evaluation_metrics.md (Task A):
 

@@ -2,7 +2,7 @@
 
 > **Project**: JBG060 / ZHL — Northern Bahr el Ghazal Flood Modeling (South Sudan)
 > **Scope**: 5 Aweil Counties (*Aweil Centre, Aweil East, Aweil North, Aweil South, Aweil West*)
-> **Version**: `v3` (3-Fold Expanding-Window Cross-Validation, Protocol-Aligned Metrics, Provenance Tracking)
+> **Version**: `v3` — the project baseline (3-Fold Expanding-Window Cross-Validation, Protocol-Aligned Metrics, Provenance Tracking)
 
 ---
 
@@ -20,9 +20,9 @@ forecasts onto the pixel flood maps for the cattle/crop exposure risk products.
 
 ---
 
-## 2. What Changed in v3
+## 2. What Changed in `v3` (the Baseline)
 
-v3 fixes three evaluation-honesty problems found in the v2 design, following `evaluation_metrics.md`:
+`v3` — now the project baseline — fixes three evaluation-honesty problems found in the `v2` design, following `evaluation_metrics.md`:
 
 1. **3 expanding-window CV folds** (replacing 5 folds of 5-year blocks). Walk-forward design with an expanding training window, 1 validation year, and 2–3 held-out test years per fold. Every flood season 2009–2024 is used for validation/test exactly once.
 2. **Per-fold references**: climatology & persistence baselines are estimated *inside each fold's training window* and never see validation/test years.
@@ -53,7 +53,7 @@ LightGBM_v1/
 ├── data_loader.py         # Signal & label loaders with provenance registry (real sources only)
 ├── splits.py              # 3 expanding-window CV folds & boundary purging
 ├── features.py            # 50 rolling hydro features enforcing the Friday 3-day embargo cutoff
-├── features_fe.py         # Feature-engineered set for --model lightgbm_fe (v3 + per-county ERA5 + county)
+├── features_fe.py         # Feature-engineered set for --model lightgbm_fe (baseline + per-county ERA5 + county)
 ├── baselines.py           # Climatology (smoothed & median) and Markov Persistence reference baselines
 ├── lgbm_model.py          # LightGBM detection classifier & q10/q50/q90 quantile area regressors
 ├── duration_model.py      # Multi-horizon binary LightGBM classifiers (1-4 weeks ahead)
@@ -63,7 +63,7 @@ LightGBM_v1/
     ├── outputs_v1/        # Execution outputs for initial baseline model
     ├── outputs_v2/        # Execution outputs for 5-fold CV & monthly/county breakdown
     ├── outputs_v3/        # Execution outputs for 3-fold expanding-window CV (--model lightgbm)
-    ├── outputs_baseline/  # Frozen v3 baseline run (--model lightgbm_baseline)
+    ├── outputs_baseline/  # Frozen baseline run (--model lightgbm_baseline)
     └── outputs_fe/        # Feature-engineered run (--model lightgbm_fe): same tables
         └── tables/
             ├── cv_test_predictions_aweil.csv
@@ -96,7 +96,7 @@ LightGBM_v1/
 - `build_weekly_features()`: embargoed weekly feature matrix — every feature dated for a target week starting Monday *m* is dated at most *m* − 3 days. County-weeks with any missing hydro feature are flagged `complete=False`; `run.py` drops and reports them. Lake Albert altimetry is sparse (~1 obs per 10-day satellite revisit, first obs 2002-07-10) and is forward-filled to daily (past data only); its timestamps carry the satellite pass time-of-day and are normalized to the pass day so they align with the daily grid; weeks before the first observation (~2000-01–2002-07) are incomplete and excluded.
 
 ### **`features_fe.py`**
-- `build_weekly_features_fe()`: feature-engineered matrix for `--model lightgbm_fe`. Starts from the frozen v3 matrix (`features.build_weekly_features`) and adds: `cnty_tp_w7` / `cnty_ro_w7` — per-county 7-day ERA5 precipitation/runoff rolling sums over each county's **own** bounding box (not the Aweil union box) — and `county` itself as a categorical feature; drops `year` (the cyclic `month`/`week_of_year` encodings stay). `FEATURE_COLUMNS_ENGINEERED` (52 columns) is derived from the frozen `features.FEATURE_COLUMNS`, which is imported and never mutated, so the v3 path cannot drift. Same Friday 3-day embargo; `complete` recomputed against the engineered list.
+- `build_weekly_features_fe()`: feature-engineered matrix for `--model lightgbm_fe`. Starts from the frozen baseline matrix (`features.build_weekly_features`) and adds: `cnty_tp_w7` / `cnty_ro_w7` — per-county 7-day ERA5 precipitation/runoff rolling sums over each county's **own** bounding box (not the Aweil union box) — and `county` itself as a categorical feature; drops `year` (the cyclic `month`/`week_of_year` encodings stay). `FEATURE_COLUMNS_ENGINEERED` (52 columns) is derived from the frozen `features.FEATURE_COLUMNS`, which is imported and never mutated, so the baseline path cannot drift. Same Friday 3-day embargo; `complete` recomputed against the engineered list.
 
 ### **`baselines.py`**
 - Climatology (smoothed `(k+0.5)/(n+1)` probability, median area) and first-order Markov Persistence (`p_on`/`p_off`) plus last-detection area baseline. Called **per fold** by `run.py` with a training-window mask, so references never leak.
@@ -157,15 +157,15 @@ All outputs are saved to `LightGBM_v1/outputs/outputs_v3/tables/` — to `LightG
 Execute the master script from the repository root:
 ```bash
 python LightGBM_v1/run.py                             # lightgbm (default) -> outputs_v3
-python LightGBM_v1/run.py --model lightgbm_baseline   # frozen v3 baseline  -> outputs_baseline
+python LightGBM_v1/run.py --model lightgbm_baseline   # frozen baseline     -> outputs_baseline
 python LightGBM_v1/run.py --model lightgbm_fe         # feature-engineered  -> outputs_fe
 python LightGBM_v1/run.py --model tabpfn              # TabPFN reference
 python LightGBM_v1/run.py --mode final --model lightgbm_fe   # final fit -> outputs_final_fit
 ```
 
-`--model lightgbm_baseline` runs **exactly the v3 model** (same features, same default hyperparameters) but writes every output table to `LightGBM_v1/outputs/outputs_baseline/tables/`, so the frozen baseline stays clearly separated from the later improved LightGBM model and the two can be diffed table-by-table. Both LightGBM choices also write the pooled feature-importance table (§6, item 6).
+`--model lightgbm_baseline` runs **exactly the baseline model** (same features, same default hyperparameters) but writes every output table to `LightGBM_v1/outputs/outputs_baseline/tables/`, so the frozen baseline stays clearly separated from the later improved LightGBM model and the two can be diffed table-by-table. Both LightGBM choices also write the pooled feature-importance table (§6, item 6).
 
-`--model lightgbm_fe` is the feature-engineered model (§4 `features_fe.py`): the v3 features plus per-county 7-day precipitation/runoff (`cnty_tp_w7`, `cnty_ro_w7`) and the `county` identity (categorical), with `year` removed. Same folds, embargo, hyperparameters and metrics; outputs go to `outputs_fe/`. Tune it with `python -m LightGBM_v1.tuning --feature-set fe --n-trials 50 --evaluate` (registry entry `"fe"` in `tuning.py`).
+`--model lightgbm_fe` is the feature-engineered model (§4 `features_fe.py`): the baseline features plus per-county 7-day precipitation/runoff (`cnty_tp_w7`, `cnty_ro_w7`) and the `county` identity (categorical), with `year` removed. Same folds, embargo, hyperparameters and metrics; outputs go to `outputs_fe/`. Tune it with `python -m LightGBM_v1.tuning --feature-set fe --n-trials 50 --evaluate` (registry entry `"fe"` in `tuning.py`).
 
 `--mode final` (default `cv`) switches to the final-fit mode (`run.final_fit`): instead of the 3-fold CV the chosen configuration is retrained once — train on everything before the final year (2000-2024), early-stopping on the final year (2025) — and it forecasts the latest feature-complete week (2025-12-29 with inputs through Dec 2025): `det_prob`, `q10/q50/q90` plus duration horizons h1/h2 in `outputs/outputs_final_fit/tables/final_forecast_aweil.csv` (feeds `climatology_maps.forecast_maps --predictions`). CV output folders stay untouched.
 

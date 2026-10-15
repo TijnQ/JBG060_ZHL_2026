@@ -26,15 +26,31 @@ LightGBM area forecast.
 Weeks with no historical month data for a county fall back to the county's
 annual pattern (normalised), and their severity/worst layers are zero.
 
+Two modes
+---------
+* cv (default): the out-of-fold evaluation gallery — county forecasts from the
+  3-fold expanding-window CV, composited per test week.
+* final: the Level-2 *operational product*. Input is the Level-1 final-fit
+  forecast (`LightGBM_v1/outputs/outputs_final_fit/tables/final_forecast_aweil.csv`,
+  written by `python -m LightGBM_v1.run --mode final` — one forecast week, the
+  latest feature-complete one, with det_prob_h1/h2 duration heads). The exact
+  same compositing and rendering code is reused; outputs land in
+  climatology_maps/outputs/outputs_final_fit/.
+
 Inputs
 ------
 * prediction table: LightGBM CV output (`cv_test_predictions_aweil.csv`,
   columns county, week, det_prob, q10, q50, q90, det_prob_h1..h4). Any of the
   committed output folders works; pass --predictions for a custom file.
+  In --mode final the Level-1 final-fit table is used instead (pass
+  --predictions to point at a different final table).
 * climatology cache: built once by `pixel_climatology.py` (raw Parquets needed
   only for that build; afterwards maps run from the cache alone).
 
-Outputs (climatology_maps/outputs/forecast_maps/)
+Outputs
+-------
+* cv mode    -> climatology_maps/outputs/forecast_maps/
+* final mode -> climatology_maps/outputs/outputs_final_fit/
 * <metric>_<week>.png        one image per week per metric (see --all-weeks)
 * forecast_maps_interactive.html  all weeks, week slider + play button
 * week_summary.csv           per-week county-level numbers used + implied totals
@@ -49,6 +65,10 @@ Examples
     python -m climatology_maps.forecast_maps --horizon 2 --metric prob
     # custom prediction file, July-December only
     python -m climatology_maps.forecast_maps --predictions PATH --month 7 8 9 10 11 12
+    # OPERATIONAL PRODUCT: downscale the Level-1 final-fit forecast (section 9)
+    python -m climatology_maps.forecast_maps --mode final
+    # ...the same product 2 weeks ahead (persistence of the forecast)
+    python -m climatology_maps.forecast_maps --mode final --horizon 2 --metric prob
 """
 
 from __future__ import annotations
@@ -83,6 +103,13 @@ DEFAULT_PREDICTION_CANDIDATES = [
     PROJECT_ROOT / "LightGBM_v1" / "outputs" / "outputs_baseline" / "tables" / "cv_test_predictions_aweil.csv",
     PROJECT_ROOT / "LightGBM_v1" / "outputs" / "outputs_v3" / "tables" / "cv_test_predictions_aweil.csv",
 ]
+
+# Level-1 final-fit forecast (run.py --mode final): the operational single-week
+# county forecast that the Level-2 final-fit maps downscale (--mode final).
+FINAL_PREDICTION_CANDIDATES = [
+    PROJECT_ROOT / "LightGBM_v1" / "outputs" / "outputs_final_fit" / "tables" / "final_forecast_aweil.csv",
+]
+FINAL_OUT_DIR = PROJECT_ROOT / "climatology_maps" / "outputs" / "outputs_final_fit"
 
 METRICS = {
     "prob": "prob",
@@ -120,6 +147,60 @@ def load_predictions(path: str | Path | None = None) -> pd.DataFrame:
     print(f"    {len(df)} county-weeks, {df['week'].nunique()} weeks, "
           f"counties: {', '.join(sorted(df['county'].unique()))}")
     return df
+
+
+def load_final_predictions(
+    path: str | Path | None = None,
+) -> tuple[pd.DataFrame, list[int]]:
+    """Load the Level-1 *final-fit* forecast — the Level-2 final-fit input.
+
+    This is the operational single-week county forecast written by
+    `python -m LightGBM_v1.run --mode final` (columns county, week, det_prob,
+    q10, q50, q90, det_prob_h1, det_prob_h2). Returns the standardised table
+    plus the duration heads it ships — h3/h4 are deliberately absent because
+    they lose to climatology and persistence (see LightGBM_v1/run.py).
+    """
+    if path is None:
+        for cand in FINAL_PREDICTION_CANDIDATES:
+            if Path(cand).is_file():
+                path = cand
+                break
+        else:
+            raise FileNotFoundError(
+                "No Level-1 final-fit forecast found; run first:\n"
+                "  python -m LightGBM_v1.run --model lightgbm_fe "
+                "--params fe_baseline --mode final\n"
+                "(writes LightGBM_v1/outputs/outputs_final_fit/tables/"
+                "final_forecast_aweil.csv)\n"
+                "or pass --predictions PATH to use a different final table."
+            )
+    path = Path(path)
+    df = pd.read_csv(path, parse_dates=["week"])
+    required = {"county", "week", "det_prob", "q10", "q50", "q90"}
+    missing = required.difference(df.columns)
+    if missing:
+        raise ValueError(f"Final forecast table {path} misses columns {sorted(missing)}")
+    horizons = sorted(
+        int(col.rsplit("h", 1)[1]) for col in df.columns
+        if col.startswith("det_prob_h") and col[len("det_prob_h"):].isdigit()
+    )
+    df = df.sort_values(["county", "week"]).reset_index(drop=True)
+    print(f"  [final forecast] {path}")
+    print(f"    {len(df)} county rows, {df['week'].nunique()} forecast week(s), "
+          f"counties: {', '.join(sorted(df['county'].unique()))}, duration heads: "
+          + (", ".join(f"h{h}" for h in horizons) if horizons else "none"))
+    return df, horizons
+
+
+def _validate_final_horizon(horizons: list[int], horizon: int) -> None:
+    """Fail fast when a duration head is requested that the final table lacks."""
+    if horizon and horizon not in horizons:
+        have = ", ".join(f"h{h}" for h in horizons) if horizons else "none"
+        raise SystemExit(
+            f"--horizon {horizon}: the Level-1 final forecast ships duration "
+            f"heads {have} (h3/h4 lose to climatology and persistence — "
+            "LightGBM_v1/run.py)."
+        )
 
 
 # --------------------------------------------------------------------------- #
@@ -402,6 +483,11 @@ def _peak_weeks(predictions: pd.DataFrame, n: int) -> pd.Series:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--mode", choices=("cv", "final"), default="cv",
+                        help="cv: out-of-fold CV predictions, evaluation gallery "
+                             "(default; outputs/forecast_maps) | final: downscale "
+                             "the Level-1 final-fit forecast — the operational "
+                             "Level-2 product (outputs/outputs_final_fit)")
     parser.add_argument("--predictions", default=None, help="path to a county-week prediction CSV")
     parser.add_argument("--horizon", type=int, default=0, choices=[0, 1, 2, 3, 4],
                         help="duration head to use as the event probability "
@@ -417,25 +503,40 @@ def main() -> None:
     parser.add_argument("--cmap", default="YlOrRd")
     parser.add_argument("--agg-step", type=float, default=0.025,
                         help="interactive raster cell size in degrees (0.025 ~ 2.5 km)")
-    parser.add_argument("--outdir", default=str(OUT_DIR))
+    parser.add_argument("--outdir", default=None,
+                        help="output directory (default: outputs/forecast_maps in cv "
+                             "mode, outputs/outputs_final_fit in final mode)")
     parser.add_argument("--no-html", action="store_true")
     parser.add_argument("--no-png", action="store_true")
     args = parser.parse_args()
 
+    final = args.mode == "final"
+    outdir = Path(args.outdir) if args.outdir else (FINAL_OUT_DIR if final else OUT_DIR)
+
     print("=" * 95)
-    print("AWEIL WEEKLY FLOOD-RISK MAPS — LightGBM county forecasts x pixel climatology")
+    if final:
+        print("LEVEL-2 FINAL FIT — pixel flood maps (Level-1 final forecast x pixel climatology)")
+    else:
+        print("AWEIL WEEKLY FLOOD-RISK MAPS — LightGBM county forecasts x pixel climatology")
     print("=" * 95)
 
     climatology = pc.get_climatology()
     assets = county_month_assets(climatology)
-    predictions = load_predictions(args.predictions)
+    if final:
+        predictions, horizons = load_final_predictions(args.predictions)
+        _validate_final_horizon(horizons, args.horizon)
+        print("\nLevel-1 final-fit forecast being downscaled:")
+        cols = [c for c in ("county", "week", "det_prob", "q10", "q50", "q90",
+                            "det_prob_h1", "det_prob_h2") if c in predictions.columns]
+        print(predictions[cols].to_string(index=False))
+    else:
+        predictions = load_predictions(args.predictions)
     boundaries = pc.load_aweil_counties()
 
     selected = _week_selector(predictions, args.year, args.month)
     if selected.empty:
         raise SystemExit("No prediction weeks match the --year/--month filters.")
 
-    outdir = Path(args.outdir)
     outdir.mkdir(parents=True, exist_ok=True)
 
     if args.all_weeks:
@@ -450,6 +551,9 @@ def main() -> None:
     summary_rows = []
     boundary_geo = boundaries
     png_weeks = set(png_weeks)
+    title_suffix = ("final fit h" + str(args.horizon) if final and args.horizon
+                    else "final fit" if final
+                    else f"h{args.horizon}" if args.horizon else "")
 
     # Streaming design: compose and render one week at a time; hold only the
     # tiny max-aggregated coarse matrices for the interactive HTML, never the
@@ -473,7 +577,7 @@ def main() -> None:
             for metric in ("prob", "sev", "worst", "clim"):
                 p = render_week_png(frame, week, metric, outdir, boundary_geo,
                                     cmap=args.cmap,
-                                    title_suffix=f"h{args.horizon}" if args.horizon else "")
+                                    title_suffix=title_suffix)
                 print(f"  [png] {p}")
         if not args.no_html:
             z, lons, lats = aggregate_raster(frame, args.metric, args.agg_step)
@@ -490,11 +594,15 @@ def main() -> None:
 
     if not args.no_html:
         print("\nRendering interactive HTML (week slider) ...")
+        html_title = (
+            f"Aweil flood risk — final-fit forecast — {METRIC_TITLES[args.metric]}"
+            if final else
+            f"Aweil flood risk by week — {METRIC_TITLES[args.metric]}"
+        ) + (f" (horizon h{args.horizon})" if args.horizon else "")
         render_interactive_html(
             coarse, coarse_meta[0], coarse_meta[1], args.metric,
             outdir / "forecast_maps_interactive.html",
-            title=f"Aweil flood risk by week — {METRIC_TITLES[args.metric]}"
-                  + (f" (horizon h{args.horizon})" if args.horizon else ""),
+            title=html_title,
             boundaries=boundaries,
         )
 
@@ -502,6 +610,18 @@ def main() -> None:
     print("\nTop-5 county-weeks by implied flooded area:")
     print(peak[["week", "county", "det_prob", "q50", "implied_area_km2"]].to_string(index=False))
     print("\nDone.")
+    if final:
+        weeks_str = ", ".join(str(w.date()) for w in selected)
+        print("\n" + "=" * 95)
+        print("LEVEL-2 FINAL FIT COMPLETE")
+        print("=" * 95)
+        print(f"  Forecast week(s): {weeks_str} (operational Level-1 final-fit forecast —")
+        print("  see LightGBM_v1/run.py --mode final and main.ipynb section 9)")
+        print("  Layers per week: prob / sev / worst / clim. sev & worst are an honest 0")
+        print("  where the forecast week's month has no historical flood climatology;")
+        print("  the prob layer still places the county forecast on the annual pattern.")
+        print(f"  -> {outdir}")
+        print("=" * 95)
 
 
 if __name__ == "__main__":

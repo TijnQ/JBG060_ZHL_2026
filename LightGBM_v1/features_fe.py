@@ -1,7 +1,7 @@
 """Engineered feature set for the LightGBM_v1 pipeline (plan.md: `lightgbm_fe`).
 
 Implements the feature decisions locked in plan.md §3.1 without touching the
-frozen v3 feature matrix:
+frozen baseline feature matrix:
 
 - `county`      — the row's own county as a pandas `category` column (5 levels)
                   → LightGBM native categorical splits. Restores the county
@@ -17,10 +17,10 @@ frozen v3 feature matrix:
                   stays in the frame for bookkeeping but is not part of
                   FEATURE_COLUMNS_ENGINEERED, so LightGBM never sees it.
 
-The v3 path stays frozen by construction: `features.FEATURE_COLUMNS` and
+The baseline path stays frozen by construction: `features.FEATURE_COLUMNS` and
 `features.build_weekly_features()` are imported, never reassigned or mutated,
 so `--model lightgbm`, `--model lightgbm_baseline` and `--model tabpfn` keep
-building exactly the frozen v3 matrix. Only `run.py --model lightgbm_fe` and
+building exactly the frozen baseline matrix. Only `run.py --model lightgbm_fe` and
 the `"fe"` entry in `tuning.FEATURE_SETS` consume this module.
 
 Embargo: the engineered features reuse the identical Friday cutoff rule — a
@@ -58,7 +58,7 @@ ENGINEERED_ADDITIONS = ("county", "cnty_tp_w7", "cnty_ro_w7")
 # Two named column lists, no runtime swapping (plan.md §6): features.FEATURE_COLUMNS
 # stays byte-identical and untouched, and this list is DERIVED from it so the
 # shared columns can never drift apart (plan.md §4.2 integrity gate). Order:
-# the v3 columns minus `year`, then the engineered additions.
+# the baseline columns minus `year`, then the engineered additions.
 FEATURE_COLUMNS_ENGINEERED: list[str] = [
     column for column in features.FEATURE_COLUMNS if column not in REMOVED_V3_COLUMNS
 ] + list(ENGINEERED_ADDITIONS)
@@ -70,7 +70,7 @@ def daily_feature_index(years: list[int] | None = None) -> pd.DatetimeIndex:
     Mirrors the index built inside features.build_daily_signals exactly (31-day
     warm-up before the first year, ending at the last Friday cutoff) so the
     engineered rolling sums see the same daily history — and therefore have the
-    same NaN warm-up pattern — as the frozen v3 columns.
+    same NaN warm-up pattern — as the frozen baseline columns.
     """
     years = years or config.YEARS
     last_cutoff = pd.date_range("2000-01-03", "2025-12-29", freq="W-MON")[-1] - pd.Timedelta(days=config.EMBARGO_DAYS)
@@ -141,8 +141,8 @@ def _attach_county_columns(frame: pd.DataFrame, county_rolling: pd.DataFrame) ->
 def build_weekly_features_fe() -> pd.DataFrame:
     """Build the embargoed weekly feature matrix with the engineered fe columns.
 
-    Starts from the frozen v3 matrix (features.build_weekly_features()) so
-    every v3 column stays byte-identical, then:
+    Starts from the frozen baseline matrix (features.build_weekly_features()) so
+    every baseline column stays byte-identical, then:
     1. adds `cnty_tp_w7` / `cnty_ro_w7` (each row carries its own county's
        7-day ERA5 box sum ending at the Friday cutoff),
     2. converts `county` to pandas `category` (LightGBM native categorical

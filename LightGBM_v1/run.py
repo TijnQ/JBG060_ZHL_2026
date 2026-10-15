@@ -1,21 +1,21 @@
-"""Shared LightGBM/TabPFN runner (v3: 3 expanding-window CV folds).
+"""Shared LightGBM/TabPFN runner (baseline: 3 expanding-window CV folds).
 
 Model choice (--model):
-- lightgbm           — the current v3 model, saved to outputs/outputs_v3/tables/
-- lightgbm_baseline  — the same frozen v3 model, flagged as the project baseline
+- lightgbm           — the baseline model, saved to outputs/outputs_v3/tables/
+- lightgbm_baseline  — the same frozen model, flagged as the project baseline
                        and saved to outputs/outputs_baseline/tables/ so the later
                        improved LightGBM model stays clearly separated
 - lightgbm_fe        — feature-engineered counterpart of the baseline
                        (features_fe.py: + county, + cnty_tp_w7, + cnty_ro_w7,
-                       - year from the model input), same v3 hyperparameters,
+                       - year from the model input), same baseline hyperparameters,
                        saved to outputs/outputs_fe/tables/
 - tabpfn             — zero-shot TabPFN reference, saved to
                        TabPFN_v1/outputs/outputs_v3/tables/
 
 Hyperparameter set (--params, LightGBM models only; default "baseline"):
-- baseline        — the frozen v3 defaults (run.py behavior unchanged)
+- baseline        — the frozen baseline defaults (run.py behavior unchanged)
 - baseline_optuna — Optuna winners tuned on the baseline features
-- fe_baseline     — the same v3 defaults, named for the fe grid cell
+- fe_baseline     — the same baseline defaults, named for the fe grid cell
 - fe_optuna       — Optuna winners tuned on the engineered features
 Optuna sets route the run to their own output folder
 (e.g. lightgbm_fe --params fe_optuna -> outputs/outputs_fe_optuna/tables/)
@@ -97,8 +97,8 @@ def _resolve_backend(model_name: str, params_name: str):
     predict_forecast = lgbm_model.predict_lightgbm
     duration_backend = duration_model
     tables_dir = config.TABLES_DIR
-    # Feature matrix + column list: the v3 choices share the frozen v3 build;
-    # the engineered choice swaps both (plan.md §6) without touching the v3 path.
+    # Feature matrix + column list: the baseline choices share the frozen build;
+    # the engineered choice swaps both (plan.md §6) without touching the baseline path.
     build_features = features.build_weekly_features
     feature_columns = features.FEATURE_COLUMNS
     # Feature importance needs the fitted LightGBM boosters; TabPFN has none.
@@ -112,13 +112,13 @@ def _resolve_backend(model_name: str, params_name: str):
         tables_dir = PROJECT_ROOT / "TabPFN_v1" / "outputs" / f"outputs_{config.MODEL_VERSION}" / "tables"
         collect_importance = False
     elif model_name == "lightgbm_baseline":
-        # The frozen v3 model is the project baseline: identical model code and
+        # The frozen model is the project baseline: identical model code and
         # default hyperparameters, but the outputs land in outputs_baseline/ so
         # the baseline stays clearly separated from the improved LightGBM model.
         tables_dir = config.BASELINE_TABLES_DIR
     elif model_name == "lightgbm_fe":
         # Feature-engineered counterpart of the frozen baseline (plan.md §3.1):
-        # same LightGBM backend and v3 default hyperparameters, but the
+        # same LightGBM backend and baseline default hyperparameters, but the
         # engineered feature set (features_fe.py) and its own output folder so
         # the run stays table-by-table diffable against outputs_baseline/.
         tables_dir = config.FE_TABLES_DIR
@@ -134,7 +134,7 @@ def _resolve_backend(model_name: str, params_name: str):
         suffix = params_name if params_name.startswith(f"{stem}_") else f"{stem}_{params_name}"
         tables_dir = config.OUT_ROOT / f"outputs_{suffix}" / "tables"
 
-    # Per-head LightGBM kwargs from the named set (None = the frozen v3
+    # Per-head LightGBM kwargs from the named set (None = the frozen baseline
     # defaults); TabPFN has no tunable hyperparameters, so all three stay None
     # there and the historic kwarg-free call shape is preserved.
     det_params = param_set["det"] if model_name != "tabpfn" else None
@@ -187,7 +187,7 @@ def main(model_name: str = "lightgbm", params_name: str = "baseline") -> None:
     if model_name == "lightgbm_fe":
         added = [c for c in feature_columns if c not in features.FEATURE_COLUMNS]
         removed = [c for c in features.FEATURE_COLUMNS if c not in feature_columns]
-        print(f"      Engineered set: + {added} | - {removed} (all other v3 columns identical)")
+        print(f"      Engineered set: + {added} | - {removed} (all other baseline columns identical)")
 
     # Full-frame duration targets (computed once; labels exist through end-2025)
     full_duration_targets = duration_model.build_duration_targets(feats_df)
@@ -377,7 +377,7 @@ def main(model_name: str = "lightgbm", params_name: str = "baseline") -> None:
     # 7. Final summary
     pooled_lgbm = eval_table[(eval_table["scope"] == "pooled") & (eval_table["model"] == model_name)].iloc[0]
     print("\n" + "=" * 95)
-    print("PIPELINE COMPLETE — V3 SUMMARY")
+    print("PIPELINE COMPLETE — BASELINE SUMMARY")
     print("=" * 95)
     print(f"  OOF test weeks scored: {len(all_oof_df)} "
           f"({all_oof_df['test_year'].min()}-{all_oof_df['test_year'].max()}, 2025 excluded)")
@@ -494,8 +494,8 @@ if __name__ == "__main__":
         "--model",
         choices=("lightgbm", "lightgbm_baseline", "lightgbm_fe", "tabpfn"),
         default="lightgbm",
-        help="lightgbm: current v3 model -> outputs_v3 | "
-             "lightgbm_baseline: frozen v3 baseline -> outputs_baseline | "
+        help="lightgbm: baseline model -> outputs_v3 | "
+             "lightgbm_baseline: frozen baseline -> outputs_baseline | "
              "lightgbm_fe: engineered features (+county, +cnty_tp_w7, "
              "+cnty_ro_w7, -year) -> outputs_fe | "
              "tabpfn: TabPFN reference",
@@ -505,9 +505,9 @@ if __name__ == "__main__":
         choices=tuple(lgbm_model.PARAM_SETS),
         default="baseline",
         help="hyperparameter set (LightGBM models only): "
-             "baseline: frozen v3 defaults (unchanged behavior) | "
+             "baseline: frozen baseline defaults (unchanged behavior) | "
              "baseline_optuna: Optuna winners tuned on the baseline features | "
-             "fe_baseline: the same v3 defaults (fe grid cell) | "
+             "fe_baseline: the same baseline defaults (fe grid cell) | "
              "fe_optuna: Optuna winners tuned on the engineered features. "
              "Optuna sets save to their own outputs_<model>_<params>/tables "
              "folder instead of the frozen per-model folders.",

@@ -20,14 +20,14 @@ TABLES_DIR = OUT_DIR / "tables"
 FIGURES_DIR = OUT_DIR / "figures"
 MODELS_DIR = OUT_DIR / "models"
 
-# Frozen v3 baseline (run.py --model lightgbm_baseline): the same v3 model, but
+# Frozen baseline (run.py --model lightgbm_baseline): the same model as the default run, but
 # its outputs land here instead of outputs_v3 so the baseline stays clearly
 # separated from the later improved LightGBM model (table-by-table diffable).
 BASELINE_OUT_DIR = OUT_ROOT / "outputs_baseline"
 BASELINE_TABLES_DIR = BASELINE_OUT_DIR / "tables"
 
 # Feature-engineered model (run.py --model lightgbm_fe): the same LightGBM
-# backend and v3 default hyperparameters, but the engineered feature set from
+# backend and baseline default hyperparameters, but the engineered feature set from
 # features_fe.py. Outputs land here so the run stays table-by-table diffable
 # against the frozen baseline. MODEL_VERSION stays "v3" — model identity rides
 # on --model, not on a version bump (plan.md §4).
@@ -69,7 +69,7 @@ AWEIL_COUNTIES = [
 ]
 SCOPE = "aweil"
 
-# --- Time & Cross-Validation Specification (v3: 3 expanding-window folds) ----
+# --- Time & Cross-Validation Specification (baseline: 3 expanding-window folds) ----
 # Real data coverage: ERA5 2000-2025, gauge & Lake Albert 2000-2025.
 # 2025 is loaded so feature completeness is real, but it stays OUTSIDE the CV:
 # no fold trains, validates, or tests on 2025, and no CV output contains 2025.

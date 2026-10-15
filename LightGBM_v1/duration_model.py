@@ -60,7 +60,7 @@ def train_duration_models(
 ) -> dict[int, lgbm.LGBMClassifier]:
     """Train binary LightGBM classifiers for each duration horizon (1..4 weeks ahead).
 
-    `feature_columns` overrides the model input columns (None = the frozen v3
+    `feature_columns` overrides the model input columns (None = the frozen baseline
     FEATURE_COLUMNS; run.py passes the engineered list for --model lightgbm_fe).
     `params` overrides the hardcoded duration hyperparameters per key
     (params=None keeps today's defaults); random_state is always SEED + h.
@@ -103,7 +103,7 @@ def predict_duration(
 ) -> pd.DataFrame:
     """Predict duration probabilities for horizons 1..4 weeks ahead.
 
-    `feature_columns` selects the prediction input (None = the frozen v3
+    `feature_columns` selects the prediction input (None = the frozen baseline
     FEATURE_COLUMNS; run.py passes the engineered list for --model lightgbm_fe).
     """
     columns = list(feature_columns) if feature_columns is not None else list(FEATURE_COLUMNS)
