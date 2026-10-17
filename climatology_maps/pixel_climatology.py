@@ -120,11 +120,18 @@ def snap_to_grid(longitude, latitude) -> tuple[np.ndarray, np.ndarray]:
 def load_aweil_counties(boundaries_path: str | Path = ADMIN2_PATH) -> gpd.GeoDataFrame:
     """Admin-2 polygons of the five Aweil counties (standardised columns)."""
     gdf = gpd.read_file(boundaries_path).to_crs("EPSG:4326")
-    if "adm2_name" in gdf.columns:
-        gdf = gdf.rename(columns={"adm2_name": "county"})
-    selected = gdf[gdf["adm1_name"] == STATE][["county", "geometry"]].copy()
+    if "county" not in gdf.columns:
+        if "adm2_name" in gdf.columns:
+            gdf = gdf.rename(columns={"adm2_name": "county"})
+        elif "shapeName" in gdf.columns:
+            gdf = gdf.rename(columns={"shapeName": "county"})
+    if "adm1_name" in gdf.columns:
+        selected = gdf[gdf["adm1_name"] == STATE][["county", "geometry"]].copy()
+    else:
+        selected = gdf[gdf["county"].str.contains("Aweil", case=False, na=False)][["county", "geometry"]].copy()
     selected = selected.drop_duplicates(subset="county")
     return selected.reset_index(drop=True)
+
 
 
 def _annual_path(flood_root: Path, flood_type: str, year: int) -> Path:

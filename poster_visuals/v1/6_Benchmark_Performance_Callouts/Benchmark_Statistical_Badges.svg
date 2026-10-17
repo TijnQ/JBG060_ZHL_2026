@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1200" height="380" viewBox="0 0 1200 380" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    .stat { font-family: 'DejaVu Sans', Helvetica, Arial, sans-serif; font-size: 46px; font-weight: bold; }
+    .label { font-family: 'DejaVu Sans', Helvetica, Arial, sans-serif; font-size: 16px; font-weight: bold; fill: #0F172A; }
+    .desc { font-family: 'DejaVu Sans', Helvetica, Arial, sans-serif; font-size: 12.5px; fill: #334155; line-height: 1.4; }
+    .footer { font-family: 'DejaVu Sans', Helvetica, Arial, sans-serif; font-size: 12px; font-weight: bold; }
+  </style>
+
+  <!-- Card 1 -->
+  <g transform="translate(40, 30)">
+    <rect width="345" height="320" rx="16" fill="#ECFDF5" stroke="#10B981" stroke-width="2.5" />
+    <text x="172" y="100" text-anchor="middle" class="stat" fill="#059669">+34.8%</text>
+    <text x="172" y="145" text-anchor="middle" class="label">BSS vs. CLIMATOLOGY</text>
+    <text x="172" y="185" text-anchor="middle" class="desc">34.8% probabilistic skill over</text>
+    <text x="172" y="205" text-anchor="middle" class="desc">the 26-year calendar baseline</text>
+    <line x1="25" y1="240" x2="320" y2="240" stroke="#10B981" stroke-width="1" opacity="0.4" />
+    <text x="172" y="275" text-anchor="middle" class="footer" fill="#059669">Brier: 0.0650 vs 0.0996 (Clim)</text>
+  </g>
+
+  <!-- Card 2 -->
+  <g transform="translate(425, 30)">
+    <rect width="345" height="320" rx="16" fill="#EFF6FF" stroke="#3B82F6" stroke-width="2.5" />
+    <text x="172" y="100" text-anchor="middle" class="stat" fill="#2563EB">+21.7%</text>
+    <text x="172" y="145" text-anchor="middle" class="label">BSS vs. PERSISTENCE</text>
+    <text x="172" y="185" text-anchor="middle" class="desc">21.7% skill over latest week's</text>
+    <text x="172" y="205" text-anchor="middle" class="desc">satellite flood observation</text>
+    <line x1="25" y1="240" x2="320" y2="240" stroke="#3B82F6" stroke-width="1" opacity="0.4" />
+    <text x="172" y="275" text-anchor="middle" class="footer" fill="#2563EB">Brier: 0.0650 vs 0.0830 (Persist)</text>
+  </g>
+
+  <!-- Card 3 -->
+  <g transform="translate(810, 30)">
+    <rect width="345" height="320" rx="16" fill="#FFFBEB" stroke="#F59E0B" stroke-width="2.5" />
+    <text x="172" y="100" text-anchor="middle" class="stat" fill="#D97706">8.68 km²</text>
+    <text x="172" y="145" text-anchor="middle" class="label">FLOOD-WEEK MAE</text>
+    <text x="172" y="185" text-anchor="middle" class="desc">44.1% error reduction in flooded</text>
+    <text x="172" y="205" text-anchor="middle" class="desc">area forecast during active floods</text>
+    <line x1="25" y1="240" x2="320" y2="240" stroke="#F59E0B" stroke-width="1" opacity="0.4" />
+    <text x="172" y="275" text-anchor="middle" class="footer" fill="#D97706">LightGBM: 8.68 vs Clim: 15.52 km²</text>
+  </g>
+</svg>

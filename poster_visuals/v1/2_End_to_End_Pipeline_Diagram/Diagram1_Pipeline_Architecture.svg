@@ -1,0 +1,238 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg width="1600" height="680" viewBox="0 0 1600 680" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Drop Shadow Filter -->
+    <filter id="cardShadow" x="-5%" y="-5%" width="110%" height="115%" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#0F172A" flood-opacity="0.10" />
+    </filter>
+    <filter id="badgeShadow" x="-5%" y="-5%" width="110%" height="115%" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#0F172A" flood-opacity="0.12" />
+    </filter>
+
+    <!-- Gradients -->
+    <linearGradient id="hdrGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#1E3A8A" />
+      <stop offset="100%" stop-color="#0369A1" />
+    </linearGradient>
+
+    <!-- Markers -->
+    <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#0284C7" />
+    </marker>
+  </defs>
+
+  <style>
+    .title { font-family: 'DejaVu Sans', Helvetica, Arial, sans-serif; font-size: 26px; font-weight: bold; fill: #0F172A; }
+    .subtitle { font-family: 'DejaVu Sans', Helvetica, Arial, sans-serif; font-size: 15px; fill: #475569; }
+    .stage-hdr { font-family: 'DejaVu Sans', Helvetica, Arial, sans-serif; font-size: 17px; font-weight: bold; fill: #FFFFFF; }
+    .card-title { font-family: 'DejaVu Sans', Helvetica, Arial, sans-serif; font-size: 16px; font-weight: bold; fill: #0F172A; }
+    .card-sub { font-family: 'DejaVu Sans', Helvetica, Arial, sans-serif; font-size: 13px; font-weight: bold; }
+    .body-txt { font-family: 'DejaVu Sans', Helvetica, Arial, sans-serif; font-size: 13px; fill: #334155; line-height: 1.45; }
+    .badge-txt { font-family: 'DejaVu Sans', Helvetica, Arial, sans-serif; font-size: 11.5px; font-weight: bold; }
+    .audit-txt { font-family: 'DejaVu Sans', Helvetica, Arial, sans-serif; font-size: 12px; font-style: italic; fill: #64748B; }
+  </style>
+
+  <!-- Background -->
+  <rect width="100%" height="100%" fill="#F8FAFC" />
+
+  <!-- Diagram Header -->
+  <text x="800" y="48" text-anchor="middle" class="title">END-TO-END PROBABILISTIC FLOOD FORECASTING &amp; EXPOSURE PIPELINE</text>
+  <text x="800" y="75" text-anchor="middle" class="subtitle">Operational 4-Stage Architecture: Embargoed Meteorological Ingestion → County ML → High-Resolution Pixel Downscaling → Asset Overlay</text>
+
+  <!-- ======================================================================= -->
+  <!-- STAGE 1: DATA INGESTION (EMBARGOED) -->
+  <!-- ======================================================================= -->
+  <g transform="translate(45, 110)">
+    <rect width="330" height="520" rx="14" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.8" filter="url(#cardShadow)" />
+    <!-- Stage Header -->
+    <path d="M 0 14 Q 0 0 14 0 L 316 0 Q 330 0 330 14 L 330 52 L 0 52 Z" fill="#1E3A8A" />
+    <text x="165" y="33" text-anchor="middle" class="stage-hdr">STAGE 1: DATA INGESTION</text>
+
+    <!-- Subtitle tag -->
+    <rect x="20" y="66" width="290" height="26" rx="6" fill="#EFF6FF" stroke="#3B82F6" stroke-width="1" />
+    <text x="165" y="83" text-anchor="middle" fill="#1E40AF" class="badge-txt">Strict Friday Embargo Protocol (t - 3 Days)</text>
+
+    <!-- Content Items -->
+    <g transform="translate(20, 108)">
+      <circle cx="8" cy="8" r="5" fill="#2563EB" />
+      <text x="24" y="12" class="card-sub" fill="#1E3A8A">Meteorology &amp; Hydrology</text>
+      <text x="24" y="32" class="body-txt">• ERA5-Land Daily Precipitation (tp)</text>
+      <text x="24" y="52" class="body-txt">• ERA5 Surface Runoff (ro)</text>
+      <text x="24" y="72" class="body-txt">• GLEAM Actual Evaporation (ET)</text>
+      <text x="24" y="92" class="body-txt">• Soil Moisture &amp; Antecedent 7d/14d Deficit</text>
+    </g>
+
+    <g transform="translate(20, 222)">
+      <circle cx="8" cy="8" r="5" fill="#2563EB" />
+      <text x="24" y="12" class="card-sub" fill="#1E3A8A">Satellite Altimetry &amp; Gauges</text>
+      <text x="24" y="32" class="body-txt">• Hydroweb: Lake Victoria Water Levels</text>
+      <text x="24" y="52" class="body-txt">• DAHITI: Lake Albert / Kyoga Altimetry</text>
+      <text x="24" y="72" class="body-txt">• Dartmouth (DFO) River Gauge Inflows</text>
+    </g>
+
+    <g transform="translate(20, 316)">
+      <circle cx="8" cy="8" r="5" fill="#2563EB" />
+      <text x="24" y="12" class="card-sub" fill="#1E3A8A">Ground Truth Target (MCDWD)</text>
+      <text x="24" y="32" class="body-txt">• NASA MODIS 8-day Flood Composites</text>
+      <text x="24" y="52" class="body-txt">• 26-Year Record (2000–2025, Tile h20v08)</text>
+      <text x="24" y="72" class="body-txt">• Recurring vs Unusual Inundation Masks</text>
+    </g>
+
+    <!-- Embargo Callout Box -->
+    <rect x="20" y="415" width="290" height="85" rx="8" fill="#FEF3C7" stroke="#F59E0B" stroke-width="1.2" />
+    <text x="32" y="435" class="badge-txt" fill="#92400E">AUDIT VERIFICATION: EMBARGO</text>
+    <text x="32" y="455" class="audit-txt" fill="#78350F">No lookahead leakage. All predictors</text>
+    <text x="32" y="473" class="audit-txt" fill="#78350F">frozen Friday 00:00 UTC preceding the</text>
+    <text x="32" y="491" class="audit-txt" fill="#78350F">target Monday-Sunday forecast week.</text>
+  </g>
+
+  <!-- Connecting Arrow 1 -> 2 -->
+  <path d="M 380 370 L 425 370" stroke="#0284C7" stroke-width="4.0" stroke-linecap="round" marker-end="url(#arrow)" />
+
+  <!-- ======================================================================= -->
+  <!-- STAGE 2: TASK A - COUNTY LIGHTGBM -->
+  <!-- ======================================================================= -->
+  <g transform="translate(435, 110)">
+    <rect width="330" height="520" rx="14" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.8" filter="url(#cardShadow)" />
+    <!-- Stage Header -->
+    <path d="M 0 14 Q 0 0 14 0 L 316 0 Q 330 0 330 14 L 330 52 L 0 52 Z" fill="#0D9488" />
+    <text x="165" y="33" text-anchor="middle" class="stage-hdr">STAGE 2: TASK A (LIGHTGBM)</text>
+
+    <!-- Subtitle tag -->
+    <rect x="20" y="66" width="290" height="26" rx="6" fill="#F0FDFA" stroke="#14B8A6" stroke-width="1" />
+    <text x="165" y="83" text-anchor="middle" fill="#0F766E" class="badge-txt">County-Level Probabilistic Engine</text>
+
+    <!-- Content Items -->
+    <g transform="translate(20, 108)">
+      <circle cx="8" cy="8" r="5" fill="#0D9488" />
+      <text x="24" y="12" class="card-sub" fill="#0F766E">Head 1: Detection Probability (det_prob)</text>
+      <text x="24" y="32" class="body-txt">• Binary Logloss Objective</text>
+      <text x="24" y="52" class="body-txt">• Calibrated Brier Score: 0.0650</text>
+      <text x="24" y="72" class="body-txt">• +34.8% Skill vs Climatology</text>
+      <text x="24" y="92" class="body-txt">• +21.7% Skill vs Persistence</text>
+    </g>
+
+    <g transform="translate(20, 222)">
+      <circle cx="8" cy="8" r="5" fill="#0D9488" />
+      <text x="24" y="12" class="card-sub" fill="#0F766E">Head 2: Quantile Area (q10, q50, q90)</text>
+      <text x="24" y="32" class="body-txt">• Asymmetric Pinball Quantile Loss</text>
+      <text x="24" y="52" class="body-txt">• Flood-Week MAE: 8.68 km² (vs 15.5 km²)</text>
+      <text x="24" y="72" class="body-txt">• 73.8% Flood-Week Band Coverage</text>
+    </g>
+
+    <g transform="translate(20, 316)">
+      <circle cx="8" cy="8" r="5" fill="#0D9488" />
+      <text x="24" y="12" class="card-sub" fill="#0F766E">Head 3: Multi-Week Duration (h1..h4)</text>
+      <text x="24" y="32" class="body-txt">• Inundation persistence 1 to 4 weeks</text>
+      <text x="24" y="52" class="body-txt">• Independent temporal rollout heads</text>
+    </g>
+
+    <!-- Protocol Callout Box -->
+    <rect x="20" y="395" width="290" height="105" rx="8" fill="#ECFDF5" stroke="#10B981" stroke-width="1.2" />
+    <text x="32" y="415" class="badge-txt" fill="#065F46">CROSS-VALIDATION PROTOCOL</text>
+    <text x="32" y="435" class="audit-txt" fill="#047857">Walk-forward expanding temporal splits:</text>
+    <text x="32" y="453" class="audit-txt" fill="#047857">• Test 1: 2010–11  • Test 2: 2016–17</text>
+    <text x="32" y="471" class="audit-txt" fill="#047857">• Test 3: 2022–24 (Catastrophic flood)</text>
+    <text x="32" y="489" class="audit-txt" fill="#047857">No test season ever seen in training.</text>
+  </g>
+
+  <!-- Connecting Arrow 2 -> 3 -->
+  <path d="M 770 370 L 815 370" stroke="#0284C7" stroke-width="4.0" stroke-linecap="round" marker-end="url(#arrow)" />
+
+  <!-- ======================================================================= -->
+  <!-- STAGE 3: TASK B - PIXEL DOWNSCALER (~232M) -->
+  <!-- ======================================================================= -->
+  <g transform="translate(825, 110)">
+    <rect width="330" height="520" rx="14" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.8" filter="url(#cardShadow)" />
+    <!-- Stage Header -->
+    <path d="M 0 14 Q 0 0 14 0 L 316 0 Q 330 0 330 14 L 330 52 L 0 52 Z" fill="#D97706" />
+    <text x="165" y="33" text-anchor="middle" class="stage-hdr">STAGE 3: TASK B (DOWNSCALER)</text>
+
+    <!-- Subtitle tag -->
+    <rect x="20" y="66" width="290" height="26" rx="6" fill="#FFFBEB" stroke="#F59E0B" stroke-width="1" />
+    <text x="165" y="83" text-anchor="middle" fill="#B45309" class="badge-txt">Physical Spatial Allocation (~232m)</text>
+
+    <!-- Content Items -->
+    <g transform="translate(20, 108)">
+      <circle cx="8" cy="8" r="5" fill="#D97706" />
+      <text x="24" y="12" class="card-sub" fill="#B45309">Spatial Signature Prior</text>
+      <text x="24" y="32" class="body-txt">• Historical freq_given(p, c, m)</text>
+      <text x="24" y="52" class="body-txt">• 584,313 canonical cells across 5 counties</text>
+      <text x="24" y="72" class="body-txt">• Native resolution: 10/4800° (~232 meters)</text>
+    </g>
+
+    <g transform="translate(20, 202)">
+      <circle cx="8" cy="8" r="5" fill="#D97706" />
+      <text x="24" y="12" class="card-sub" fill="#B45309">Coordinate Snapping Fix</text>
+      <text x="24" y="32" class="body-txt">• Index formula: k = round(v/step - 0.5)</text>
+      <text x="24" y="52" class="body-txt">• 100% cell merge between Parquet &amp; Grid</text>
+      <text x="24" y="72" class="body-txt">• Zero spatial offset or floating artifacts</text>
+    </g>
+
+    <g transform="translate(20, 296)">
+      <circle cx="8" cy="8" r="5" fill="#D97706" />
+      <text x="24" y="12" class="card-sub" fill="#B45309">Conservation Constraints</text>
+      <text x="24" y="32" class="body-txt">• Exact Area Match: Σ sev(p) × A = q50</text>
+      <text x="24" y="52" class="body-txt">• Probability Layer: prob = det_prob × prior</text>
+      <text x="24" y="72" class="body-txt">• Worst-case Layer: worst scaled to q90</text>
+    </g>
+
+    <!-- Verification Callout Box -->
+    <rect x="20" y="395" width="290" height="105" rx="8" fill="#FEF3C7" stroke="#F59E0B" stroke-width="1.2" />
+    <text x="32" y="415" class="badge-txt" fill="#92400E">AUDIT VERIFICATION: CONSERVATION</text>
+    <text x="32" y="435" class="audit-txt" fill="#78350F">For Nov 4, 2024 peak flood week:</text>
+    <text x="32" y="453" class="audit-txt" fill="#78350F">• LightGBM q50 = 166.32 km²</text>
+    <text x="32" y="471" class="audit-txt" fill="#78350F">• Map implied unclipped = 166.32 km²</text>
+    <text x="32" y="489" class="audit-txt" fill="#78350F">Error = 0.00% (Exact conservation).</text>
+  </g>
+
+  <!-- Connecting Arrow 3 -> 4 -->
+  <path d="M 1160 370 L 1205 370" stroke="#0284C7" stroke-width="4.0" stroke-linecap="round" marker-end="url(#arrow)" />
+
+  <!-- ======================================================================= -->
+  <!-- STAGE 4: ASSET EXPOSURE OVERLAY -->
+  <!-- ======================================================================= -->
+  <g transform="translate(1215, 110)">
+    <rect width="340" height="520" rx="14" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.8" filter="url(#cardShadow)" />
+    <!-- Stage Header -->
+    <path d="M 0 14 Q 0 0 14 0 L 326 0 Q 340 0 340 14 L 340 52 L 0 52 Z" fill="#DC2626" />
+    <text x="170" y="33" text-anchor="middle" class="stage-hdr">STAGE 4: ASSET EXPOSURE</text>
+
+    <!-- Subtitle tag -->
+    <rect x="20" y="66" width="300" height="26" rx="6" fill="#FEF2F2" stroke="#EF4444" stroke-width="1" />
+    <text x="170" y="83" text-anchor="middle" fill="#B91C1C" class="badge-txt">Humanitarian Impact &amp; Early Action</text>
+
+    <!-- Content Items -->
+    <g transform="translate(20, 108)">
+      <circle cx="8" cy="8" r="5" fill="#DC2626" />
+      <text x="24" y="12" class="card-sub" fill="#991B1B">Staple Crop Phenology Overlay</text>
+      <text x="24" y="32" class="body-txt">• ASAP Crop &amp; Rangeland Masks</text>
+      <text x="24" y="52" class="body-txt">• Sorghum &amp; Pearl Millet Calendars</text>
+      <text x="24" y="72" class="body-txt">• Critical Collision Window (Sep–Nov)</text>
+      <text x="24" y="92" class="body-txt">• Ripening grain vs 91.8% flood peak</text>
+    </g>
+
+    <g transform="translate(20, 222)">
+      <circle cx="8" cy="8" r="5" fill="#DC2626" />
+      <text x="24" y="12" class="card-sub" fill="#991B1B">Livestock &amp; Pastoral Rangeland</text>
+      <text x="24" y="32" class="body-txt">• FAO Gridded Livestock (Cattle Density)</text>
+      <text x="24" y="52" class="body-txt">• Transhumance corridor inundation</text>
+      <text x="24" y="72" class="body-txt">• Pasture submergence alerts</text>
+    </g>
+
+    <g transform="translate(20, 316)">
+      <circle cx="8" cy="8" r="5" fill="#DC2626" />
+      <text x="24" y="12" class="card-sub" fill="#991B1B">Population &amp; Infrastructure</text>
+      <text x="24" y="32" class="body-txt">• WorldPop 100m Population Density</text>
+      <text x="24" y="52" class="body-txt">• Public health facility accessibility</text>
+      <text x="24" y="72" class="body-txt">• Pre-emptive evacuation bulletins</text>
+    </g>
+
+    <!-- Output Box -->
+    <rect x="20" y="415" width="300" height="85" rx="8" fill="#FEE2E2" stroke="#DC2626" stroke-width="1.2" />
+    <text x="32" y="435" class="badge-txt" fill="#991B1B">DECISION-SUPPORT PRODUCTS</text>
+    <text x="32" y="455" class="audit-txt" fill="#7F1D1D">• 1–4 Week Early Action Bulletins</text>
+    <text x="32" y="473" class="audit-txt" fill="#7F1D1D">• Targeted county risk ranking</text>
+    <text x="32" y="491" class="audit-txt" fill="#7F1D1D">• Protection of unharvested staple crops</text>
+  </g>
+</svg>

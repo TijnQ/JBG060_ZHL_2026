@@ -1,0 +1,140 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1900 820" width="100%" height="100%" style="background:#FFFFFF; font-family:'Segoe UI', Helvetica, Arial, sans-serif;">
+  <defs>
+    <filter id="shadow" x="-5%" y="-5%" width="110%" height="110%">
+      <feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#0F172A" flood-opacity="0.08"/>
+    </filter>
+    <marker id="arrow-blue" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#0284C7" />
+    </marker>
+    <marker id="arrow-indigo" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#4F46E5" />
+    </marker>
+  </defs>
+
+  <!-- Title Banner -->
+  <text x="950" y="45" text-anchor="middle" font-size="28" font-weight="800" fill="#0F172A">END-TO-END FLOOD FORECASTING &amp; ANTICIPATORY ACTION PIPELINE</text>
+  <text x="950" y="78" text-anchor="middle" font-size="16" font-weight="600" fill="#475569">Operational Multi-Head GBDT Engine (Task A)  ⟶  Area-Preserving ~232 m Downscaler (Task B)  ⟶  Multi-Asset Exposure Action</text>
+
+  <!-- ==================== LEFT CONTAINER: DATA INGESTION ==================== -->
+  <g transform="translate(40, 100)" filter="url(#shadow)">
+    <rect width="520" height="680" rx="16" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="2"/>
+    <rect width="520" height="60" rx="16" fill="#0284C7"/>
+    <rect y="40" width="520" height="20" fill="#0284C7"/>
+    <text x="260" y="38" text-anchor="middle" font-size="18" font-weight="700" fill="#FFFFFF">1. DATA INGESTION &amp; EMBARGO</text>
+
+    <!-- Embargo Badge -->
+    <rect x="25" y="80" width="470" height="50" rx="8" fill="#FEF2F2" stroke="#DC2626" stroke-width="1.5"/>
+    <text x="260" y="102" text-anchor="middle" font-size="13" font-weight="800" fill="#991B1B">STRICT FRIDAY 00:00 UTC OPERATIONAL EMBARGO</text>
+    <text x="260" y="120" text-anchor="middle" font-size="11.5" font-weight="600" fill="#B91C1C">Zero lookahead leakage; mirrors humanitarian anticipatory cycle</text>
+
+    <!-- Card 1: Upstream Hydro -->
+    <rect x="25" y="145" width="470" height="150" rx="10" fill="#FFFFFF" stroke="#BAE6FD" stroke-width="1.5"/>
+    <text x="45" y="175" font-size="16" font-weight="700" fill="#0369A1">Upstream Hydrometeorology (ERA5-Land)</text>
+    <text x="45" y="202" font-size="13" fill="#1E293B">• Catchment Runoff (Q_upstream): 1, 7, 14, 30-day cumulative lags</text>
+    <text x="45" y="226" font-size="13" fill="#1E293B">• Net Water Balance: P - ET₀ surplus balance</text>
+    <text x="45" y="250" font-size="13" fill="#1E293B">• Spatial Catchment: ~300 km Congo-Nile divide transit</text>
+    <text x="45" y="274" font-size="12" font-weight="600" fill="#0284C7">Key Signal: Runoff accumulation drives downstream floodplain ponding</text>
+
+    <!-- Card 2: Gauges & Altimetry -->
+    <rect x="25" y="315" width="470" height="150" rx="10" fill="#FFFFFF" stroke="#BAE6FD" stroke-width="1.5"/>
+    <text x="45" y="345" font-size="16" font-weight="700" fill="#0369A1">Remote Water Levels &amp; River Gauges</text>
+    <text x="45" y="372" font-size="13" fill="#1E293B">• River Lol Gauges: gauge_w1, w7, w14 &amp; 7-day stage rate-of-change</text>
+    <text x="45" y="396" font-size="13" fill="#1E293B">• Lake Albert &amp; Sudd Altimetry remote water level monitoring</text>
+    <text x="45" y="420" font-size="13" fill="#1E293B">• Hydraulic routing delay delivers 2 to 4 weeks of actionable lead time</text>
+    <text x="45" y="444" font-size="12" font-weight="600" fill="#0284C7">Physical Mechanism: Flat River Lol floodplain slows flood transit</text>
+
+    <!-- Card 3: MODIS Satellite -->
+    <rect x="25" y="485" width="470" height="165" rx="10" fill="#FFFFFF" stroke="#BAE6FD" stroke-width="1.5"/>
+    <text x="45" y="515" font-size="16" font-weight="700" fill="#0369A1">Historical Satellite Baseline (MODIS)</text>
+    <text x="45" y="542" font-size="13" fill="#1E293B">• 26-Year Historical Inundation Record (2000–2025 Terra/Aqua)</text>
+    <text x="45" y="566" font-size="13" fill="#1E293B">• Native ~232 m Spatial Resolution (MODIS 8-day composites)</text>
+    <text x="45" y="590" font-size="13" fill="#1E293B">• Establishes empirical pixel climatology &amp; permanent water masks</text>
+    <text x="45" y="614" font-size="12" font-weight="600" fill="#0284C7">High Spatial Fidelity: Resolves localized drainage channels</text>
+  </g>
+
+  <!-- Arrow 1: Left -> Center -->
+  <path d="M570,440 L630,440" stroke="#0284C7" stroke-width="4" marker-end="url(#arrow-blue)"/>
+  <text x="600" y="425" text-anchor="middle" font-size="12" font-weight="700" fill="#0284C7">Lagged Feats</text>
+
+  <!-- ==================== CENTER CONTAINER: MODEL ENGINE ==================== -->
+  <g transform="translate(640, 100)" filter="url(#shadow)">
+    <rect width="600" height="680" rx="16" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="2"/>
+    <rect width="600" height="60" rx="16" fill="#4F46E5"/>
+    <rect y="40" width="600" height="20" fill="#4F46E5"/>
+    <text x="300" y="38" text-anchor="middle" font-size="18" font-weight="700" fill="#FFFFFF">2. MULTI-HEAD GBDT ENGINE (LIGHTGBM)</text>
+
+    <!-- Feature Harmonization Card -->
+    <rect x="25" y="80" width="550" height="75" rx="10" fill="#EEF2FF" stroke="#A5B4FC" stroke-width="1.5"/>
+    <text x="275" y="105" text-anchor="middle" font-size="15" font-weight="700" fill="#3730A3">Feature Ingestion &amp; Autoregression</text>
+    <text x="275" y="128" text-anchor="middle" font-size="12" fill="#1E293B">Hydrometeorological Lags + Harmonic Seasonality (sin/cos) + Autoregressive Extent (y_lag1, y_lag2)</text>
+    <text x="275" y="145" text-anchor="middle" font-size="11.5" font-weight="600" fill="#4338CA">Weekly county tabular state: 1,810 pooled observation weeks across 5 Aweil counties</text>
+
+    <!-- Head 1: Detection -->
+    <rect x="25" y="170" width="550" height="110" rx="10" fill="#FDF4FF" stroke="#D946EF" stroke-width="1.5"/>
+    <text x="45" y="200" font-size="15" font-weight="700" fill="#86198F">Head 1: Flood Detection Classifier [P(flood &gt; 0)]</text>
+    <text x="45" y="225" font-size="12.5" fill="#1E293B">• Objective: Binary Cross-Entropy / LogLoss</text>
+    <text x="45" y="247" font-size="12.5" fill="#1E293B">• High Reliability: Brier Score = 0.0766 | BSS vs Climatology = +24.6%</text>
+    <text x="45" y="268" font-size="12" font-weight="600" fill="#A21CAF">Discriminates wet vs. dry weeks prior to extent quantification</text>
+
+    <!-- Head 2: Extent Quantiles -->
+    <rect x="25" y="295" width="550" height="115" rx="10" fill="#F0FDF4" stroke="#16A34A" stroke-width="1.5"/>
+    <text x="45" y="325" font-size="15" font-weight="700" fill="#14532D">Head 2: Tabular County Extent Quantiles [q10, q50, q90 km²]</text>
+    <text x="45" y="350" font-size="12.5" fill="#1E293B">• Objective: Asymmetric Pinball Loss (Quantile Regression)</text>
+    <text x="45" y="372" font-size="12.5" fill="#1E293B">• Calibrated Uncertainty Bounds: q10 (conservative) to q90 (extreme surge)</text>
+    <text x="45" y="394" font-size="12" font-weight="600" fill="#15803D">Central Forecast: Median q50 (km²) feeds area-conserving spatial downscaler</text>
+
+    <!-- Head 3: Duration / Persistence -->
+    <rect x="25" y="425" width="550" height="115" rx="10" fill="#FFFBEB" stroke="#D97706" stroke-width="1.5"/>
+    <text x="45" y="455" font-size="15" font-weight="700" fill="#92400E">Head 3: Flood Persistence / Duration [h1, h2, h3, h4 weeks]</text>
+    <text x="45" y="480" font-size="12.5" fill="#1E293B">• Multi-Horizon Survival Heads: 1, 2, 3, and 4 weeks forward survival</text>
+    <text x="45" y="502" font-size="12.5" fill="#1E293B">• Beats Persistence: Markov persistence collapses by W3 (-6.8%), GBDT holds +26% BSS</text>
+    <text x="45" y="524" font-size="12" font-weight="600" fill="#B45309">Essential for prolonged standing water risk (crop rotting &amp; livestock diseases)</text>
+
+    <!-- Optuna Node -->
+    <rect x="25" y="555" width="550" height="100" rx="10" fill="#F1F5F9" stroke="#64748B" stroke-width="1.2" stroke-dasharray="6,4"/>
+    <text x="275" y="582" text-anchor="middle" font-size="13.5" font-weight="700" fill="#334155">Optuna Bayesian Hyperparameter Optimization</text>
+    <text x="275" y="606" text-anchor="middle" font-size="12" fill="#475569">50+ TPE trials across learning rate, num_leaves, and L1/L2 alpha/lambda regularization.</text>
+    <text x="275" y="628" text-anchor="middle" font-size="12" font-weight="600" fill="#1E293B">Discovery: Objective loss rapidly saturates at ~0.366 (noise floor); further architectural</text>
+    <text x="275" y="646" text-anchor="middle" font-size="12" font-weight="600" fill="#1E293B">complexity cannot overcome irreducible observational variance.</text>
+  </g>
+
+  <!-- Arrow 2: Center -> Right -->
+  <path d="M1250,440 L1310,440" stroke="#4F46E5" stroke-width="4" marker-end="url(#arrow-indigo)"/>
+  <text x="1280" y="425" text-anchor="middle" font-size="12" font-weight="700" fill="#4F46E5">q50 (km²)</text>
+
+  <!-- ==================== RIGHT CONTAINER: DOWNSCALING & EXPOSURE ==================== -->
+  <g transform="translate(1320, 100)" filter="url(#shadow)">
+    <rect width="540" height="680" rx="16" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="2"/>
+    <rect width="540" height="60" rx="16" fill="#059669"/>
+    <rect y="40" width="540" height="20" fill="#059669"/>
+    <text x="270" y="38" text-anchor="middle" font-size="18" font-weight="700" fill="#FFFFFF">3. DOWNSCALING &amp; EXPOSURE</text>
+
+    <!-- Downscaling Engine Card -->
+    <rect x="25" y="80" width="490" height="190" rx="10" fill="#FFFFFF" stroke="#A7F3D0" stroke-width="1.5"/>
+    <text x="270" y="110" text-anchor="middle" font-size="16" font-weight="700" fill="#065F46">Area-Preserving Spatial Downscaling (Task B)</text>
+    <text x="45" y="138" font-size="13" fill="#1E293B">• Step 1: Ingest tabular county median extent q50 (km²)</text>
+    <text x="45" y="162" font-size="13" fill="#1E293B">• Step 2: Sample conditional pixel climatology P(pixel | month, county)</text>
+    <text x="45" y="186" font-size="13" fill="#1E293B">• Step 3: Discrete rank-order step merge: k = round(v / step - 0.5)</text>
+    <text x="45" y="210" font-size="13" font-weight="700" fill="#047857">• Exact Mathematical Area Conservation: Σ sev_p × A_p ≡ q50</text>
+    <text x="45" y="234" font-size="12.5" font-weight="700" fill="#065F46">  Mathematical Area Distortion: Δ = 0.000 km² (100% Exact Conservation)</text>
+    <text x="45" y="256" font-size="12" fill="#334155">Output: Calibrated ~232 m resolution inundation severity raster [sev ∈ (0, 1)]</text>
+
+    <!-- Split Branch A: Cropland Exposure -->
+    <rect x="25" y="285" width="490" height="175" rx="10" fill="#FEFCE8" stroke="#FACC15" stroke-width="1.5"/>
+    <text x="45" y="315" font-size="16" font-weight="700" fill="#854D0E">[CROPLAND EXPOSURE] Stationary Food Security</text>
+    <text x="45" y="342" font-size="13" fill="#1E293B">• ASAP High-Resolution Cropland Mask (Sorghum &amp; Groundnuts)</text>
+    <text x="45" y="366" font-size="13" fill="#1E293B">• Critical Collision: Ripening &amp; Harvest season (Sep–Nov) vs. flood peak</text>
+    <text x="45" y="390" font-size="13" fill="#1E293B">• Stationary Vulnerability: Standing water &gt;48h leads to 100% crop spoilage</text>
+    <text x="45" y="414" font-size="13" font-weight="700" fill="#A16207">• Anticipatory Trigger (2–3 wk lead): Emergency early harvesting,</text>
+    <text x="45" y="434" font-size="13" font-weight="700" fill="#A16207">  drainage embankment clearing, &amp; elevated grain bag storage</text>
+
+    <!-- Split Branch B: Cattle Exposure -->
+    <rect x="25" y="475" width="490" height="175" rx="10" fill="#FFF1F2" stroke="#FDA4AF" stroke-width="1.5"/>
+    <text x="45" y="505" font-size="16" font-weight="700" fill="#9F1239">[CATTLE EXPOSURE] Mobile Pastoral Livestock</text>
+    <text x="45" y="532" font-size="13" fill="#1E293B">• GeoNode Livestock Density Layer (Dinka transhumance herds)</text>
+    <text x="45" y="556" font-size="13" fill="#1E293B">• River basin grazing corridors cut off by backwater flooding</text>
+    <text x="45" y="580" font-size="13" fill="#1E293B">• Mobile Vulnerability: Herds can relocate if dry routes are identified</text>
+    <text x="45" y="604" font-size="13" font-weight="700" fill="#BE123C">• Anticipatory Trigger (7–14 d lead): Prophylactic liver-fluke dosing,</text>
+    <text x="45" y="624" font-size="13" font-weight="700" fill="#BE123C">  coordinated dry transhumance passage, &amp; intercommunal peace pacts</text>
+  </g>
+</svg>
