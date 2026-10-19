@@ -285,7 +285,7 @@ def generate_diagram1_pipeline(output_dir: Path) -> tuple[Path, Path, Path]:
 
     # SVG pure vector implementation with modern cards, typography, and badges
     svg_content = """<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<svg width="1600" height="680" viewBox="0 0 1600 680" xmlns="http://www.w3.org/2000/svg">
+<svg width="1600" height="380" viewBox="0 0 1600 380" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <!-- Drop Shadow Filter -->
     <filter id="cardShadow" x="-5%" y="-5%" width="110%" height="115%" filterUnits="userSpaceOnUse">
@@ -321,205 +321,136 @@ def generate_diagram1_pipeline(output_dir: Path) -> tuple[Path, Path, Path]:
   <!-- Background -->
   <rect width="100%" height="100%" fill="#F8FAFC" />
 
-  <!-- Diagram Header -->
-  <text x="800" y="48" text-anchor="middle" class="title">END-TO-END PROBABILISTIC FLOOD FORECASTING &amp; EXPOSURE PIPELINE</text>
-  <text x="800" y="75" text-anchor="middle" class="subtitle">Operational 4-Stage Architecture: Embargoed Meteorological Ingestion → County ML → High-Resolution Pixel Downscaling → Asset Overlay</text>
 
   <!-- ======================================================================= -->
-  <!-- STAGE 1: DATA INGESTION (EMBARGOED) -->
+  <!-- STAGE 1: DATA PREPARATION -->
   <!-- ======================================================================= -->
-  <g transform="translate(45, 110)">
-    <rect width="330" height="520" rx="14" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.8" filter="url(#cardShadow)" />
+  <g transform="translate(45, 30)">
+    <rect width="330" height="310" rx="14" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.8" filter="url(#cardShadow)" />
     <!-- Stage Header -->
     <path d="M 0 14 Q 0 0 14 0 L 316 0 Q 330 0 330 14 L 330 52 L 0 52 Z" fill="#1E3A8A" />
-    <text x="165" y="33" text-anchor="middle" class="stage-hdr">STAGE 1: DATA INGESTION</text>
+    <text x="165" y="33" text-anchor="middle" class="stage-hdr">STAGE 1: DATA PREPARATION</text>
 
     <!-- Subtitle tag -->
     <rect x="20" y="66" width="290" height="26" rx="6" fill="#EFF6FF" stroke="#3B82F6" stroke-width="1" />
-    <text x="165" y="83" text-anchor="middle" fill="#1E40AF" class="badge-txt">Strict Friday Embargo Protocol (t - 3 Days)</text>
+    <text x="165" y="83" text-anchor="middle" fill="#1E40AF" class="badge-txt">Raw data → one clean weekly table</text>
 
     <!-- Content Items -->
-    <g transform="translate(20, 108)">
-      <circle cx="8" cy="8" r="5" fill="#2563EB" />
-      <text x="24" y="12" class="card-sub" fill="#1E3A8A">Meteorology &amp; Hydrology</text>
-      <text x="24" y="32" class="body-txt">• ERA5-Land Daily Precipitation (tp)</text>
-      <text x="24" y="52" class="body-txt">• ERA5 Surface Runoff (ro)</text>
-      <text x="24" y="72" class="body-txt">• GLEAM Actual Evaporation (ET)</text>
-      <text x="24" y="92" class="body-txt">• Soil Moisture &amp; Antecedent 7d/14d Deficit</text>
-    </g>
+    <g transform="translate(20, 112)">
+      <circle cx="8" cy="6" r="5" fill="#2563EB" />
+      <text x="24" y="10" class="body-txt">• One clean weekly table:</text>
+      <text x="40" y="30" class="body-txt">5 counties, 26 years (2000–2025)</text>
 
-    <g transform="translate(20, 222)">
-      <circle cx="8" cy="8" r="5" fill="#2563EB" />
-      <text x="24" y="12" class="card-sub" fill="#1E3A8A">Satellite Altimetry &amp; Gauges</text>
-      <text x="24" y="32" class="body-txt">• Hydroweb: Lake Victoria Water Levels</text>
-      <text x="24" y="52" class="body-txt">• DAHITI: Lake Albert / Kyoga Altimetry</text>
-      <text x="24" y="72" class="body-txt">• Dartmouth (DFO) River Gauge Inflows</text>
-    </g>
+      <circle cx="8" cy="56" r="5" fill="#2563EB" />
+      <text x="24" y="60" class="body-txt">• Weather rolled into 1–30-day sums:</text>
+      <text x="40" y="80" class="body-txt">local + upstream, rivers &amp; lakes</text>
 
-    <g transform="translate(20, 316)">
-      <circle cx="8" cy="8" r="5" fill="#2563EB" />
-      <text x="24" y="12" class="card-sub" fill="#1E3A8A">Ground Truth Target (MCDWD)</text>
-      <text x="24" y="32" class="body-txt">• NASA MODIS 8-day Flood Composites</text>
-      <text x="24" y="52" class="body-txt">• 26-Year Record (2000–2025, Tile h20v08)</text>
-      <text x="24" y="72" class="body-txt">• Recurring vs Unusual Inundation Masks</text>
-    </g>
+      <circle cx="8" cy="106" r="5" fill="#2563EB" />
+      <text x="24" y="110" class="body-txt">• Flood history &amp; time-of-year,</text>
+      <text x="40" y="130" class="body-txt">encoded as predictive features</text>
 
-    <!-- Embargo Callout Box -->
-    <rect x="20" y="415" width="290" height="85" rx="8" fill="#FEF3C7" stroke="#F59E0B" stroke-width="1.2" />
-    <text x="32" y="435" class="badge-txt" fill="#92400E">AUDIT VERIFICATION: EMBARGO</text>
-    <text x="32" y="455" class="audit-txt" fill="#78350F">No lookahead leakage. All predictors</text>
-    <text x="32" y="473" class="audit-txt" fill="#78350F">frozen Friday 00:00 UTC preceding the</text>
-    <text x="32" y="491" class="audit-txt" fill="#78350F">target Monday-Sunday forecast week.</text>
+      <circle cx="8" cy="156" r="5" fill="#2563EB" />
+      <text x="24" y="160" class="body-txt">• No peeking ahead: only data</text>
+      <text x="40" y="180" class="body-txt">known by forecast Friday</text>
+    </g>
   </g>
 
   <!-- Connecting Arrow 1 -> 2 -->
-  <path d="M 380 370 L 425 370" stroke="#0284C7" stroke-width="4.0" stroke-linecap="round" marker-end="url(#arrow)" />
+  <path d="M 380 185 L 425 185" stroke="#0284C7" stroke-width="4.0" stroke-linecap="round" marker-end="url(#arrow)" />
 
   <!-- ======================================================================= -->
-  <!-- STAGE 2: TASK A - COUNTY LIGHTGBM -->
+  <!-- STAGE 2: HAZARD ENGINE (LEVEL-1) -->
   <!-- ======================================================================= -->
-  <g transform="translate(435, 110)">
-    <rect width="330" height="520" rx="14" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.8" filter="url(#cardShadow)" />
+  <g transform="translate(435, 30)">
+    <rect width="330" height="310" rx="14" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.8" filter="url(#cardShadow)" />
     <!-- Stage Header -->
     <path d="M 0 14 Q 0 0 14 0 L 316 0 Q 330 0 330 14 L 330 52 L 0 52 Z" fill="#0D9488" />
-    <text x="165" y="33" text-anchor="middle" class="stage-hdr">STAGE 2: TASK A (LIGHTGBM)</text>
+    <text x="165" y="33" text-anchor="middle" class="stage-hdr">STAGE 2: HAZARD ENGINE</text>
 
     <!-- Subtitle tag -->
     <rect x="20" y="66" width="290" height="26" rx="6" fill="#F0FDFA" stroke="#14B8A6" stroke-width="1" />
-    <text x="165" y="83" text-anchor="middle" fill="#0F766E" class="badge-txt">County-Level Probabilistic Engine</text>
+    <text x="165" y="83" text-anchor="middle" fill="#0F766E" class="badge-txt">Level-1 · County Probabilistic Engine</text>
 
     <!-- Content Items -->
-    <g transform="translate(20, 108)">
-      <circle cx="8" cy="8" r="5" fill="#0D9488" />
-      <text x="24" y="12" class="card-sub" fill="#0F766E">Head 1: Detection Probability (det_prob)</text>
-      <text x="24" y="32" class="body-txt">• Binary Logloss Objective</text>
-      <text x="24" y="52" class="body-txt">• Calibrated Brier Score: 0.0650</text>
-      <text x="24" y="72" class="body-txt">• +34.8% Skill vs Climatology</text>
-      <text x="24" y="92" class="body-txt">• +21.7% Skill vs Persistence</text>
+    <g transform="translate(20, 112)">
+      <circle cx="8" cy="6" r="5" fill="#0D9488" />
+      <text x="24" y="10" class="body-txt">• Multi-Head LightGBM</text>
+      <text x="40" y="30" class="body-txt">(50 weekly engineered features)</text>
+
+      <circle cx="8" cy="56" r="5" fill="#0D9488" />
+      <text x="24" y="60" class="body-txt">• Predicts flood occurrence probability</text>
+      <text x="40" y="80" class="body-txt">&amp; multi-horizon duration (1–4 wks)</text>
+
+      <circle cx="8" cy="106" r="5" fill="#0D9488" />
+      <text x="24" y="110" class="body-txt">• Quantile area regression: q10 (best),</text>
+      <text x="40" y="130" class="body-txt">q50 (median), q90 (worst)</text>
     </g>
 
-    <g transform="translate(20, 222)">
-      <circle cx="8" cy="8" r="5" fill="#0D9488" />
-      <text x="24" y="12" class="card-sub" fill="#0F766E">Head 2: Quantile Area (q10, q50, q90)</text>
-      <text x="24" y="32" class="body-txt">• Asymmetric Pinball Quantile Loss</text>
-      <text x="24" y="52" class="body-txt">• Flood-Week MAE: 8.68 km² (vs 15.5 km²)</text>
-      <text x="24" y="72" class="body-txt">• 73.8% Flood-Week Band Coverage</text>
-    </g>
-
-    <g transform="translate(20, 316)">
-      <circle cx="8" cy="8" r="5" fill="#0D9488" />
-      <text x="24" y="12" class="card-sub" fill="#0F766E">Head 3: Multi-Week Duration (h1..h4)</text>
-      <text x="24" y="32" class="body-txt">• Inundation persistence 1 to 4 weeks</text>
-      <text x="24" y="52" class="body-txt">• Independent temporal rollout heads</text>
-    </g>
-
-    <!-- Protocol Callout Box -->
-    <rect x="20" y="395" width="290" height="105" rx="8" fill="#ECFDF5" stroke="#10B981" stroke-width="1.2" />
-    <text x="32" y="415" class="badge-txt" fill="#065F46">CROSS-VALIDATION PROTOCOL</text>
-    <text x="32" y="435" class="audit-txt" fill="#047857">Walk-forward expanding temporal splits:</text>
-    <text x="32" y="453" class="audit-txt" fill="#047857">• Test 1: 2010–11  • Test 2: 2016–17</text>
-    <text x="32" y="471" class="audit-txt" fill="#047857">• Test 3: 2022–24 (Catastrophic flood)</text>
-    <text x="32" y="489" class="audit-txt" fill="#047857">No test season ever seen in training.</text>
   </g>
 
   <!-- Connecting Arrow 2 -> 3 -->
-  <path d="M 770 370 L 815 370" stroke="#0284C7" stroke-width="4.0" stroke-linecap="round" marker-end="url(#arrow)" />
+  <path d="M 770 185 L 815 185" stroke="#0284C7" stroke-width="4.0" stroke-linecap="round" marker-end="url(#arrow)" />
 
   <!-- ======================================================================= -->
-  <!-- STAGE 3: TASK B - PIXEL DOWNSCALER (~232M) -->
+  <!-- STAGE 3: PIXEL DOWNSCALER (LEVEL-2) -->
   <!-- ======================================================================= -->
-  <g transform="translate(825, 110)">
-    <rect width="330" height="520" rx="14" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.8" filter="url(#cardShadow)" />
+  <g transform="translate(825, 30)">
+    <rect width="330" height="310" rx="14" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.8" filter="url(#cardShadow)" />
     <!-- Stage Header -->
     <path d="M 0 14 Q 0 0 14 0 L 316 0 Q 330 0 330 14 L 330 52 L 0 52 Z" fill="#D97706" />
-    <text x="165" y="33" text-anchor="middle" class="stage-hdr">STAGE 3: TASK B (DOWNSCALER)</text>
+    <text x="165" y="33" text-anchor="middle" class="stage-hdr">STAGE 3: PIXEL DOWNSCALER</text>
 
     <!-- Subtitle tag -->
     <rect x="20" y="66" width="290" height="26" rx="6" fill="#FFFBEB" stroke="#F59E0B" stroke-width="1" />
-    <text x="165" y="83" text-anchor="middle" fill="#B45309" class="badge-txt">Physical Spatial Allocation (~232m)</text>
+    <text x="165" y="83" text-anchor="middle" fill="#B45309" class="badge-txt">Level-2 · Spatial Allocation (~232m)</text>
 
     <!-- Content Items -->
-    <g transform="translate(20, 108)">
-      <circle cx="8" cy="8" r="5" fill="#D97706" />
-      <text x="24" y="12" class="card-sub" fill="#B45309">Spatial Signature Prior</text>
-      <text x="24" y="32" class="body-txt">• Historical freq_given(p, c, m)</text>
-      <text x="24" y="52" class="body-txt">• 584,313 canonical cells across 5 counties</text>
-      <text x="24" y="72" class="body-txt">• Native resolution: 10/4800° (~232 meters)</text>
+    <g transform="translate(20, 112)">
+      <circle cx="8" cy="6" r="5" fill="#D97706" />
+      <text x="24" y="10" class="body-txt">• 26-year conditional pixel climatology</text>
+      <text x="40" y="30" class="body-txt">(MODIS MCDWD)</text>
+
+      <circle cx="8" cy="56" r="5" fill="#D97706" />
+      <text x="24" y="60" class="body-txt">• Golden Rule: allocates WHERE water</text>
+      <text x="40" y="80" class="body-txt">pools based on county q50</text>
+
+      <circle cx="8" cy="106" r="5" fill="#D97706" />
+      <text x="24" y="110" class="body-txt">• Coordinate snapping guarantees exact</text>
+      <text x="40" y="130" class="body-txt">area conservation (0.0 km² error)</text>
     </g>
 
-    <g transform="translate(20, 202)">
-      <circle cx="8" cy="8" r="5" fill="#D97706" />
-      <text x="24" y="12" class="card-sub" fill="#B45309">Coordinate Snapping Fix</text>
-      <text x="24" y="32" class="body-txt">• Index formula: k = round(v/step - 0.5)</text>
-      <text x="24" y="52" class="body-txt">• 100% cell merge between Parquet &amp; Grid</text>
-      <text x="24" y="72" class="body-txt">• Zero spatial offset or floating artifacts</text>
-    </g>
-
-    <g transform="translate(20, 296)">
-      <circle cx="8" cy="8" r="5" fill="#D97706" />
-      <text x="24" y="12" class="card-sub" fill="#B45309">Conservation Constraints</text>
-      <text x="24" y="32" class="body-txt">• Exact Area Match: Σ sev(p) × A = q50</text>
-      <text x="24" y="52" class="body-txt">• Probability Layer: prob = det_prob × prior</text>
-      <text x="24" y="72" class="body-txt">• Worst-case Layer: worst scaled to q90</text>
-    </g>
-
-    <!-- Verification Callout Box -->
-    <rect x="20" y="395" width="290" height="105" rx="8" fill="#FEF3C7" stroke="#F59E0B" stroke-width="1.2" />
-    <text x="32" y="415" class="badge-txt" fill="#92400E">AUDIT VERIFICATION: CONSERVATION</text>
-    <text x="32" y="435" class="audit-txt" fill="#78350F">For Nov 4, 2024 peak flood week:</text>
-    <text x="32" y="453" class="audit-txt" fill="#78350F">• LightGBM q50 = 166.32 km²</text>
-    <text x="32" y="471" class="audit-txt" fill="#78350F">• Map implied unclipped = 166.32 km²</text>
-    <text x="32" y="489" class="audit-txt" fill="#78350F">Error = 0.00% (Exact conservation).</text>
   </g>
 
   <!-- Connecting Arrow 3 -> 4 -->
-  <path d="M 1160 370 L 1205 370" stroke="#0284C7" stroke-width="4.0" stroke-linecap="round" marker-end="url(#arrow)" />
+  <path d="M 1160 185 L 1205 185" stroke="#0284C7" stroke-width="4.0" stroke-linecap="round" marker-end="url(#arrow)" />
 
   <!-- ======================================================================= -->
-  <!-- STAGE 4: ASSET EXPOSURE OVERLAY -->
+  <!-- STAGE 4: ASSET RISK OVERLAP (LEVEL-3) -->
   <!-- ======================================================================= -->
-  <g transform="translate(1215, 110)">
-    <rect width="340" height="520" rx="14" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.8" filter="url(#cardShadow)" />
+  <g transform="translate(1215, 30)">
+    <rect width="340" height="310" rx="14" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.8" filter="url(#cardShadow)" />
     <!-- Stage Header -->
     <path d="M 0 14 Q 0 0 14 0 L 326 0 Q 340 0 340 14 L 340 52 L 0 52 Z" fill="#DC2626" />
-    <text x="170" y="33" text-anchor="middle" class="stage-hdr">STAGE 4: ASSET EXPOSURE</text>
+    <text x="170" y="33" text-anchor="middle" class="stage-hdr">STAGE 4: ASSET RISK OVERLAP</text>
 
     <!-- Subtitle tag -->
     <rect x="20" y="66" width="300" height="26" rx="6" fill="#FEF2F2" stroke="#EF4444" stroke-width="1" />
-    <text x="170" y="83" text-anchor="middle" fill="#B91C1C" class="badge-txt">Humanitarian Impact &amp; Early Action</text>
+    <text x="170" y="83" text-anchor="middle" fill="#B91C1C" class="badge-txt">Level-3 · Humanitarian Early Action</text>
 
     <!-- Content Items -->
-    <g transform="translate(20, 108)">
-      <circle cx="8" cy="8" r="5" fill="#DC2626" />
-      <text x="24" y="12" class="card-sub" fill="#991B1B">Staple Crop Phenology Overlay</text>
-      <text x="24" y="32" class="body-txt">• ASAP Crop &amp; Rangeland Masks</text>
-      <text x="24" y="52" class="body-txt">• Sorghum &amp; Pearl Millet Calendars</text>
-      <text x="24" y="72" class="body-txt">• Critical Collision Window (Sep–Nov)</text>
-      <text x="24" y="92" class="body-txt">• Ripening grain vs 91.8% flood peak</text>
+    <g transform="translate(20, 112)">
+      <circle cx="8" cy="6" r="5" fill="#DC2626" />
+      <text x="24" y="10" class="body-txt">• Direct spatial raster multiplication</text>
+
+      <circle cx="8" cy="56" r="5" fill="#DC2626" />
+      <text x="24" y="60" class="body-txt">• ASAP Cropland Mask (~500m grid) →</text>
+      <text x="40" y="80" class="body-txt">inundated staple hectares</text>
+
+      <circle cx="8" cy="106" r="5" fill="#DC2626" />
+      <text x="24" y="110" class="body-txt">• ICPAC Cattle Density (~9km grid) →</text>
+      <text x="40" y="130" class="body-txt">exposed head of livestock</text>
     </g>
 
-    <g transform="translate(20, 222)">
-      <circle cx="8" cy="8" r="5" fill="#DC2626" />
-      <text x="24" y="12" class="card-sub" fill="#991B1B">Livestock &amp; Pastoral Rangeland</text>
-      <text x="24" y="32" class="body-txt">• FAO Gridded Livestock (Cattle Density)</text>
-      <text x="24" y="52" class="body-txt">• Transhumance corridor inundation</text>
-      <text x="24" y="72" class="body-txt">• Pasture submergence alerts</text>
-    </g>
-
-    <g transform="translate(20, 316)">
-      <circle cx="8" cy="8" r="5" fill="#DC2626" />
-      <text x="24" y="12" class="card-sub" fill="#991B1B">Population &amp; Infrastructure</text>
-      <text x="24" y="32" class="body-txt">• WorldPop 100m Population Density</text>
-      <text x="24" y="52" class="body-txt">• Public health facility accessibility</text>
-      <text x="24" y="72" class="body-txt">• Pre-emptive evacuation bulletins</text>
-    </g>
-
-    <!-- Output Box -->
-    <rect x="20" y="415" width="300" height="85" rx="8" fill="#FEE2E2" stroke="#DC2626" stroke-width="1.2" />
-    <text x="32" y="435" class="badge-txt" fill="#991B1B">DECISION-SUPPORT PRODUCTS</text>
-    <text x="32" y="455" class="audit-txt" fill="#7F1D1D">• 1–4 Week Early Action Bulletins</text>
-    <text x="32" y="473" class="audit-txt" fill="#7F1D1D">• Targeted county risk ranking</text>
-    <text x="32" y="491" class="audit-txt" fill="#7F1D1D">• Protection of unharvested staple crops</text>
   </g>
 </svg>
 """
@@ -527,61 +458,52 @@ def generate_diagram1_pipeline(output_dir: Path) -> tuple[Path, Path, Path]:
         f.write(svg_content)
 
     # Render high-resolution PNG & PDF via matplotlib to guarantee 300 DPI publication standards
-    fig, ax = plt.subplots(figsize=(16, 6.8), dpi=300)
+    fig, ax = plt.subplots(figsize=(16, 3.8), dpi=300)
     ax.set_xlim(0, 1600)
-    ax.set_ylim(0, 680)
+    ax.set_ylim(0, 380)
     ax.invert_yaxis()
     ax.axis("off")
 
     # Matplotlib parallel rendering for PNG and PDF
     stages = [
         {
-            "x": 45, "y": 110, "w": 330, "h": 520, "color": "#1E3A8A", "bg": "#EFF6FF", "tag_bg": "#DBEAFE",
-            "tag": "Strict Friday Embargo (t - 3 Days)", "title": "STAGE 1: DATA INGESTION",
-            "sections": [
-                ("Meteorology & Hydrology", ["ERA5 Daily Precipitation (tp)", "ERA5 Surface Runoff (ro)", "GLEAM Evapotranspiration (ET)", "Soil Moisture & 7d/14d Deficit"]),
-                ("Satellite Altimetry & Gauges", ["Hydroweb: Lake Victoria Levels", "DAHITI: Lake Albert / Kyoga Altimetry", "Dartmouth (DFO) River Discharge"]),
-                ("Ground Truth Flood Target", ["NASA MODIS 8-day Flood Masks", "26-Year Climatology (2000-2025)", "Recurring & Unusual Flood Masks"]),
+            "x": 45, "y": 30, "w": 330, "h": 310, "color": "#1E3A8A", "bg": "#EFF6FF", "tag_bg": "#DBEAFE",
+            "tag": "Raw data → one clean weekly table", "title": "STAGE 1: DATA PREPARATION",
+            "bullets": [
+                ["One clean weekly table:", "5 counties, 26 years (2000–2025)"],
+                ["Weather rolled into 1–30-day sums:", "local + upstream, rivers & lakes"],
+                ["Flood history & time-of-year,", "encoded as predictive features"],
+                ["No peeking ahead: only data", "known by forecast Friday"],
             ],
-            "callout": ("AUDIT: EMBARGO", "Strict Friday 00:00 UTC cutoff.\nZero lookahead leakage across weeks.")
         },
         {
-            "x": 435, "y": 110, "w": 330, "h": 520, "color": "#0D9488", "bg": "#F0FDFA", "tag_bg": "#CCFBF1",
-            "tag": "County Probabilistic ML Engine", "title": "STAGE 2: TASK A (LIGHTGBM)",
-            "sections": [
-                ("Head 1: Detection Probability", ["Binary Logloss Classifier (det_prob)", "Brier Score: 0.0650 (Calibrated)", "+34.8% Skill vs Climatology", "+21.7% Skill vs Persistence"]),
-                ("Head 2: Quantile Area (km²)", ["Asymmetric Pinball Quantile Loss", "q10, q50 (Median), q90 (Worst)", "Flood-Week MAE: 8.68 km²"]),
-                ("Head 3: Multi-Week Duration", ["Persistence 1 to 4 weeks ahead", "Independent multi-horizon heads"]),
+            "x": 435, "y": 30, "w": 330, "h": 310, "color": "#0D9488", "bg": "#F0FDFA", "tag_bg": "#CCFBF1",
+            "tag": "Level-1 · County Probabilistic Engine", "title": "STAGE 2: HAZARD ENGINE",
+            "bullets": [
+                ["Multi-Head LightGBM", "(50 weekly engineered features)"],
+                ["Predicts flood occurrence probability", "& multi-horizon duration (1–4 wks)"],
+                ["Quantile area regression: q10 (best),", "q50 (median), q90 (worst)"],
             ],
-            "callout": ("AUDIT: VALIDATION", "Walk-forward temporal splits.\nNo test season ever seen in training.")
         },
         {
-            "x": 825, "y": 110, "w": 330, "h": 520, "color": "#D97706", "bg": "#FFFBEB", "tag_bg": "#FEF3C7",
-            "tag": "Physical Spatial Allocation (~232m)", "title": "STAGE 3: TASK B (DOWNSCALER)",
-            "sections": [
-                ("Spatial Signature Prior", ["Empirical freq_given(p, c, m)", "584,313 canonical cells", "Native ~232 m MODIS grid"]),
-                ("Coordinate Snapping Bugfix", ["Index: k = round(v/step - 0.5)", "100% cell merge (Grid vs Parquet)", "Zero floating cell artifacts"]),
-                ("Conservation Constraints", ["Exact Area Conservation Matching q50", "Probability Map: det_prob × prior", "Severity Layer: scaled to q50"]),
+            "x": 825, "y": 30, "w": 330, "h": 310, "color": "#D97706", "bg": "#FFFBEB", "tag_bg": "#FEF3C7",
+            "tag": "Level-2 · Spatial Allocation (~232m)", "title": "STAGE 3: PIXEL DOWNSCALER",
+            "bullets": [
+                ["26-year conditional pixel climatology", "(MODIS MCDWD)"],
+                ["Golden Rule: allocates WHERE water", "pools based on county q50"],
+                ["Coordinate snapping guarantees exact", "area conservation (0.0 km² error)"],
             ],
-            "callout": ("AUDIT: CONSERVATION", "Nov 4, 2024 peak flood:\nq50 = 166.32 km² == Implied map area.")
         },
         {
-            "x": 1215, "y": 110, "w": 340, "h": 520, "color": "#DC2626", "bg": "#FEF2F2", "tag_bg": "#FEE2E2",
-            "tag": "Humanitarian Impact & Early Action", "title": "STAGE 4: ASSET EXPOSURE",
-            "sections": [
-                ("Staple Crop Phenology", ["ASAP Sorghum & Pearl Millet Masks", "Growth stages vs Flood timeline", "Critical Harvest Window (Sep-Nov)"]),
-                ("Livestock & Pastoral Rangeland", ["FAO Cattle Density Grids", "Pastoral transhumance routes", "Rangeland submergence alerts"]),
-                ("Population & Health Facilities", ["WorldPop 100m Population Density", "Health facility accessibility", "Pre-emptive action bulletins"]),
+            "x": 1215, "y": 30, "w": 340, "h": 310, "color": "#DC2626", "bg": "#FEF2F2", "tag_bg": "#FEE2E2",
+            "tag": "Level-3 · Humanitarian Early Action", "title": "STAGE 4: ASSET RISK OVERLAP",
+            "bullets": [
+                ["Direct spatial raster multiplication"],
+                ["ASAP Cropland Mask (~500m grid) →", "inundated staple hectares"],
+                ["ICPAC Cattle Density (~9km grid) →", "exposed head of livestock"],
             ],
-            "callout": ("AUDIT: HUMANITARIAN", "Actionable 1-4 week early warnings\nto protect ripening grain & cattle.")
         },
     ]
-
-    # Draw diagram Title
-    ax.text(800, 48, "END-TO-END PROBABILISTIC FLOOD FORECASTING & EXPOSURE PIPELINE",
-            ha="center", va="center", fontsize=15.5, fontweight="bold", color="#0F172A")
-    ax.text(800, 75, "Operational 4-Stage Architecture: Embargoed Meteorological Ingestion → County ML → High-Resolution Pixel Downscaling → Asset Overlay",
-            ha="center", va="center", fontsize=9.2, color="#475569")
 
     for stg in stages:
         x, y, w, h = stg["x"], stg["y"], stg["w"], stg["h"]
@@ -608,34 +530,22 @@ def generate_diagram1_pipeline(output_dir: Path) -> tuple[Path, Path, Path]:
         ax.add_patch(tag)
         ax.text(x + w / 2, y + 74, stg["tag"], ha="center", va="center", fontsize=8.2, fontweight="bold", color=stg["color"], zorder=4)
 
-        # Sections
-        sec_y = y + 105
-        for header, bullets in stg["sections"]:
-            ax.plot(x + 22, sec_y + 6, marker="o", markersize=4.5, color=stg["color"], zorder=4)
-            ax.text(x + 32, sec_y + 8, header, fontsize=9.0, fontweight="bold", color=stg["color"], zorder=4)
-            sec_y += 20
-            for b in bullets:
-                ax.text(x + 32, sec_y + 6, f"• {b}", fontsize=8.0, color="#334155", zorder=4)
-                sec_y += 18
-            sec_y += 10
-
-        # Audit Callout Box
-        callout_title, callout_body = stg["callout"]
-        call_rect = mpatches.FancyBboxPatch(
-            (x + 15, y + h - 92), w - 30, 78, boxstyle="round,pad=0.01,rounding_size=8",
-            facecolor="#FFFBEB" if "CONSERVATION" in callout_title else ("#F0FDF4" if "VALIDATION" in callout_title else "#FEF2F2"),
-            edgecolor="#F59E0B" if "CONSERVATION" in callout_title else ("#10B981" if "VALIDATION" in callout_title else "#DC2626"),
-            linewidth=1.0, zorder=3
-        )
-        ax.add_patch(call_rect)
-        ax.text(x + 25, y + h - 78, callout_title, fontsize=8.2, fontweight="bold", va="top",
-                color="#B45309" if "CONSERVATION" in callout_title else ("#047857" if "VALIDATION" in callout_title else "#B91C1C"), zorder=4)
-        ax.text(x + 25, y + h - 58, callout_body, fontsize=7.5, color="#475569", linespacing=1.35, va="top", zorder=4)
+        # Bullets (flat, pre-wrapped lines)
+        by = y + 116
+        for lines in stg["bullets"]:
+            ax.plot(x + 22, by + 4, marker="o", markersize=4.5, color=stg["color"], zorder=4)
+            for j, ln in enumerate(lines):
+                if j == 0:
+                    ax.text(x + 32, by, f"• {ln}", fontsize=8.6, color="#1E293B", zorder=4)
+                else:
+                    ax.text(x + 46, by, ln, fontsize=8.6, color="#334155", zorder=4)
+                by += 17
+            by += 11
 
     # Connecting Arrows
     for arrow_x in [385, 775, 1165]:
         ax.annotate(
-            "", xy=(arrow_x + 40, 370), xytext=(arrow_x, 370),
+            "", xy=(arrow_x + 40, 185), xytext=(arrow_x, 185),
             arrowprops=dict(facecolor="#0284C7", edgecolor="#0284C7", width=3.0, headwidth=9.0),
             zorder=5
         )
@@ -1331,7 +1241,7 @@ poster_visuals/
 ├── 1_Study_Area_Locator_Map/
 │   ├── Map1_Study_Area_Locator_Map.png            [300 DPI high-resolution for A0 poster]
 │   └── Map1_Study_Area_Locator_Map.pdf            [Vector PDF format]
-├── 2_End_to_End_Pipeline_Diagram/
+├── v1/2_End_to_End_Pipeline_Diagram/
 │   ├── Diagram1_Pipeline_Architecture.svg         [Pure scalable vector format]
 │   ├── Diagram1_Pipeline_Architecture.png         [300 DPI high-resolution]
 │   └── Diagram1_Pipeline_Architecture.pdf         [Vector PDF format]
@@ -1492,7 +1402,7 @@ def main() -> None:
     POSTER_DIR.mkdir(parents=True, exist_ok=True)
 
     dir_map1 = POSTER_DIR / "1_Study_Area_Locator_Map"
-    dir_diag1 = POSTER_DIR / "2_End_to_End_Pipeline_Diagram"
+    dir_diag1 = POSTER_DIR / "v1" / "2_End_to_End_Pipeline_Diagram"
     dir_chart1 = POSTER_DIR / "3_Hydrological_Lag_and_Decoupling"
     dir_chart2 = POSTER_DIR / "4_Agricultural_Exposure_Phenology_Plot"
     dir_map2 = POSTER_DIR / "5_Sample_Downscaled_Forecast_Raster"
