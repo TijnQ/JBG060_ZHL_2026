@@ -125,7 +125,7 @@ def add_table_panel(ax, header: list[str], rows: list[list[str]], title: str,
             cell.set_text_props(color="#FFFFFF", fontweight="bold")
         else:
             cell.set_facecolor("#FFFFFF" if r == 1 else "#F8FAFC")
-            cell.set_text_props(color=TEXT, fontweight="bold" if c == len(header) - 1 else "normal")
+            cell.set_text_props(color=TEXT)
 
 
 
@@ -138,7 +138,7 @@ def generate_model1_overview(output_dir: Path) -> tuple[Path, Path]:
     pinball_cut = (1 - lgbm["mean_pinball_loss"] / clim["mean_pinball_loss"]) * 100
     pinball_cut_pers = (1 - lgbm["mean_pinball_loss"] / persist["mean_pinball_loss"]) * 100
 
-    fig = plt.figure(figsize=(16.5, 9.5), dpi=300)
+    fig = plt.figure(figsize=(16.5, 10.25), dpi=300)
     fig.patch.set_alpha(0.0)
     gs = fig.add_gridspec(2, 4, height_ratios=[1.05, 1.0], hspace=0.42, wspace=0.12)
 
@@ -155,7 +155,7 @@ def generate_model1_overview(output_dir: Path) -> tuple[Path, Path]:
     add_table_panel(
         ax_tbl,
         header=["Measure", "Climatology", "Persistence", "Model",
-                "Improvement\nvs. Climatology", "Improvement\nvs. Persistence"],
+                "Model vs.\nClimatology", "Model vs.\nPersistence"],
         rows=[["Brier", f"{clim['brier_score']:.4f}", f"{persist['brier_score']:.4f}",
                f"{lgbm['brier_score']:.4f}", f"+{bss_clim:.1f}%", f"+{bss_pers:.1f}%"],
               ["Pinball", f"{clim['mean_pinball_loss']:.3f}", f"{persist['mean_pinball_loss']:.3f}",
@@ -185,7 +185,7 @@ def generate_model2_overview(output_dir: Path) -> tuple[Path, Path]:
     bss_all = px["bss_vs_clim"] * 100
     n_pos = sum(1 for s in px["county_stats"] if s[3] > 0)
 
-    fig = plt.figure(figsize=(16.5, 8), dpi=300)
+    fig = plt.figure(figsize=(16.5, 5.46), dpi=300)
     fig.patch.set_alpha(0.0)
     gs = fig.add_gridspec(1, 3, wspace=0.22)
 
@@ -198,7 +198,7 @@ def generate_model2_overview(output_dir: Path) -> tuple[Path, Path]:
 
     fig.suptitle("Model 2 \u00b7 Pixel Downscaling Performance (~232 m Grid)",
                  fontsize=22, fontweight="bold", y=0.98, color=TITLE)
-    fig.subplots_adjust(left=0.06, right=0.94, top=0.86, bottom=0.06)
+    fig.subplots_adjust(left=0.06, right=0.94, top=0.84, bottom=0.05)
 
     png_path = output_dir / "model2_pixel_performance_overview.png"
     svg_path = output_dir / "model2_pixel_performance_overview.svg"
