@@ -358,15 +358,20 @@ def get_climatology(
     boundaries_path: str | Path = ADMIN2_PATH,
     cache_dir: str | Path = OUT_DIR,
     rebuild: bool = False,
+    years: range = YEARS,
 ) -> dict[str, pd.DataFrame]:
-    """Return cached tables or build (and cache) them from the raw Parquets."""
+    """Return cached tables or build (and cache) them from the raw Parquets.
+
+    `years` restricts the baseline window used to build the climatology
+    (e.g. range(2000, 2009) for fold-1 train-only priors in evaluation).
+    """
     if not rebuild:
         cached = load_cache(cache_dir)
         if cached is not None:
             print(f"  [climatology] loaded from cache in {cache_dir}")
             return cached
     print("  [climatology] building per-pixel climatology from raw flood masks ...")
-    tables = build_pixel_climatology(flood_root, boundaries_path)
+    tables = build_pixel_climatology(flood_root, boundaries_path, years)
     save_cache(tables, cache_dir)
     return tables
 
