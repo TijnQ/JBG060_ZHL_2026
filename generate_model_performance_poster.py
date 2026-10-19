@@ -164,7 +164,7 @@ def generate_model1_overview(output_dir: Path) -> tuple[Path, Path]:
         bbox=[0.03, 0.0, 0.94, 1.0],
     )
 
-    fig.suptitle("Model 1 \u00b7 County Flood Forecast (LightGBM)",
+    fig.suptitle("Stage 2 \u00b7 County Flood Forecast (LightGBM)",
                  fontsize=22, fontweight="bold", y=0.98, color=TITLE)
     fig.subplots_adjust(left=0.04, right=0.96, top=0.88, bottom=0.06)
 
