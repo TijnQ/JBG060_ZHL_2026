@@ -203,9 +203,9 @@ def generate_model2_overview(output_dir: Path) -> tuple[Path, Path]:
         (hero_w + gap_x, 0.0, small_w, small_h),
     ]
     cards = [
-        (f"{auroc:.2f}", "AUROC \u2014 Flood\nRanking Skill", C_GREEN, 110, 24),
-        (f"+{bss_all:.1f}%", "BSS vs. Climatology\n(pixel probabilities)", C_BLUE, 48, 20),
-        (f"{n_pos} / 5", "Counties with\nPositive Skill", C_ORANGE, 48, 20),
+        (f"{auroc:.2f}", "AUROC \u2014 Flood\nRanking Skill", C_GREEN, 150, 34),
+        (f"+{bss_all:.1f}%", "BSS vs. Climatology\n(pixel probabilities)", C_BLUE, 72, 28),
+        (f"{n_pos} / 5", "Counties with\nPositive Skill", C_ORANGE, 72, 28),
     ]
     for (x, y, w, h), (stat, label, accent, ss, ls) in zip(rects, cards):
         ax.add_patch(mpatches.FancyBboxPatch(

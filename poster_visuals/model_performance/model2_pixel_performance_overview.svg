@@ -6,7 +6,7 @@
   <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
    <cc:Work>
     <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
-    <dc:date>2026-10-19T18:05:11.585397</dc:date>
+    <dc:date>2026-10-19T18:07:17.769312</dc:date>
     <dc:format>image/svg+xml</dc:format>
     <dc:creator>
      <cc:Agent>
@@ -41,7 +41,7 @@ Q 7.2 59.04 7.2 67.5936
 L 7.2 620.7264 
 Q 7.2 629.28 24.3072 629.28 
 z
-" clip-path="url(#pc12fbaa024)" style="fill: #ecfdf5; stroke: #059669; stroke-width: 2.5; stroke-linejoin: miter"/>
+" clip-path="url(#p5329b5c06e)" style="fill: #ecfdf5; stroke: #059669; stroke-width: 2.5; stroke-linejoin: miter"/>
    </g>
    <g id="patch_3">
     <path d="M 611.6544 335.520864 
@@ -54,7 +54,7 @@ Q 594.5472 59.04 594.5472 67.5936
 L 594.5472 326.967264 
 Q 594.5472 335.520864 611.6544 335.520864 
 z
-" clip-path="url(#pc12fbaa024)" style="fill: #e8eef2; stroke: #1e3f52; stroke-width: 2.5; stroke-linejoin: miter"/>
+" clip-path="url(#p5329b5c06e)" style="fill: #e8eef2; stroke: #1e3f52; stroke-width: 2.5; stroke-linejoin: miter"/>
    </g>
    <g id="patch_4">
     <path d="M 611.6544 629.28 
@@ -67,28 +67,28 @@ Q 594.5472 352.799136 594.5472 361.352736
 L 594.5472 620.7264 
 Q 594.5472 629.28 611.6544 629.28 
 z
-" clip-path="url(#pc12fbaa024)" style="fill: #faece5; stroke: #d96b43; stroke-width: 2.5; stroke-linejoin: miter"/>
+" clip-path="url(#p5329b5c06e)" style="fill: #faece5; stroke: #d96b43; stroke-width: 2.5; stroke-linejoin: miter"/>
    </g>
    <g id="text_1">
-    <text style="font-weight: 700; font-size: 110px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #059669" x="292.32" y="317.489125" transform="rotate(-0 292.32 317.489125)">0.92</text>
+    <text style="font-weight: 700; font-size: 150px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #059669" x="292.32" y="328.526625" transform="rotate(-0 292.32 328.526625)">0.92</text>
    </g>
    <g id="text_2">
-    <text style="font-weight: 700; font-size: 24px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; fill: #363432" transform="translate(187.670625 473.653069)">AUROC — Flood</text>
-    <text style="font-weight: 700; font-size: 24px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; fill: #363432" transform="translate(204.073125 501.439631)">Ranking Skill</text>
+    <text style="font-weight: 700; font-size: 34px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; fill: #363432" transform="translate(144.066719 470.584514)">AUROC — Flood</text>
+    <text style="font-weight: 700; font-size: 34px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; fill: #363432" transform="translate(167.303594 509.948811)">Ranking Skill</text>
    </g>
    <g id="text_3">
-    <text style="font-weight: 700; font-size: 48px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #1e3f52" x="871.1136" y="182.877346" transform="rotate(-0 871.1136 182.877346)">+5.8%</text>
+    <text style="font-weight: 700; font-size: 72px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #1e3f52" x="871.1136" y="189.499846" transform="rotate(-0 871.1136 189.499846)">+5.8%</text>
    </g>
    <g id="text_4">
-    <text style="font-weight: 700; font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; fill: #363432" transform="translate(759.318288 257.49873)">BSS vs. Climatology</text>
-    <text style="font-weight: 700; font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; fill: #363432" transform="translate(759.99485 280.810449)">(pixel probabilities)</text>
+    <text style="font-weight: 700; font-size: 28px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; fill: #363432" transform="translate(714.600163 255.043886)">BSS vs. Climatology</text>
+    <text style="font-weight: 700; font-size: 28px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; fill: #363432" transform="translate(715.54735 287.680292)">(pixel probabilities)</text>
    </g>
    <g id="text_5">
-    <text style="font-weight: 700; font-size: 48px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #d96b43" x="871.1136" y="476.636482" transform="rotate(-0 871.1136 476.636482)">5 / 5</text>
+    <text style="font-weight: 700; font-size: 72px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #d96b43" x="871.1136" y="483.258982" transform="rotate(-0 871.1136 483.258982)">5 / 5</text>
    </g>
    <g id="text_6">
-    <text style="font-weight: 700; font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; fill: #363432" transform="translate(793.677663 551.335991)">Counties with</text>
-    <text style="font-weight: 700; font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; fill: #363432" transform="translate(798.40735 574.49146)">Positive Skill</text>
+    <text style="font-weight: 700; font-size: 28px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; fill: #363432" transform="translate(762.703288 548.912397)">Counties with</text>
+    <text style="font-weight: 700; font-size: 28px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; fill: #363432" transform="translate(769.32485 581.330053)">Positive Skill</text>
    </g>
   </g>
   <g id="text_7">
@@ -96,7 +96,7 @@ z
   </g>
  </g>
  <defs>
-  <clipPath id="pc12fbaa024">
+  <clipPath id="p5329b5c06e">
    <rect x="7.2" y="59.04" width="1140.48" height="570.24"/>
   </clipPath>
  </defs>
