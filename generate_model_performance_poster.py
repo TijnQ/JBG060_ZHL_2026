@@ -143,12 +143,12 @@ def generate_model1_overview(output_dir: Path) -> tuple[Path, Path]:
 
     draw_stat_card(fig.add_subplot(gs[0, 0]), f"+{bss_clim:.1f}%",
                    "BSS vs.\nClimatology", C_GREEN)
-    draw_stat_card(fig.add_subplot(gs[0, 1]), f"\u2212{pinball_cut:.1f}%",
-                   "Pinball Loss vs.\nClimatology", C_BLUE)
+    draw_stat_card(fig.add_subplot(gs[0, 1]), f"+{pinball_cut:.1f}%",
+                   "Pinball Skill Score\nvs. Climatology", C_BLUE)
     draw_stat_card(fig.add_subplot(gs[0, 2]), f"+{bss_pers:.1f}%",
                    "BSS vs.\nPersistence", C_ORANGE)
-    draw_stat_card(fig.add_subplot(gs[0, 3]), f"\u2212{pinball_cut_pers:.1f}%",
-                   "Pinball Loss vs.\nPersistence", C_GREEN)
+    draw_stat_card(fig.add_subplot(gs[0, 3]), f"+{pinball_cut_pers:.1f}%",
+                   "Pinball Skill Score\nvs. Persistence", C_GREEN)
 
     ax_tbl = fig.add_subplot(gs[1, :])
     add_table_panel(
@@ -158,7 +158,7 @@ def generate_model1_overview(output_dir: Path) -> tuple[Path, Path]:
         rows=[["Brier", f"{clim['brier_score']:.4f}", f"{persist['brier_score']:.4f}",
                f"{lgbm['brier_score']:.4f}", f"+{bss_clim:.1f}%", f"+{bss_pers:.1f}%"],
               ["Pinball loss", f"{clim['mean_pinball_loss']:.3f}", f"{persist['mean_pinball_loss']:.3f}",
-               f"{lgbm['mean_pinball_loss']:.3f}", f"\u2212{pinball_cut:.1f}%", f"\u2212{pinball_cut_pers:.1f}%"]],
+               f"{lgbm['mean_pinball_loss']:.3f}", f"+{pinball_cut:.1f}%", f"+{pinball_cut_pers:.1f}%"]],
         col_widths=[0.13, 0.145, 0.145, 0.12, 0.23, 0.23],
         bbox=[0.03, 0.20, 0.94, 0.60],
     )

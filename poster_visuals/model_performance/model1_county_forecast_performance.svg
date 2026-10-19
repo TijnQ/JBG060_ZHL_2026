@@ -6,7 +6,7 @@
   <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
    <cc:Work>
     <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
-    <dc:date>2026-10-19T17:36:13.457977</dc:date>
+    <dc:date>2026-10-19T17:47:41.705277</dc:date>
     <dc:format>image/svg+xml</dc:format>
     <dc:creator>
      <cc:Agent>
@@ -41,7 +41,7 @@ Q 12.213578 88.684959 12.213578 104.054876
 L 12.213578 314.110413 
 Q 12.213578 329.480331 27.254312 329.480331 
 z
-" clip-path="url(#p8123688d43)" style="fill: #ecfdf5; stroke: #059669; stroke-width: 2.5; stroke-linejoin: miter"/>
+" clip-path="url(#p6152e9d195)" style="fill: #ecfdf5; stroke: #059669; stroke-width: 2.5; stroke-linejoin: miter"/>
    </g>
    <g id="text_1">
     <text style="font-weight: 700; font-size: 52px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #059669" x="132.53945" y="197.814866" transform="rotate(-0 132.53945 197.814866)">+34.8%</text>
@@ -63,14 +63,14 @@ Q 292.973945 88.684959 292.973945 104.054876
 L 292.973945 314.110413 
 Q 292.973945 329.480331 308.014679 329.480331 
 z
-" clip-path="url(#p2a43f4b90a)" style="fill: #e8eef2; stroke: #1e3f52; stroke-width: 2.5; stroke-linejoin: miter"/>
+" clip-path="url(#pf76f986f22)" style="fill: #e8eef2; stroke: #1e3f52; stroke-width: 2.5; stroke-linejoin: miter"/>
    </g>
    <g id="text_3">
-    <text style="font-weight: 700; font-size: 52px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #1e3f52" x="413.299817" y="197.814866" transform="rotate(-0 413.299817 197.814866)">−60.3%</text>
+    <text style="font-weight: 700; font-size: 52px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #1e3f52" x="413.299817" y="197.814866" transform="rotate(-0 413.299817 197.814866)">+60.3%</text>
    </g>
    <g id="text_4">
-    <text style="font-weight: 700; font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; fill: #363432" transform="translate(326.284192 264.425205)">Pinball Loss vs.</text>
-    <text style="font-weight: 700; font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; fill: #363432" transform="translate(346.310754 287.580673)">Climatology</text>
+    <text style="font-weight: 700; font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; fill: #363432" transform="translate(311.848254 264.425205)">Pinball Skill Score</text>
+    <text style="font-weight: 700; font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; fill: #363432" transform="translate(326.560754 287.580673)">vs. Climatology</text>
    </g>
   </g>
   <g id="axes_3">
@@ -85,7 +85,7 @@ Q 573.734312 88.684959 573.734312 104.054876
 L 573.734312 314.110413 
 Q 573.734312 329.480331 588.775046 329.480331 
 z
-" clip-path="url(#p37e72fa689)" style="fill: #faece5; stroke: #d96b43; stroke-width: 2.5; stroke-linejoin: miter"/>
+" clip-path="url(#p9ad595611d)" style="fill: #faece5; stroke: #d96b43; stroke-width: 2.5; stroke-linejoin: miter"/>
    </g>
    <g id="text_5">
     <text style="font-weight: 700; font-size: 52px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #d96b43" x="694.060183" y="197.814866" transform="rotate(-0 694.060183 197.814866)">+21.7%</text>
@@ -107,14 +107,14 @@ Q 854.494679 88.684959 854.494679 104.054876
 L 854.494679 314.110413 
 Q 854.494679 329.480331 869.535413 329.480331 
 z
-" clip-path="url(#p4dd29f8f73)" style="fill: #ecfdf5; stroke: #059669; stroke-width: 2.5; stroke-linejoin: miter"/>
+" clip-path="url(#p9defbf12aa)" style="fill: #ecfdf5; stroke: #059669; stroke-width: 2.5; stroke-linejoin: miter"/>
    </g>
    <g id="text_7">
-    <text style="font-weight: 700; font-size: 52px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #059669" x="974.82055" y="197.814866" transform="rotate(-0 974.82055 197.814866)">−27.8%</text>
+    <text style="font-weight: 700; font-size: 52px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #059669" x="974.82055" y="197.814866" transform="rotate(-0 974.82055 197.814866)">+27.8%</text>
    </g>
    <g id="text_8">
-    <text style="font-weight: 700; font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; fill: #363432" transform="translate(887.804925 264.50333)">Pinball Loss vs.</text>
-    <text style="font-weight: 700; font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; fill: #363432" transform="translate(909.053363 287.658798)">Persistence</text>
+    <text style="font-weight: 700; font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; fill: #363432" transform="translate(873.368988 264.50333)">Pinball Skill Score</text>
+    <text style="font-weight: 700; font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; fill: #363432" transform="translate(889.303363 287.658798)">vs. Persistence</text>
    </g>
   </g>
   <g id="axes_5">
@@ -306,7 +306,7 @@ z
 " style="fill: #f8fafc; stroke: #cbd5e1; stroke-linejoin: miter"/>
     </g>
     <g id="text_25">
-     <text style="font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #363432" x="712.924272" y="618.488667" transform="rotate(-0 712.924272 618.488667)">−60.3%</text>
+     <text style="font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #363432" x="712.924272" y="618.488667" transform="rotate(-0 712.924272 618.488667)">+60.3%</text>
     </g>
     <g id="patch_23">
      <path d="M 831.073248 637.366612 
@@ -317,7 +317,7 @@ z
 " style="fill: #f8fafc; stroke: #cbd5e1; stroke-linejoin: miter"/>
     </g>
     <g id="text_26">
-     <text style="font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #363432" x="949.222224" y="618.488667" transform="rotate(-0 949.222224 618.488667)">−27.8%</text>
+     <text style="font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #363432" x="949.222224" y="618.488667" transform="rotate(-0 949.222224 618.488667)">+27.8%</text>
     </g>
    </g>
   </g>
@@ -326,16 +326,16 @@ z
   </g>
  </g>
  <defs>
-  <clipPath id="p8123688d43">
+  <clipPath id="p6152e9d195">
    <rect x="7.2" y="81" width="250.678899" height="256.165289"/>
   </clipPath>
-  <clipPath id="p2a43f4b90a">
+  <clipPath id="pf76f986f22">
    <rect x="287.960367" y="81" width="250.678899" height="256.165289"/>
   </clipPath>
-  <clipPath id="p37e72fa689">
+  <clipPath id="p9ad595611d">
    <rect x="568.720734" y="81" width="250.678899" height="256.165289"/>
   </clipPath>
-  <clipPath id="p4dd29f8f73">
+  <clipPath id="p9defbf12aa">
    <rect x="849.481101" y="81" width="250.678899" height="256.165289"/>
   </clipPath>
  </defs>
