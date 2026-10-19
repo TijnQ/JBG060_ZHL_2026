@@ -1,0 +1,51 @@
+region,year,n_weeks,analysis_area_km2,detected_area_km2_weeks,mean_weekly_detected_area_percent,status
+White Nile / Sudd corridor candidate,2000,52,35536.404213075526,38.89451071846738,0.0021048031632173764,exploratory_candidate_boundaries
+White Nile / Sudd corridor candidate,2001,53,35536.404213075526,44.67519622262561,0.002372013289699762,exploratory_candidate_boundaries
+White Nile / Sudd corridor candidate,2002,52,35536.404213075526,257.57013205399164,0.013938584614721729,exploratory_candidate_boundaries
+White Nile / Sudd corridor candidate,2003,52,35536.404213075526,633.3400322411657,0.03427363087049854,exploratory_candidate_boundaries
+White Nile / Sudd corridor candidate,2004,52,35536.404213075526,611.3424604966127,0.0330832171659484,exploratory_candidate_boundaries
+White Nile / Sudd corridor candidate,2005,52,35536.404213075526,865.3112384034307,0.04682691202731381,exploratory_candidate_boundaries
+White Nile / Sudd corridor candidate,2006,52,35536.404213075526,1053.6579567453898,0.057019424061140175,exploratory_candidate_boundaries
+White Nile / Sudd corridor candidate,2007,53,35536.404213075526,2381.8256661871046,0.12646216718982237,exploratory_candidate_boundaries
+White Nile / Sudd corridor candidate,2008,52,35536.404213075526,960.1025559707099,0.05195660928730323,exploratory_candidate_boundaries
+White Nile / Sudd corridor candidate,2009,52,35536.404213075526,907.3846597230299,0.04910374412122731,exploratory_candidate_boundaries
+White Nile / Sudd corridor candidate,2010,52,35536.404213075526,1531.6199512619123,0.08288466569479828,exploratory_candidate_boundaries
+White Nile / Sudd corridor candidate,2011,52,35536.404213075526,926.001565463124,0.05011121076284945,exploratory_candidate_boundaries
+White Nile / Sudd corridor candidate,2012,53,35536.404213075526,966.7302257275414,0.05132818961898253,exploratory_candidate_boundaries
+White Nile / Sudd corridor candidate,2013,52,35536.404213075526,1403.2150558798178,0.07593594658301611,exploratory_candidate_boundaries
+White Nile / Sudd corridor candidate,2014,52,35536.404213075526,1492.3343163982388,0.08075869657980943,exploratory_candidate_boundaries
+White Nile / Sudd corridor candidate,2015,52,35536.404213075526,1474.476999091103,0.07979233558797957,exploratory_candidate_boundaries
+White Nile / Sudd corridor candidate,2016,52,35536.404213075526,873.7364953848911,0.04728285059596836,exploratory_candidate_boundaries
+White Nile / Sudd corridor candidate,2017,52,35536.404213075526,930.5053621260098,0.05035493681280921,exploratory_candidate_boundaries
+White Nile / Sudd corridor candidate,2018,53,35536.404213075526,862.8765944468968,0.045814118850189586,exploratory_candidate_boundaries
+White Nile / Sudd corridor candidate,2019,52,35536.404213075526,444.43689734220067,0.024051007972500885,exploratory_candidate_boundaries
+White Nile / Sudd corridor candidate,2020,52,35536.404213075526,3001.853162531015,0.1624473457898363,exploratory_candidate_boundaries
+White Nile / Sudd corridor candidate,2021,52,35536.404213075526,18570.431463792484,1.0049516542380124,exploratory_candidate_boundaries
+White Nile / Sudd corridor candidate,2022,52,35536.404213075526,36412.61422369301,1.9704936296487001,exploratory_candidate_boundaries
+White Nile / Sudd corridor candidate,2023,52,35536.404213075526,23459.230518866705,1.269512373099777,exploratory_candidate_boundaries
+White Nile / Sudd corridor candidate,2024,53,35536.404213075526,31590.90179141163,1.6773074372055765,exploratory_candidate_boundaries
+Lol catchment candidate,2000,52,75140.97856039675,20.30870956235483,0.0005197591440128033,exploratory_candidate_boundaries
+Lol catchment candidate,2001,53,75140.97856039675,229.53296441275268,0.0057635803156545345,exploratory_candidate_boundaries
+Lol catchment candidate,2002,52,75140.97856039675,101.20192232472738,0.0025900525268948388,exploratory_candidate_boundaries
+Lol catchment candidate,2003,52,75140.97856039675,1550.0173290781836,0.03966946682127219,exploratory_candidate_boundaries
+Lol catchment candidate,2004,52,75140.97856039675,90.07490332882242,0.0023052796391360773,exploratory_candidate_boundaries
+Lol catchment candidate,2005,52,75140.97856039675,903.6290268184746,0.023126503830400626,exploratory_candidate_boundaries
+Lol catchment candidate,2006,52,75140.97856039675,1071.2755190147275,0.02741706680354947,exploratory_candidate_boundaries
+Lol catchment candidate,2007,53,75140.97856039675,2200.533913103793,0.0552554792203547,exploratory_candidate_boundaries
+Lol catchment candidate,2008,52,75140.97856039675,7217.281084625658,0.18471128493551928,exploratory_candidate_boundaries
+Lol catchment candidate,2009,52,75140.97856039675,536.9295886285134,0.013741595078892034,exploratory_candidate_boundaries
+Lol catchment candidate,2010,52,75140.97856039675,2733.862491888524,0.06996751931824499,exploratory_candidate_boundaries
+Lol catchment candidate,2011,52,75140.97856039675,239.53771061404188,0.0061304690504966185,exploratory_candidate_boundaries
+Lol catchment candidate,2012,53,75140.97856039675,376.98807705546653,0.00946618306312704,exploratory_candidate_boundaries
+Lol catchment candidate,2013,52,75140.97856039675,1117.4465089984872,0.028598717176681294,exploratory_candidate_boundaries
+Lol catchment candidate,2014,52,75140.97856039675,1967.457497702299,0.050352978939777866,exploratory_candidate_boundaries
+Lol catchment candidate,2015,52,75140.97856039675,383.53953929172275,0.009815896082676363,exploratory_candidate_boundaries
+Lol catchment candidate,2016,52,75140.97856039675,342.1212044126438,0.008755880023207464,exploratory_candidate_boundaries
+Lol catchment candidate,2017,52,75140.97856039675,175.6766552101037,0.004496078278862754,exploratory_candidate_boundaries
+Lol catchment candidate,2018,53,75140.97856039675,378.6461025830484,0.009507816138873144,exploratory_candidate_boundaries
+Lol catchment candidate,2019,52,75140.97856039675,1110.2451696184016,0.02841441388648717,exploratory_candidate_boundaries
+Lol catchment candidate,2020,52,75140.97856039675,2538.976826274945,0.064979826406065,exploratory_candidate_boundaries
+Lol catchment candidate,2021,52,75140.97856039675,3571.014335829078,0.0913926780403844,exploratory_candidate_boundaries
+Lol catchment candidate,2022,52,75140.97856039675,3593.8018172921024,0.09197587619106272,exploratory_candidate_boundaries
+Lol catchment candidate,2023,52,75140.97856039675,640.1330947437381,0.016382873976149032,exploratory_candidate_boundaries
+Lol catchment candidate,2024,53,75140.97856039675,2420.9883278448924,0.06079109685397745,exploratory_candidate_boundaries
