@@ -693,126 +693,92 @@ def generate_visual2_upstream_lag(output_dir: Path) -> tuple[Path, Path]:
 # 3. Model Benchmark & Lead-Time Skill Decay (Sub-Objective 2)
 # =============================================================================
 def generate_visual3_benchmark_optuna(output_dir: Path) -> tuple[Path, Path]:
-    """Generate multi-metric lead-time decay curve with Optuna convergence flatline mini-inset."""
+    """Generate the A0-poster-proof multi-horizon skill decay curve.
+
+    Poster specification (ZOA & Zero Hunger Lab presentation):
+      * Brier Skill Score vs. calendar climatology across lead weeks 1-4:
+        LightGBM Multi-Head (+25.5, +22.0, +20.0, +25.9) as solid deep-slate
+        line with clear markers; Markov Persistence Baseline
+        (+9.2, +3.1, -8.0, -7.7) as dashed coral line
+      * horizontal zero-skill reference line (calendar climatology)
+      * every text element >= 20 pt (title 22 pt bold #1E3F52)
+      * text/axes colour #363432; transparent background
+      * exports visual4_skill_decay_poster.{png,svg} plus the canonical
+        Visual3 PNG/PDF twins with the same design
+    """
     set_poster_style()
     output_dir.mkdir(parents=True, exist_ok=True)
+    poster_png = output_dir / "visual4_skill_decay_poster.png"
+    poster_svg = output_dir / "visual4_skill_decay_poster.svg"
     png_path = output_dir / "Visual3_Model_Benchmark_and_Lead_Time_Skill.png"
     pdf_path = output_dir / "Visual3_Model_Benchmark_and_Lead_Time_Skill.pdf"
 
-    # Load Optuna trials
-    optuna_path = REPO_ROOT / "LightGBM_v1" / "outputs" / "tuning" / "optuna_trials_lgbm_aweil_baseline_v3.csv"
-    optuna_df = pd.read_csv(optuna_path)
-    trials = optuna_df["number"].values
-    losses = optuna_df["value"].values
+    TEXT = "#363432"   # dark anthracite: body text and axes
+    TITLE = "#1E3F52"  # deep slate blue: title
 
-    # Real pooled benchmark metrics from duration_metrics_aweil.csv
-    horizons = [1, 2, 3, 4]
-    weeks = ["Week 1", "Week 2", "Week 3", "Week 4"]
-    brier_gbdt = [0.0766, 0.0826, 0.0884, 0.0894]
-    bss_vs_clim = [24.56, 22.01, 20.90, 26.03]   # %
+    lead_weeks = np.arange(1, 5)
+    lead_labels = ["Week 1", "Week 2", "Week 3", "Week 4"]
+    lgbm_bss = [25.5, 22.0, 20.0, 25.9]
+    persistence_bss = [9.2, 3.1, -8.0, -7.7]
 
-    # Implied Brier scores for climatology
-    brier_clim = [b / (1 - bss / 100) for b, bss in zip(brier_gbdt, bss_vs_clim)]
-    # First-order Markov Persistence (skill decays rapidly as lead horizon extends)
-    persist_bss_clim = [18.2, 11.5, 4.1, -1.8]
-    brier_persist = [0.0830, 0.0938, 0.1072, 0.1230]
+    fig, ax = plt.subplots(figsize=(11.5, 7.5), dpi=300)
 
-    fig, ax_main = plt.subplots(figsize=(15.5, 7.8), dpi=300)
+    # Zero-skill reference (calendar climatology baseline)
+    ax.axhline(0, color="#7A8B99", linewidth=1.8, zorder=2)
+    ax.text(4.35, 2.2, "Climatology Baseline / Zero Skill",
+            ha="right", va="bottom", fontsize=20, color=TEXT, zorder=4)
 
-    # Primary Left Y-axis: Forecast Skill (Brier Skill Score vs Climatology %)
-    line_gbdt = ax_main.plot(
-        horizons, bss_vs_clim, color="#4F46E5", linewidth=3.2, marker="o", markersize=8.5,
-        markerfacecolor="#4F46E5", markeredgecolor="#FFFFFF", markeredgewidth=1.8,
-        label="Our GBDT Model (BSS vs Climatology %)", zorder=4
+    ax.plot(lead_weeks, lgbm_bss, color="#1E3F52", linewidth=4,
+            marker="o", markersize=11, markerfacecolor="#1E3F52",
+            markeredgecolor="#FFFFFF", markeredgewidth=1.8,
+            label="LightGBM Multi-Head", zorder=5)
+    ax.plot(lead_weeks, persistence_bss, color="#D96B43", linewidth=3,
+            linestyle=(0, (6, 3)), marker="s", markersize=9,
+            markerfacecolor="#D96B43", markeredgecolor="#FFFFFF", markeredgewidth=1.5,
+            label="Markov Persistence Baseline", zorder=5)
+
+    # Annotation at the Week 3/4 divergence
+    ax.annotate(
+        "Persistence fails (-8%) while\nLightGBM holds >20% skill",
+        xy=(3, -8), xytext=(4.32, -12), ha="right", va="center",
+        fontsize=20, fontweight="bold", color=TEXT, linespacing=1.15,
+        arrowprops=dict(arrowstyle="->", color="#7A8B99", lw=2.0),
+        bbox=dict(boxstyle="round,pad=0.35", facecolor="#FEF2F2", edgecolor="#D96B43", lw=1.4),
+        zorder=6
     )
-    for h, val in zip(horizons, bss_vs_clim):
-        ax_main.text(h, val + 1.4, f"+{val:.1f}%", ha="center", va="bottom",
-                     fontsize=9.5, fontweight="bold", color="#4338CA",
-                     bbox=dict(boxstyle="round,pad=0.2", facecolor="#EEF2FF", edgecolor="#A5B4FC", lw=0.8),
-                     zorder=5)
 
-    # Climatology Baseline line (BSS = 0%)
-    line_clim = ax_main.axhline(0, color="#94A3B8", linewidth=2.0, linestyle="--",
-                                label="Dynamic Climatology Benchmark (Skill = 0%)", zorder=3)
+    ax.set_title("Multi-Horizon Forecast Skill (1\u20134 Weeks Ahead)",
+                 fontsize=22, fontweight="bold", color=TITLE, pad=18)
+    ax.set_ylabel("Brier Skill Score (BSS vs. Calendar)",
+                  fontsize=20, fontweight="bold", labelpad=12, color=TEXT)
+    ax.set_xlabel("Forecast Lead Time", fontsize=20, labelpad=10, color=TEXT)
+    ax.set_xticks(lead_weeks)
+    ax.set_xticklabels(lead_labels, fontsize=20, color=TEXT)
+    ax.set_yticks([-10, 0, 10, 20])
+    ax.tick_params(axis="both", labelsize=20, colors=TEXT)
+    ax.set_xlim(0.6, 4.4)
+    ax.set_ylim(-18, 31)
+    ax.grid(axis="y", color="#E0E0E0", alpha=0.5, linewidth=1.2, zorder=0)
+    ax.set_axisbelow(True)
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    for spine in ("left", "bottom"):
+        ax.spines[spine].set_color(TEXT)
 
-    # First-order Markov Persistence line (Decays with lead time)
-    line_persist = ax_main.plot(
-        horizons, persist_bss_clim, color="#D97706", linewidth=2.8, marker="s", markersize=7.5,
-        markerfacecolor="#D97706", markeredgecolor="#FFFFFF", markeredgewidth=1.5,
-        linestyle="-.", label="First-Order Markov Persistence (vs Climatology)", zorder=4
-    )
-    for h, val in zip(horizons, persist_bss_clim):
-        y_off = 1.4 if val >= 0 else -2.2
-        va = "bottom" if val >= 0 else "top"
-        ax_main.text(h, val + y_off, f"{val:+.1f}%", ha="center", va=va,
-                     fontsize=9.0, fontweight="bold", color="#B45309",
-                     bbox=dict(boxstyle="round,pad=0.2", facecolor="#FFFBEB", edgecolor="#FCD34D", lw=0.8),
-                     zorder=5)
+    leg = ax.legend(loc="lower left", fontsize=20, frameon=True,
+                    facecolor="#FFFFFF", edgecolor="#CBD5E1", framealpha=0.95)
+    for t in leg.get_texts():
+        t.set_color(TEXT)
 
-    ax_main.set_ylabel("Forecast Skill Score (BSS vs Climatology %)", fontsize=11.5, fontweight="bold", color="#0F172A", labelpad=10)
-    ax_main.set_xlabel("Forecast Lead Horizon", fontsize=11.5, fontweight="bold", labelpad=8)
-    ax_main.set_xticks(horizons)
-    ax_main.set_xticklabels(weeks, fontweight="bold", fontsize=11.0)
-    ax_main.set_xlim(0.65, 4.35)
-    ax_main.set_ylim(-16, 75)
-    ax_main.yaxis.set_major_locator(MultipleLocator(10))
-    ax_main.grid(True, linestyle=":", alpha=0.5, color="#CBD5E1")
-    ax_main.spines["top"].set_visible(False)
-
-    # Right Y-axis for raw Brier Score (lower is better)
-    ax_brier = ax_main.twinx()
-    ax_brier.plot(horizons, brier_gbdt, color="#4F46E5", linestyle=":", linewidth=1.8, alpha=0.35, zorder=2)
-    ax_brier.plot(horizons, brier_clim, color="#94A3B8", linestyle=":", linewidth=1.8, alpha=0.35, zorder=2)
-    ax_brier.set_ylabel("Raw Brier Score (BS, Lower is Better)", fontsize=10.5, color="#64748B", labelpad=10)
-    ax_brier.tick_params(axis="y", labelcolor="#64748B")
-    ax_brier.set_ylim(0.04, 0.16)
-    ax_brier.spines["top"].set_visible(False)
-
-    # Legend on main plot cleanly at upper left
-    handles = [line_gbdt[0], line_persist[0], line_clim]
-    ax_main.legend(handles=handles, loc="upper left", frameon=True, facecolor="#FFFFFF", edgecolor="#CBD5E1", fontsize=9.2)
-
-    # Sub-Objective 2 Verification Callout Banner at bottom center-left
-    callout_main = mpatches.FancyBboxPatch(
-        (0.95, -14.2), 2.30, 8.8, boxstyle="round,pad=0.05,rounding_size=0.15",
-        facecolor="#F0FDF4", edgecolor="#16A34A", linewidth=1.2, zorder=6
-    )
-    ax_main.add_patch(callout_main)
-    ax_main.text(2.10, -9.8, "SUB-OBJECTIVE 2 VERIFICATION:\n• GBDT sustains >+20% skill through W4  |  Robustly beats persistence & climatology\n• Persistence collapses by W4 (-1.8%) as hydrological memory decays downstream",
-                 ha="center", va="center", fontsize=8.6, fontweight="bold", color="#14532D", zorder=7)
-
-    # -------------------------------------------------------------------------
-    # Mini-Inset Callout: Optuna Trial-vs-Loss Convergence Plot (in upper right)
-    # -------------------------------------------------------------------------
-    ax_inset = ax_main.inset_axes([0.53, 0.55, 0.43, 0.41])
-
-    ax_inset.plot(trials, losses, color="#64748B", marker="o", markersize=3.5,
-                  markerfacecolor="#38BDF8", markeredgecolor="#0284C7", linewidth=1.0, alpha=0.85)
-    smoothed = pd.Series(losses).rolling(window=4, min_periods=1).mean()
-    ax_inset.plot(trials, smoothed, color="#DC2626", linewidth=2.0, label="Convergence Floor (~0.366)")
-
-    # Noise floor shaded band
-    ax_inset.axhspan(0.362, 0.380, color="#DC2626", alpha=0.12)
-    ax_inset.text(28, 0.445, "Plateau after Trial ~10\nIrreducible Data Noise Floor",
-                  ha="center", va="center", fontsize=8.2, fontweight="bold", color="#991B1B",
-                  bbox=dict(boxstyle="round,pad=0.2", facecolor="#FEF2F2", edgecolor="#DC2626", lw=0.8))
-
-    ax_inset.set_title("Optuna Hyperparameter Flatline (54 Trials)", fontsize=9.5, fontweight="bold", color="#0F172A", pad=4)
-    ax_inset.set_xlabel("Trial Number", fontsize=8.5, labelpad=2)
-    ax_inset.set_ylabel("CV Objective Loss", fontsize=8.5, labelpad=2)
-    ax_inset.tick_params(axis="both", labelsize=8.0)
-    ax_inset.set_ylim(0.34, 0.52)
-    ax_inset.grid(True, linestyle=":", alpha=0.45)
-
-    fig.suptitle("Visual 3: Model Benchmark Skill Across Lead Horizons & Optuna Tuning Flatline",
-                 fontsize=14.0, fontweight="bold", y=0.98)
-
-    fig.subplots_adjust(top=0.90, bottom=0.10, left=0.08, right=0.92)
-    fig.savefig(png_path, dpi=300, bbox_inches="tight")
+    fig.tight_layout()
+    fig.savefig(poster_png, dpi=300, bbox_inches="tight", transparent=True)
+    fig.savefig(poster_svg, bbox_inches="tight", transparent=True)
+    fig.savefig(png_path, dpi=300, bbox_inches="tight", transparent=True)
     fig.savefig(pdf_path, bbox_inches="tight")
     plt.close(fig)
 
-    print(f"  [Visual 3] Model Benchmark & Optuna Plot exported to:\n    - {png_path}\n    - {pdf_path}")
+    print(f"  [Visual 3] Multi-Horizon Skill Decay (A0-poster-proof) exported to:\n"
+          f"    - {poster_png}\n    - {poster_svg}\n    - {png_path}\n    - {pdf_path}")
     return png_path, pdf_path
 
 
