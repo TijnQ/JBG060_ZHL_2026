@@ -300,6 +300,48 @@ def _rounded_top_rect(x, y, w, h, r):
     return mpath.Path(verts, codes)
 
 
+def _audit_diagram1_bounds(fig, ax, cards, pills=()):
+    """Fail-loud check that every text element stays inside its card/pill border.
+
+    Run at draw time (before savefig) in both Diagram-1 renderers so text
+    overflow can never slip into a regenerated poster asset unnoticed.
+    """
+    fig.canvas.draw()
+    inv = ax.transData.inverted()
+    problems = []
+    checked = 0
+    for t in ax.texts:
+        s = t.get_text()
+        if not s.strip():
+            continue
+        checked += 1
+        bb = t.get_window_extent(renderer=fig.canvas.get_renderer())
+        (px0, py0), (px1, py1) = inv.transform([(bb.x0, bb.y0), (bb.x1, bb.y1)])
+        lx, hx = min(px0, px1), max(px0, px1)
+        ly, hy = min(py0, py1), max(py0, py1)
+        cx, cy = (lx + hx) / 2, (ly + hy) / 2
+        card = next((c for c in cards if c["x"] <= cx <= c["x"] + c["w"]), None)
+        if card is None:
+            problems.append(f"{s[:36]!r}: x {lx:.0f}..{hx:.0f} outside every card")
+            continue
+        if (lx < card["x"] + 4 or hx > card["x"] + card["w"] - 4
+                or ly < card["y"] + 2 or hy > card["y"] + card["h"] - 2):
+            problems.append(f"{s[:36]!r}: card {card['x']}..{card['x'] + card['w']} "
+                            f"exceeded (text x {lx:.0f}..{hx:.0f}, y {ly:.0f}..{hy:.0f})")
+        pill = next((p for p in pills
+                     if p["x"] <= cx <= p["x"] + p["w"]
+                     and p["y"] <= cy <= p["y"] + p["h"]), None)
+        if pill is not None and (lx < pill["x"] + 2 or hx > pill["x"] + pill["w"] - 2):
+            problems.append(f"tag {s[:36]!r}: pill {pill['x']}..{pill['x'] + pill['w']} "
+                            f"exceeded (text x {lx:.0f}..{hx:.0f})")
+    if problems:
+        print("  [Diagram 1][AUDIT] TEXT OUT OF BOUNDS:")
+        for p in problems:
+            print(f"    - {p}")
+    else:
+        print(f"  [Diagram 1][AUDIT] all {checked} text elements inside card/pill borders")
+
+
 def _render_diagram1_svg(svg_path: Path) -> None:
     """Render Diagram 1 (pipeline architecture) as a matplotlib vector SVG.
 
@@ -315,34 +357,34 @@ def _render_diagram1_svg(svg_path: Path) -> None:
              tag_bg="#EFF6FF", tag_edge="#3B82F6", tag_fg="#1E40AF",
              title="STAGE 1: DATA PREPARATION", tag="Raw data \u2192 one clean weekly table",
              bullets=[
-                 ("\u2022 One clean weekly table:", "5 counties, 26 years (2000\u20132025)"),
-                 ("\u2022 Weather rolled into 1\u201330-day sums:", "local + upstream, rivers & lakes"),
-                 ("\u2022 Flood history & time-of-year,", "encoded as predictive features"),
-                 ("\u2022 No peeking ahead: only data", "known by forecast Friday"),
+                 ("One clean weekly table:", "5 counties, 26 years (2000\u20132025)"),
+                 ("Weather rolled into 1\u201330-day sums:", "local + upstream, rivers & lakes"),
+                 ("Flood history & time-of-year,", "encoded as predictive features"),
+                 ("No peeking ahead: only data", "known by forecast Friday"),
              ]),
         dict(x=435, w=330, hdr="#0D9488", dot="#0D9488",
              tag_bg="#F0FDFA", tag_edge="#14B8A6", tag_fg="#0F766E",
              title="STAGE 2: HAZARD ENGINE", tag="Level-1 \u00b7 County Probabilistic Engine",
              bullets=[
-                 ("\u2022 Multi-Head LightGBM", "(50 weekly engineered features)"),
-                 ("\u2022 Predicts flood occurrence probability", "& multi-horizon duration (1\u20134 wks)"),
-                 ("\u2022 Quantile area regression: q10 (best),", "q50 (median), q90 (worst)"),
+                 ("Multi-Head LightGBM", "(50 weekly engineered features)"),
+                 ("Predicts flood occurrence probability", "& multi-horizon duration (1\u20134 wks)"),
+                 ("Quantile area regression: q10 (best),", "q50 (median), q90 (worst)"),
              ]),
         dict(x=825, w=330, hdr="#D97706", dot="#D97706",
              tag_bg="#FFFBEB", tag_edge="#F59E0B", tag_fg="#B45309",
              title="STAGE 3: PIXEL DOWNSCALER", tag="Level-2 \u00b7 Spatial Allocation (~232m)",
              bullets=[
-                 ("\u2022 26-year conditional pixel climatology", "(MODIS MCDWD)"),
-                 ("\u2022 Golden Rule: allocates WHERE water", "pools based on county q50"),
-                 ("\u2022 Coordinate snapping guarantees exact", "area conservation (0.0 km\u00b2 error)"),
+                 ("26-year conditional pixel climatology", "(MODIS MCDWD)"),
+                 ("Golden Rule: allocates WHERE water", "pools based on county q50"),
+                 ("Coordinate snapping guarantees exact", "area conservation (0.0 km\u00b2 error)"),
              ]),
         dict(x=1215, w=340, hdr="#DC2626", dot="#DC2626",
              tag_bg="#FEF2F2", tag_edge="#EF4444", tag_fg="#B91C1C",
              title="STAGE 4: ASSET RISK OVERLAP", tag="Level-3 \u00b7 Humanitarian Early Action",
              bullets=[
-                 ("\u2022 Direct spatial raster multiplication", None),
-                 ("\u2022 ASAP Cropland Mask (~500m grid) \u2192", "inundated staple hectares"),
-                 ("\u2022 ICPAC Cattle Density (~9km grid) \u2192", "exposed head of livestock"),
+                 ("Direct spatial raster multiplication", None),
+                 ("ASAP Cropland Mask (~500m grid) \u2192", "inundated staple hectares"),
+                 ("ICPAC Cattle Density (~9km grid) \u2192", "exposed head of livestock"),
              ]),
     ]
     with plt.rc_context({"font.family": "DejaVu Sans", "svg.fonttype": "none",
@@ -387,6 +429,11 @@ def _render_diagram1_svg(svg_path: Path) -> None:
             ax.add_patch(mpatches.Polygon(
                 [[x2 - 4.2, 182.2], [x2 + 2.8, 185], [x2 - 4.2, 187.8]],
                 closed=True, facecolor="#0284C7", edgecolor="none", zorder=6))
+        # Self-check: every text element must sit inside its card / pill borders
+        _audit_diagram1_bounds(
+            fig, ax,
+            [{"x": s["x"], "y": 30, "w": s["w"], "h": 310} for s in stages],
+            pills=[{"x": s["x"] + 20, "y": 96, "w": s["w"] - 40, "h": 26} for s in stages])
         fig.savefig(svg_path)
         plt.close(fig)
 
@@ -401,15 +448,23 @@ def generate_diagram1_pipeline(output_dir: Path) -> tuple[Path, Path, Path]:
 
     # Vector SVG: rendered directly by matplotlib (pure Python; no hand-authored
     # markup). The previous hand-written SVG design (1600x380) is reproduced 1:1;
-    # the PNG and PDF twins below remain untouched matplotlib renderings.
+    # the PNG and PDF twins below mirror the same design at the same
+    # 100-units-per-inch scale. _audit_diagram1_bounds then verifies for BOTH
+    # renderers that no text overflows a card or tag-pill border.
     _render_diagram1_svg(svg_path)
 
     # Render high-resolution PNG & PDF via matplotlib to guarantee 300 DPI publication standards
     fig, ax = plt.subplots(figsize=(16, 3.8), dpi=300)
+    # Default subplot margins shrink the axes and scale x/y differently; force
+    # the axes to fill the figure so 1 data unit = 1/100 inch, exactly like the
+    # SVG renderer above (otherwise text renders ~29% too large and overflows).
+    ax.set_position([0, 0, 1, 1])
     ax.set_xlim(0, 1600)
     ax.set_ylim(0, 380)
     ax.invert_yaxis()
     ax.axis("off")
+    ax.add_patch(mpatches.Rectangle((0, 0), 1600, 380, facecolor="#F8FAFC",
+                                    edgecolor="none", zorder=0))
 
     # Matplotlib parallel rendering for PNG and PDF
     stages = [
@@ -454,40 +509,43 @@ def generate_diagram1_pipeline(output_dir: Path) -> tuple[Path, Path, Path]:
 
     for stg in stages:
         x, y, w, h = stg["x"], stg["y"], stg["w"], stg["h"]
+        # Soft drop shadow (same recipe as the SVG renderer)
+        _soft_shadow(ax, x, y, w, h, 14, (4, 8, 12, 16),
+                     (0.035, 0.028, 0.022, 0.015), zorder=1)
         # Outer Card
         card = mpatches.FancyBboxPatch(
-            (x, y), w, h, boxstyle="round,pad=0.015,rounding_size=14",
-            facecolor="#FFFFFF", edgecolor="#CBD5E1", linewidth=1.5, zorder=2
+            (x, y), w, h, boxstyle="round,pad=0,rounding_size=14",
+            facecolor="#FFFFFF", edgecolor="#CBD5E1", linewidth=1.3, zorder=2
         )
         ax.add_patch(card)
 
-        # Header Bar
-        hdr = mpatches.FancyBboxPatch(
-            (x, y), w, 50, boxstyle="round,pad=0.01,rounding_size=10",
-            facecolor=stg["color"], edgecolor=stg["color"], zorder=3
-        )
+        # Header Bar (rounded top corners only, mirroring the SVG renderer)
+        hdr = mpatches.PathPatch(_rounded_top_rect(x, y, w, 52, 14),
+                                 facecolor=stg["color"], edgecolor="none", zorder=3)
         ax.add_patch(hdr)
-        ax.text(x + w / 2, y + 25, stg["title"], ha="center", va="center", fontsize=9.8, fontweight="bold", color="#FFFFFF", zorder=4)
+        ax.text(x + w / 2, y + 33, stg["title"], ha="center", va="baseline",
+                fontsize=_px(17), fontweight="bold", color="#FFFFFF", zorder=4)
 
-        # Tag
+        # Tag pill
         tag = mpatches.FancyBboxPatch(
-            (x + 15, y + 62), w - 30, 24, boxstyle="round,pad=0.01,rounding_size=6",
-            facecolor=stg["tag_bg"], edgecolor=stg["color"], linewidth=0.8, zorder=3
+            (x + 20, y + 66), w - 40, 26, boxstyle="round,pad=0,rounding_size=6",
+            facecolor=stg["tag_bg"], edgecolor=stg["color"], linewidth=0.7, zorder=3
         )
         ax.add_patch(tag)
-        ax.text(x + w / 2, y + 74, stg["tag"], ha="center", va="center", fontsize=8.2, fontweight="bold", color=stg["color"], zorder=4)
+        ax.text(x + w / 2, y + 83, stg["tag"], ha="center", va="baseline",
+                fontsize=_px(11.5), fontweight="bold", color=stg["color"], zorder=4)
 
-        # Bullets (flat, pre-wrapped lines)
-        by = y + 116
-        for lines in stg["bullets"]:
-            ax.plot(x + 22, by + 4, marker="o", markersize=4.5, color=stg["color"], zorder=4)
-            for j, ln in enumerate(lines):
-                if j == 0:
-                    ax.text(x + 32, by, f"• {ln}", fontsize=8.6, color="#1E293B", zorder=4)
-                else:
-                    ax.text(x + 46, by, ln, fontsize=8.6, color="#334155", zorder=4)
-                by += 17
-            by += 11
+        # Bullets (flat, pre-wrapped lines; the coloured dot marks the item, so
+        # each bullet gets exactly ONE marker — no extra bullet glyph in the text)
+        for i, lines in enumerate(stg["bullets"]):
+            cy = y + 118 + 50 * i
+            ax.plot(x + 28, cy, marker="o", markersize=7.2, color=stg["color"],
+                    linestyle="none", zorder=4)
+            ax.text(x + 44, cy + 4, lines[0], ha="left", va="baseline",
+                    fontsize=_px(13), color="#334155", zorder=4)
+            if len(lines) > 1:
+                ax.text(x + 60, cy + 24, lines[1], ha="left", va="baseline",
+                        fontsize=_px(13), color="#334155", zorder=4)
 
     # Connecting Arrows
     for arrow_x in [385, 775, 1165]:
@@ -496,6 +554,12 @@ def generate_diagram1_pipeline(output_dir: Path) -> tuple[Path, Path, Path]:
             arrowprops=dict(facecolor="#0284C7", edgecolor="#0284C7", width=3.0, headwidth=9.0),
             zorder=5
         )
+
+    # Self-check: every text element must sit inside its card / pill borders
+    _audit_diagram1_bounds(
+        fig, ax,
+        [{"x": s["x"], "y": s["y"], "w": s["w"], "h": s["h"]} for s in stages],
+        pills=[{"x": s["x"] + 20, "y": s["y"] + 66, "w": s["w"] - 40, "h": 26} for s in stages])
 
     fig.savefig(png_path, dpi=300, bbox_inches="tight")
     fig.savefig(pdf_path, bbox_inches="tight")
