@@ -65,50 +65,45 @@ def load_weekly():
 
 
 def plot_weekly(weekly):
+    """Export the approved two-panel weekly mean figure without extra captions."""
     summary = weekly.groupby("week")[list(METRICS)].agg(["mean", "count", lambda s: s.quantile(.1), lambda s: s.quantile(.9)])
     stat_names = {"mean": "mean", "count": "n_years", "<lambda_0>": "p10", "<lambda_1>": "p90"}
     summary.columns = [f"{metric}_{stat_names[stat]}" for metric, stat in summary.columns]
-    # Use the midpoint of each seven-day bin to group weekly values by month.
-    dated = weekly.copy()
-    dated["month"] = [
-        (pd.Timestamp(int(y), 1, 1) + pd.Timedelta(days=(int(w)-1)*7+3)).month
-        for y, w in zip(dated.year, dated.week)
-    ]
-    annual_months = dated.groupby(["year", "month"])[list(METRICS)].mean()
-    monthly = annual_months.groupby("month").mean()
-    monthly.to_csv(OUT / "tables/aweil_monthly_typical_week.csv")
+    means = weekly.groupby("week")[list(METRICS)].mean()
     plt.rcParams.update({"font.family": "DejaVu Sans", "font.size": 12,
                          "axes.spines.top": False, "axes.spines.right": False})
-    fig, axes = plt.subplots(3, 1, figsize=(11, 9), sharex=True)
-    labels = [
-        ("rainfall_mm", "1   Rainfall", "mm per week", "#3185BA"),
-        ("net_moisture_mm", "2   Rainfall minus reference evaporation", "mm per week", "#25866A"),
-        ("flood_pixels", "3   Detected flooding", "Flood pixels", "#CB5751"),
+    fig, axes = plt.subplots(2, 1, figsize=(11, 5.8), sharex=True)
+    surplus = means.net_moisture_mm.clip(lower=0)
+    axes[0].bar(means.index, surplus, width=.7, color="#25866A",
+                label="Water surplus", zorder=2)
+    panels = [
+        ("rainfall_mm", "1   Rainfall and water surplus", "mm per week", "#3185BA"),
+        ("flood_pixels", "2   Detected flooding", "Flood pixels", "#CB5751"),
     ]
-    for ax, (metric, title, unit, color) in zip(axes, labels):
-        values = monthly[metric]
-        colors = ["#D9A776" if v < 0 else color for v in values] if metric == "net_moisture_mm" else color
-        ax.bar(monthly.index, values, width=.65, color=colors)
+    ticks = (pd.date_range("2023-01-01", periods=12, freq="MS").dayofyear - 1) / 7 + 1
+    months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+    for ax, (metric, title, unit, color) in zip(axes, panels):
+        ax.plot(means.index, means[metric], color=color, linewidth=2.6,
+                marker="o", markersize=3, label="Rainfall" if metric == "rainfall_mm" else "Detected flooding", zorder=3)
         ax.set_title(title, loc="left", fontsize=14, weight="bold", pad=10)
         ax.set_ylabel(unit)
         ax.set_axisbelow(True)
         ax.grid(axis="y", color="#ECECEC")
         ax.spines["left"].set_visible(False)
         ax.spines["bottom"].set_visible(False)
-        ax.tick_params(axis="both", length=0)
+        ax.tick_params(axis="both", length=0, labelbottom=True)
         ax.axhline(0, color="#888888", lw=.8)
-        ax.set_xticks(range(1,13), ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"])
-        ax.tick_params(labelbottom=True)
-        ax.set_xlim(.4,12.6)
-    axes[1].text(.99, .92, "Above zero: rainfall exceeds evaporation", transform=axes[1].transAxes,
-                 ha="right", va="top", fontsize=10, color="#555555")
-    first, last = weekly.year.min(), weekly.year.max()
-    fig.suptitle("Rain comes first. Flooding peaks later.", x=.12, ha="left", fontsize=22, weight="bold", y=.98)
-    fig.text(.12,.925, f"Aweil · Average weekly conditions by month · {first}–{last}", color="#555555", fontsize=12)
-    fig.text(.12,.025,f"Each bar shows a typical week, averaged across {weekly.year.nunique()} years. Weeks are assigned to their midpoint month.\nFlooding = weekly maximum detected pixel count. No detection does not necessarily mean dry land.", fontsize=9, color="#666666")
-    fig.tight_layout(rect=(.02,.075,1,.90), h_pad=2)
+        ax.set_xticks(ticks, months)
+        ax.set_xlim(.4, 52.6)
+        ax.set_ylim(bottom=0)
+    axes[0].legend(loc="upper left", ncol=2, frameon=False, fontsize=10)
+    fig.tight_layout(h_pad=2)
     for extension in ("png", "svg"):
-        fig.savefig(OUT / f"figures/aweil_weekly_climatology.{extension}", dpi=200)
+        output_path = OUT / f"figures/aweil_weekly_climatology.{extension}"
+        fig.savefig(output_path, dpi=200)
+        if extension == "svg":
+            lines = output_path.read_text(encoding="utf-8").splitlines()
+            output_path.write_text("\n".join(line.rstrip() for line in lines) + "\n", encoding="utf-8")
     plt.close(fig)
     return summary
 
