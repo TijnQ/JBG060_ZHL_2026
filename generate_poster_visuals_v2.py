@@ -298,151 +298,204 @@ def generate_hero_pipeline_diagram(output_dir: Path) -> tuple[Path, Path, Path]:
     return png_path, pdf_path, svg_path
 
 
+def _px(svg_px: float) -> float:
+    """Convert SVG-pixel lengths to matplotlib points on the 100-px-per-inch grid."""
+    return svg_px * 0.72
+
+
+def _soft_shadow(ax, x, y, w, h, r, offsets, alphas, color="#0F172A", zorder=1):
+    """Approximate an SVG feDropShadow with stacked translucent rounded rects."""
+    for dy, alpha in zip(offsets, alphas):
+        ax.add_patch(mpatches.FancyBboxPatch(
+            (x, y + dy), w, h, boxstyle=f"round,pad=0,rounding_size={r}",
+            facecolor=color, edgecolor="none", alpha=alpha, zorder=zorder))
+
+
 def generate_hero_pipeline_svg(svg_path: Path) -> None:
-    """Write an ultra-crisp standalone SVG vector file for the Hero Architecture Diagram."""
-    svg_content = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1900 820" width="100%" height="100%" style="background:#FFFFFF; font-family:'Segoe UI', Helvetica, Arial, sans-serif;">
-  <defs>
-    <filter id="shadow" x="-5%" y="-5%" width="110%" height="110%">
-      <feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#0F172A" flood-opacity="0.08"/>
-    </filter>
-    <marker id="arrow-blue" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
-      <path d="M0,0 L0,6 L8,3 z" fill="#0284C7" />
-    </marker>
-    <marker id="arrow-indigo" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
-      <path d="M0,0 L0,6 L8,3 z" fill="#4F46E5" />
-    </marker>
-  </defs>
+    """Render the Hero Architecture diagram as a matplotlib vector SVG.
 
-  <!-- Title Banner -->
-  <text x="950" y="45" text-anchor="middle" font-size="28" font-weight="800" fill="#0F172A">END-TO-END FLOOD FORECASTING &amp; ANTICIPATORY ACTION PIPELINE</text>
-  <text x="950" y="78" text-anchor="middle" font-size="16" font-weight="600" fill="#475569">Operational Multi-Head GBDT Engine (Task A)  ⟶  Area-Preserving ~232 m Downscaler (Task B)  ⟶  Multi-Asset Exposure Action</text>
+    Pure-Python replacement for the previous hand-authored SVG markup string:
+    the identical 1900x820 design (title banner, three shadowed containers with
+    rounded header bars, inner specification cards, dashed Optuna node and
+    labelled connector arrows) is reproduced 1:1. All coordinates are the
+    original SVG pixel values with y growing downward; fonts and strokes are
+    converted from px to pt (x 0.72 at 100 px/inch).
+    """
+    W, H = 1900, 820
+    L, C, R, TOP = 40, 640, 1320, 100
+    with plt.rc_context({"font.family": "DejaVu Sans", "svg.fonttype": "none",
+                 "savefig.bbox": "standard"}):
+        fig = plt.figure(figsize=(W / 100.0, H / 100.0), dpi=100)
+        ax = fig.add_axes([0, 0, 1, 1])
+        ax.set_xlim(0, W)
+        ax.set_ylim(H, 0)  # SVG y grows downward
+        ax.axis("off")
+        ax.add_patch(mpatches.Rectangle((0, 0), W, H, facecolor="#FFFFFF",
+                                        edgecolor="none", zorder=0))
 
-  <!-- ==================== LEFT CONTAINER: DATA INGESTION ==================== -->
-  <g transform="translate(40, 100)" filter="url(#shadow)">
-    <rect width="520" height="680" rx="16" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="2"/>
-    <rect width="520" height="60" rx="16" fill="#0284C7"/>
-    <rect y="40" width="520" height="20" fill="#0284C7"/>
-    <text x="260" y="38" text-anchor="middle" font-size="18" font-weight="700" fill="#FFFFFF">1. DATA INGESTION &amp; EMBARGO</text>
+        def card(x, y, w, h, fc, ec, lw_px=1.5, dashed=False, r=10):
+            ax.add_patch(mpatches.FancyBboxPatch(
+                (x, y), w, h, boxstyle=f"round,pad=0,rounding_size={r}",
+                facecolor=fc, edgecolor=ec, linewidth=_px(lw_px),
+                linestyle=(0, (4.32, 2.88)) if dashed else "solid", zorder=3))
 
-    <!-- Embargo Badge -->
-    <rect x="25" y="80" width="470" height="50" rx="8" fill="#FEF2F2" stroke="#DC2626" stroke-width="1.5"/>
-    <text x="260" y="102" text-anchor="middle" font-size="13" font-weight="800" fill="#991B1B">STRICT FRIDAY 00:00 UTC OPERATIONAL EMBARGO</text>
-    <text x="260" y="120" text-anchor="middle" font-size="11.5" font-weight="600" fill="#B91C1C">Zero lookahead leakage; mirrors humanitarian anticipatory cycle</text>
+        def txt(x, y, s, size_px, color, weight="normal", ha="left"):
+            ax.text(x, y, s, ha=ha, va="baseline", fontsize=_px(size_px),
+                    fontweight=weight, color=color, zorder=5)
 
-    <!-- Card 1: Upstream Hydro -->
-    <rect x="25" y="145" width="470" height="150" rx="10" fill="#FFFFFF" stroke="#BAE6FD" stroke-width="1.5"/>
-    <text x="45" y="175" font-size="16" font-weight="700" fill="#0369A1">Upstream Hydrometeorology (ERA5-Land)</text>
-    <text x="45" y="202" font-size="13" fill="#1E293B">• Catchment Runoff (Q_upstream): 1, 7, 14, 30-day cumulative lags</text>
-    <text x="45" y="226" font-size="13" fill="#1E293B">• Net Water Balance: P - ET₀ surplus balance</text>
-    <text x="45" y="250" font-size="13" fill="#1E293B">• Spatial Catchment: ~300 km Congo-Nile divide transit</text>
-    <text x="45" y="274" font-size="12" font-weight="600" fill="#0284C7">Key Signal: Runoff accumulation drives downstream floodplain ponding</text>
+        # Title banner
+        txt(950, 45, "END-TO-END FLOOD FORECASTING & ANTICIPATORY ACTION PIPELINE",
+            28, "#0F172A", "bold", "center")
+        txt(950, 78, "Operational Multi-Head GBDT Engine (Task A)  \u27f6  "
+                     "Area-Preserving ~232 m Downscaler (Task B)  \u27f6  "
+                     "Multi-Asset Exposure Action",
+            16, "#475569", "bold", "center")
 
-    <!-- Card 2: Gauges & Altimetry -->
-    <rect x="25" y="315" width="470" height="150" rx="10" fill="#FFFFFF" stroke="#BAE6FD" stroke-width="1.5"/>
-    <text x="45" y="345" font-size="16" font-weight="700" fill="#0369A1">Remote Water Levels &amp; River Gauges</text>
-    <text x="45" y="372" font-size="13" fill="#1E293B">• River Lol Gauges: gauge_w1, w7, w14 &amp; 7-day stage rate-of-change</text>
-    <text x="45" y="396" font-size="13" fill="#1E293B">• Lake Albert &amp; Sudd Altimetry remote water level monitoring</text>
-    <text x="45" y="420" font-size="13" fill="#1E293B">• Hydraulic routing delay delivers 2 to 4 weeks of actionable lead time</text>
-    <text x="45" y="444" font-size="12" font-weight="600" fill="#0284C7">Physical Mechanism: Flat River Lol floodplain slows flood transit</text>
+        # Three shadowed containers with rounded header bars
+        for cx, cw, color, title in (
+            (L, 520, "#0284C7", "1. DATA INGESTION & EMBARGO"),
+            (C, 600, "#4F46E5", "2. MULTI-HEAD GBDT ENGINE (LIGHTGBM)"),
+            (R, 540, "#059669", "3. DOWNSCALING & EXPOSURE"),
+        ):
+            _soft_shadow(ax, cx, TOP, cw, 680, 16, (2, 4, 6), (0.03, 0.03, 0.02), zorder=1)
+            ax.add_patch(mpatches.FancyBboxPatch(
+                (cx, TOP), cw, 680, boxstyle="round,pad=0,rounding_size=16",
+                facecolor="#F8FAFC", edgecolor="#CBD5E1", linewidth=_px(2), zorder=2))
+            ax.add_patch(mpatches.FancyBboxPatch(
+                (cx, TOP), cw, 60, boxstyle="round,pad=0,rounding_size=16",
+                facecolor=color, edgecolor="none", zorder=3))
+            ax.add_patch(mpatches.Rectangle((cx, TOP + 40), cw, 20,
+                                            facecolor=color, edgecolor="none", zorder=3))
+            txt(cx + cw / 2, TOP + 38, title, 18, "#FFFFFF", "bold", "center")
 
-    <!-- Card 3: MODIS Satellite -->
-    <rect x="25" y="485" width="470" height="165" rx="10" fill="#FFFFFF" stroke="#BAE6FD" stroke-width="1.5"/>
-    <text x="45" y="515" font-size="16" font-weight="700" fill="#0369A1">Historical Satellite Baseline (MODIS)</text>
-    <text x="45" y="542" font-size="13" fill="#1E293B">• 26-Year Historical Inundation Record (2000–2025 Terra/Aqua)</text>
-    <text x="45" y="566" font-size="13" fill="#1E293B">• Native ~232 m Spatial Resolution (MODIS 8-day composites)</text>
-    <text x="45" y="590" font-size="13" fill="#1E293B">• Establishes empirical pixel climatology &amp; permanent water masks</text>
-    <text x="45" y="614" font-size="12" font-weight="600" fill="#0284C7">High Spatial Fidelity: Resolves localized drainage channels</text>
-  </g>
+        # ---------------- LEFT: ingestion cards ----------------
+        card(L + 25, 180, 470, 50, "#FEF2F2", "#DC2626", lw_px=1.5, r=8)
+        txt(L + 260, 202, "STRICT FRIDAY 00:00 UTC OPERATIONAL EMBARGO",
+            13, "#991B1B", "bold", "center")
+        txt(L + 260, 220, "Zero lookahead leakage; mirrors humanitarian anticipatory cycle",
+            11.5, "#B91C1C", "bold", "center")
 
-  <!-- Arrow 1: Left -> Center -->
-  <path d="M570,440 L630,440" stroke="#0284C7" stroke-width="4" marker-end="url(#arrow-blue)"/>
-  <text x="600" y="425" text-anchor="middle" font-size="12" font-weight="700" fill="#0284C7">Lagged Feats</text>
+        card(L + 25, 245, 470, 150, "#FFFFFF", "#BAE6FD")
+        txt(L + 45, 275, "Upstream Hydrometeorology (ERA5-Land)", 16, "#0369A1", "bold")
+        for yy, s in ((302, "\u2022 Catchment Runoff (Q_upstream): 1, 7, 14, 30-day cumulative lags"),
+                      (326, "\u2022 Net Water Balance: P - ET\u2080 surplus balance"),
+                      (350, "\u2022 Spatial Catchment: ~300 km Congo-Nile divide transit")):
+            txt(L + 45, yy, s, 13, "#1E293B")
+        txt(L + 45, 374, "Key Signal: Runoff accumulation drives downstream floodplain ponding",
+            12, "#0284C7", "bold")
 
-  <!-- ==================== CENTER CONTAINER: MODEL ENGINE ==================== -->
-  <g transform="translate(640, 100)" filter="url(#shadow)">
-    <rect width="600" height="680" rx="16" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="2"/>
-    <rect width="600" height="60" rx="16" fill="#4F46E5"/>
-    <rect y="40" width="600" height="20" fill="#4F46E5"/>
-    <text x="300" y="38" text-anchor="middle" font-size="18" font-weight="700" fill="#FFFFFF">2. MULTI-HEAD GBDT ENGINE (LIGHTGBM)</text>
+        card(L + 25, 415, 470, 150, "#FFFFFF", "#BAE6FD")
+        txt(L + 45, 445, "Remote Water Levels & River Gauges", 16, "#0369A1", "bold")
+        for yy, s in ((472, "\u2022 River Lol Gauges: gauge_w1, w7, w14 & 7-day stage rate-of-change"),
+                      (496, "\u2022 Lake Albert & Sudd Altimetry remote water level monitoring"),
+                      (520, "\u2022 Hydraulic routing delay delivers 2 to 4 weeks of actionable lead time")):
+            txt(L + 45, yy, s, 13, "#1E293B")
+        txt(L + 45, 544, "Physical Mechanism: Flat River Lol floodplain slows flood transit",
+            12, "#0284C7", "bold")
 
-    <!-- Feature Harmonization Card -->
-    <rect x="25" y="80" width="550" height="75" rx="10" fill="#EEF2FF" stroke="#A5B4FC" stroke-width="1.5"/>
-    <text x="275" y="105" text-anchor="middle" font-size="15" font-weight="700" fill="#3730A3">Feature Ingestion &amp; Autoregression</text>
-    <text x="275" y="128" text-anchor="middle" font-size="12" fill="#1E293B">Hydrometeorological Lags + Harmonic Seasonality (sin/cos) + Autoregressive Extent (y_lag1, y_lag2)</text>
-    <text x="275" y="145" text-anchor="middle" font-size="11.5" font-weight="600" fill="#4338CA">Weekly county tabular state: 1,810 pooled observation weeks across 5 Aweil counties</text>
+        card(L + 25, 585, 470, 165, "#FFFFFF", "#BAE6FD")
+        txt(L + 45, 615, "Historical Satellite Baseline (MODIS)", 16, "#0369A1", "bold")
+        for yy, s in ((642, "\u2022 26-Year Historical Inundation Record (2000\u20132025 Terra/Aqua)"),
+                      (666, "\u2022 Native ~232 m Spatial Resolution (MODIS 8-day composites)"),
+                      (690, "\u2022 Establishes empirical pixel climatology & permanent water masks")):
+            txt(L + 45, yy, s, 13, "#1E293B")
+        txt(L + 45, 714, "High Spatial Fidelity: Resolves localized drainage channels",
+            12, "#0284C7", "bold")
 
-    <!-- Head 1: Detection -->
-    <rect x="25" y="170" width="550" height="110" rx="10" fill="#FDF4FF" stroke="#D946EF" stroke-width="1.5"/>
-    <text x="45" y="200" font-size="15" font-weight="700" fill="#86198F">Head 1: Flood Detection Classifier [P(flood &gt; 0)]</text>
-    <text x="45" y="225" font-size="12.5" fill="#1E293B">• Objective: Binary Cross-Entropy / LogLoss</text>
-    <text x="45" y="247" font-size="12.5" fill="#1E293B">• High Reliability: Brier Score = 0.0766 | BSS vs Climatology = +24.6%</text>
-    <text x="45" y="268" font-size="12" font-weight="600" fill="#A21CAF">Discriminates wet vs. dry weeks prior to extent quantification</text>
+        # ---------------- CENTER: model engine cards ----------------
+        card(C + 25, 180, 550, 75, "#EEF2FF", "#A5B4FC")
+        txt(C + 275, 205, "Feature Ingestion & Autoregression", 15, "#3730A3", "bold", "center")
+        txt(C + 275, 228, "Hydrometeorological Lags + Harmonic Seasonality (sin/cos) + "
+                          "Autoregressive Extent (y_lag1, y_lag2)", 12, "#1E293B", ha="center")
+        txt(C + 275, 245, "Weekly county tabular state: 1,810 pooled observation weeks "
+                          "across 5 Aweil counties", 11.5, "#4338CA", "bold", "center")
 
-    <!-- Head 2: Extent Quantiles -->
-    <rect x="25" y="295" width="550" height="115" rx="10" fill="#F0FDF4" stroke="#16A34A" stroke-width="1.5"/>
-    <text x="45" y="325" font-size="15" font-weight="700" fill="#14532D">Head 2: Tabular County Extent Quantiles [q10, q50, q90 km²]</text>
-    <text x="45" y="350" font-size="12.5" fill="#1E293B">• Objective: Asymmetric Pinball Loss (Quantile Regression)</text>
-    <text x="45" y="372" font-size="12.5" fill="#1E293B">• Calibrated Uncertainty Bounds: q10 (conservative) to q90 (extreme surge)</text>
-    <text x="45" y="394" font-size="12" font-weight="600" fill="#15803D">Central Forecast: Median q50 (km²) feeds area-conserving spatial downscaler</text>
+        card(C + 25, 270, 550, 110, "#FDF4FF", "#D946EF")
+        txt(C + 45, 300, "Head 1: Flood Detection Classifier [P(flood > 0)]", 15, "#86198F", "bold")
+        txt(C + 45, 325, "\u2022 Objective: Binary Cross-Entropy / LogLoss", 12.5, "#1E293B")
+        txt(C + 45, 347, "\u2022 High Reliability: Brier Score = 0.0766 | BSS vs Climatology = +24.6%",
+            12.5, "#1E293B")
+        txt(C + 45, 368, "Discriminates wet vs. dry weeks prior to extent quantification",
+            12, "#A21CAF", "bold")
 
-    <!-- Head 3: Duration / Persistence -->
-    <rect x="25" y="425" width="550" height="115" rx="10" fill="#FFFBEB" stroke="#D97706" stroke-width="1.5"/>
-    <text x="45" y="455" font-size="15" font-weight="700" fill="#92400E">Head 3: Flood Persistence / Duration [h1, h2, h3, h4 weeks]</text>
-    <text x="45" y="480" font-size="12.5" fill="#1E293B">• Multi-Horizon Survival Heads: 1, 2, 3, and 4 weeks forward survival</text>
-    <text x="45" y="502" font-size="12.5" fill="#1E293B">• Beats Persistence: Markov persistence collapses by W3 (-6.8%), GBDT holds +26% BSS</text>
-    <text x="45" y="524" font-size="12" font-weight="600" fill="#B45309">Essential for prolonged standing water risk (crop rotting &amp; livestock diseases)</text>
+        card(C + 25, 395, 550, 115, "#F0FDF4", "#16A34A")
+        txt(C + 45, 425, "Head 2: Tabular County Extent Quantiles [q10, q50, q90 km\u00b2]",
+            15, "#14532D", "bold")
+        txt(C + 45, 450, "\u2022 Objective: Asymmetric Pinball Loss (Quantile Regression)", 12.5, "#1E293B")
+        txt(C + 45, 472, "\u2022 Calibrated Uncertainty Bounds: q10 (conservative) to q90 (extreme surge)",
+            12.5, "#1E293B")
+        txt(C + 45, 494, "Central Forecast: Median q50 (km\u00b2) feeds area-conserving spatial downscaler",
+            12, "#15803D", "bold")
 
-    <!-- Optuna Node -->
-    <rect x="25" y="555" width="550" height="100" rx="10" fill="#F1F5F9" stroke="#64748B" stroke-width="1.2" stroke-dasharray="6,4"/>
-    <text x="275" y="582" text-anchor="middle" font-size="13.5" font-weight="700" fill="#334155">Optuna Bayesian Hyperparameter Optimization</text>
-    <text x="275" y="606" text-anchor="middle" font-size="12" fill="#475569">50+ TPE trials across learning rate, num_leaves, and L1/L2 alpha/lambda regularization.</text>
-    <text x="275" y="628" text-anchor="middle" font-size="12" font-weight="600" fill="#1E293B">Discovery: Objective loss rapidly saturates at ~0.366 (noise floor); further architectural</text>
-    <text x="275" y="646" text-anchor="middle" font-size="12" font-weight="600" fill="#1E293B">complexity cannot overcome irreducible observational variance.</text>
-  </g>
+        card(C + 25, 525, 550, 115, "#FFFBEB", "#D97706")
+        txt(C + 45, 555, "Head 3: Flood Persistence / Duration [h1, h2, h3, h4 weeks]",
+            15, "#92400E", "bold")
+        txt(C + 45, 580, "\u2022 Multi-Horizon Survival Heads: 1, 2, 3, and 4 weeks forward survival",
+            12.5, "#1E293B")
+        txt(C + 45, 602, "\u2022 Beats Persistence: Markov persistence collapses by W3 (-6.8%), "
+                         "GBDT holds +26% BSS", 12.5, "#1E293B")
+        txt(C + 45, 624, "Essential for prolonged standing water risk (crop rotting & livestock diseases)",
+            12, "#B45309", "bold")
 
-  <!-- Arrow 2: Center -> Right -->
-  <path d="M1250,440 L1310,440" stroke="#4F46E5" stroke-width="4" marker-end="url(#arrow-indigo)"/>
-  <text x="1280" y="425" text-anchor="middle" font-size="12" font-weight="700" fill="#4F46E5">q50 (km²)</text>
+        card(C + 25, 655, 550, 100, "#F1F5F9", "#64748B", lw_px=1.2, dashed=True)
+        txt(C + 275, 682, "Optuna Bayesian Hyperparameter Optimization", 13.5, "#334155", "bold", "center")
+        txt(C + 275, 706, "50+ TPE trials across learning rate, num_leaves, and L1/L2 alpha/lambda "
+                          "regularization.", 12, "#475569", ha="center")
+        txt(C + 275, 728, "Discovery: Objective loss rapidly saturates at ~0.366 (noise floor); "
+                          "further architectural", 12, "#1E293B", "bold", "center")
+        txt(C + 275, 746, "complexity cannot overcome irreducible observational variance.",
+            12, "#1E293B", "bold", "center")
 
-  <!-- ==================== RIGHT CONTAINER: DOWNSCALING & EXPOSURE ==================== -->
-  <g transform="translate(1320, 100)" filter="url(#shadow)">
-    <rect width="540" height="680" rx="16" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="2"/>
-    <rect width="540" height="60" rx="16" fill="#059669"/>
-    <rect y="40" width="540" height="20" fill="#059669"/>
-    <text x="270" y="38" text-anchor="middle" font-size="18" font-weight="700" fill="#FFFFFF">3. DOWNSCALING &amp; EXPOSURE</text>
+        # ---------------- RIGHT: downscaling & exposure cards ----------------
+        card(R + 25, 180, 490, 190, "#FFFFFF", "#A7F3D0")
+        txt(R + 270, 210, "Area-Preserving Spatial Downscaling (Task B)", 16, "#065F46", "bold", "center")
+        for yy, s in ((238, "\u2022 Step 1: Ingest tabular county median extent q50 (km\u00b2)"),
+                      (262, "\u2022 Step 2: Sample conditional pixel climatology P(pixel | month, county)"),
+                      (286, "\u2022 Step 3: Discrete rank-order step merge: k = round(v / step - 0.5)")):
+            txt(R + 45, yy, s, 13, "#1E293B")
+        txt(R + 45, 310, "\u2022 Exact Mathematical Area Conservation: \u03a3 sev_p \u00d7 A_p \u2261 q50",
+            13, "#047857", "bold")
+        txt(R + 45, 334, "  Mathematical Area Distortion: \u0394 = 0.000 km\u00b2 (100% Exact Conservation)",
+            12.5, "#065F46", "bold")
+        txt(R + 45, 356, "Output: Calibrated ~232 m resolution inundation severity raster [sev \u2208 (0, 1)]",
+            12, "#334155")
 
-    <!-- Downscaling Engine Card -->
-    <rect x="25" y="80" width="490" height="190" rx="10" fill="#FFFFFF" stroke="#A7F3D0" stroke-width="1.5"/>
-    <text x="270" y="110" text-anchor="middle" font-size="16" font-weight="700" fill="#065F46">Area-Preserving Spatial Downscaling (Task B)</text>
-    <text x="45" y="138" font-size="13" fill="#1E293B">• Step 1: Ingest tabular county median extent q50 (km²)</text>
-    <text x="45" y="162" font-size="13" fill="#1E293B">• Step 2: Sample conditional pixel climatology P(pixel | month, county)</text>
-    <text x="45" y="186" font-size="13" fill="#1E293B">• Step 3: Discrete rank-order step merge: k = round(v / step - 0.5)</text>
-    <text x="45" y="210" font-size="13" font-weight="700" fill="#047857">• Exact Mathematical Area Conservation: Σ sev_p × A_p ≡ q50</text>
-    <text x="45" y="234" font-size="12.5" font-weight="700" fill="#065F46">  Mathematical Area Distortion: Δ = 0.000 km² (100% Exact Conservation)</text>
-    <text x="45" y="256" font-size="12" fill="#334155">Output: Calibrated ~232 m resolution inundation severity raster [sev ∈ (0, 1)]</text>
+        card(R + 25, 385, 490, 175, "#FEFCE8", "#FACC15")
+        txt(R + 45, 415, "[CROPLAND EXPOSURE] Stationary Food Security", 16, "#854D0E", "bold")
+        for yy, s in ((442, "\u2022 ASAP High-Resolution Cropland Mask (Sorghum & Groundnuts)"),
+                      (466, "\u2022 Critical Collision: Ripening & Harvest season (Sep\u2013Nov) vs. flood peak"),
+                      (490, "\u2022 Stationary Vulnerability: Standing water >48h leads to 100% crop spoilage")):
+            txt(R + 45, yy, s, 13, "#1E293B")
+        txt(R + 45, 514, "\u2022 Anticipatory Trigger (2\u20133 wk lead): Emergency early harvesting,",
+            13, "#A16207", "bold")
+        txt(R + 45, 534, "  drainage embankment clearing, & elevated grain bag storage",
+            13, "#A16207", "bold")
 
-    <!-- Split Branch A: Cropland Exposure -->
-    <rect x="25" y="285" width="490" height="175" rx="10" fill="#FEFCE8" stroke="#FACC15" stroke-width="1.5"/>
-    <text x="45" y="315" font-size="16" font-weight="700" fill="#854D0E">[CROPLAND EXPOSURE] Stationary Food Security</text>
-    <text x="45" y="342" font-size="13" fill="#1E293B">• ASAP High-Resolution Cropland Mask (Sorghum &amp; Groundnuts)</text>
-    <text x="45" y="366" font-size="13" fill="#1E293B">• Critical Collision: Ripening &amp; Harvest season (Sep–Nov) vs. flood peak</text>
-    <text x="45" y="390" font-size="13" fill="#1E293B">• Stationary Vulnerability: Standing water &gt;48h leads to 100% crop spoilage</text>
-    <text x="45" y="414" font-size="13" font-weight="700" fill="#A16207">• Anticipatory Trigger (2–3 wk lead): Emergency early harvesting,</text>
-    <text x="45" y="434" font-size="13" font-weight="700" fill="#A16207">  drainage embankment clearing, &amp; elevated grain bag storage</text>
+        card(R + 25, 575, 490, 175, "#FFF1F2", "#FDA4AF")
+        txt(R + 45, 605, "[CATTLE EXPOSURE] Mobile Pastoral Livestock", 16, "#9F1239", "bold")
+        for yy, s in ((632, "\u2022 GeoNode Livestock Density Layer (Dinka transhumance herds)"),
+                      (656, "\u2022 River basin grazing corridors cut off by backwater flooding"),
+                      (680, "\u2022 Mobile Vulnerability: Herds can relocate if dry routes are identified")):
+            txt(R + 45, yy, s, 13, "#1E293B")
+        txt(R + 45, 704, "\u2022 Anticipatory Trigger (7\u201314 d lead): Prophylactic liver-fluke dosing,",
+            13, "#BE123C", "bold")
+        txt(R + 45, 724, "  coordinated dry transhumance passage, & intercommunal peace pacts",
+            13, "#BE123C", "bold")
 
-    <!-- Split Branch B: Cattle Exposure -->
-    <rect x="25" y="475" width="490" height="175" rx="10" fill="#FFF1F2" stroke="#FDA4AF" stroke-width="1.5"/>
-    <text x="45" y="505" font-size="16" font-weight="700" fill="#9F1239">[CATTLE EXPOSURE] Mobile Pastoral Livestock</text>
-    <text x="45" y="532" font-size="13" fill="#1E293B">• GeoNode Livestock Density Layer (Dinka transhumance herds)</text>
-    <text x="45" y="556" font-size="13" fill="#1E293B">• River basin grazing corridors cut off by backwater flooding</text>
-    <text x="45" y="580" font-size="13" fill="#1E293B">• Mobile Vulnerability: Herds can relocate if dry routes are identified</text>
-    <text x="45" y="604" font-size="13" font-weight="700" fill="#BE123C">• Anticipatory Trigger (7–14 d lead): Prophylactic liver-fluke dosing,</text>
-    <text x="45" y="624" font-size="13" font-weight="700" fill="#BE123C">  coordinated dry transhumance passage, &amp; intercommunal peace pacts</text>
-  </g>
-</svg>
-"""
-    with open(svg_path, "w", encoding="utf-8") as f:
-        f.write(svg_content)
+        # Connector arrows with labels (SVG marker geometry: 8x6 head, refX=6)
+        for x1, x2, color, label in ((570, 630, "#0284C7", "Lagged Feats"),
+                                     (1250, 1310, "#4F46E5", "q50 (km\u00b2)")):
+            ax.plot([x1, x2], [440, 440], color=color, linewidth=_px(4),
+                    solid_capstyle="round", zorder=5)
+            ax.add_patch(mpatches.Polygon(
+                [[x2 - 6, 437], [x2 + 2, 440], [x2 - 6, 443]],
+                closed=True, facecolor=color, edgecolor="none", zorder=6))
+            txt((x1 + x2) / 2, 425, label, 12, color, "bold", "center")
+
+        fig.savefig(svg_path)
+        plt.close(fig)
+
+
 
 
 # =============================================================================

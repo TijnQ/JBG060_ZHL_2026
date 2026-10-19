@@ -25,6 +25,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
+import matplotlib.path as mpath
 import matplotlib.patheffects as pe
 from matplotlib.ticker import MultipleLocator
 from matplotlib.lines import Line2D
@@ -275,6 +276,121 @@ def generate_map1_locator(output_dir: Path) -> tuple[Path, Path]:
 # =============================================================================
 # 2. End-to-End Pipeline Diagram (Diagram 1)
 # =============================================================================
+def _px(svg_px: float) -> float:
+    """Convert SVG-pixel lengths to matplotlib points on the 100-px-per-inch grid."""
+    return svg_px * 0.72
+
+
+def _soft_shadow(ax, x, y, w, h, r, offsets, alphas, color="#0F172A", zorder=1):
+    """Approximate an SVG feDropShadow with stacked translucent rounded rects."""
+    for dy, alpha in zip(offsets, alphas):
+        ax.add_patch(mpatches.FancyBboxPatch(
+            (x, y + dy), w, h, boxstyle=f"round,pad=0,rounding_size={r}",
+            facecolor=color, edgecolor="none", alpha=alpha, zorder=zorder))
+
+
+def _rounded_top_rect(x, y, w, h, r):
+    """matplotlib Path for a rectangle with rounded top corners only (y-down)."""
+    verts = [(x, y + r), (x, y), (x + r, y),
+             (x + w - r, y), (x + w, y), (x + w, y + r),
+             (x + w, y + h), (x, y + h), (0.0, 0.0)]
+    codes = [mpath.Path.MOVETO, mpath.Path.CURVE3, mpath.Path.CURVE3,
+             mpath.Path.LINETO, mpath.Path.CURVE3, mpath.Path.CURVE3,
+             mpath.Path.LINETO, mpath.Path.LINETO, mpath.Path.CLOSEPOLY]
+    return mpath.Path(verts, codes)
+
+
+def _render_diagram1_svg(svg_path: Path) -> None:
+    """Render Diagram 1 (pipeline architecture) as a matplotlib vector SVG.
+
+    Pure-Python replacement for the previous hand-authored SVG markup string:
+    the same 1600x380 design (four shadowed stage cards, rounded-top header
+    bars, tag pills, bullet lists, connector arrows) is reproduced 1:1.
+    All coordinates are the original SVG pixel values with y growing downward;
+    fonts and strokes are converted from px to pt (x 0.72 at 100 px/inch).
+    """
+    W, H = 1600, 380
+    stages = [
+        dict(x=45, w=330, hdr="#1E3A8A", dot="#2563EB",
+             tag_bg="#EFF6FF", tag_edge="#3B82F6", tag_fg="#1E40AF",
+             title="STAGE 1: DATA PREPARATION", tag="Raw data \u2192 one clean weekly table",
+             bullets=[
+                 ("\u2022 One clean weekly table:", "5 counties, 26 years (2000\u20132025)"),
+                 ("\u2022 Weather rolled into 1\u201330-day sums:", "local + upstream, rivers & lakes"),
+                 ("\u2022 Flood history & time-of-year,", "encoded as predictive features"),
+                 ("\u2022 No peeking ahead: only data", "known by forecast Friday"),
+             ]),
+        dict(x=435, w=330, hdr="#0D9488", dot="#0D9488",
+             tag_bg="#F0FDFA", tag_edge="#14B8A6", tag_fg="#0F766E",
+             title="STAGE 2: HAZARD ENGINE", tag="Level-1 \u00b7 County Probabilistic Engine",
+             bullets=[
+                 ("\u2022 Multi-Head LightGBM", "(50 weekly engineered features)"),
+                 ("\u2022 Predicts flood occurrence probability", "& multi-horizon duration (1\u20134 wks)"),
+                 ("\u2022 Quantile area regression: q10 (best),", "q50 (median), q90 (worst)"),
+             ]),
+        dict(x=825, w=330, hdr="#D97706", dot="#D97706",
+             tag_bg="#FFFBEB", tag_edge="#F59E0B", tag_fg="#B45309",
+             title="STAGE 3: PIXEL DOWNSCALER", tag="Level-2 \u00b7 Spatial Allocation (~232m)",
+             bullets=[
+                 ("\u2022 26-year conditional pixel climatology", "(MODIS MCDWD)"),
+                 ("\u2022 Golden Rule: allocates WHERE water", "pools based on county q50"),
+                 ("\u2022 Coordinate snapping guarantees exact", "area conservation (0.0 km\u00b2 error)"),
+             ]),
+        dict(x=1215, w=340, hdr="#DC2626", dot="#DC2626",
+             tag_bg="#FEF2F2", tag_edge="#EF4444", tag_fg="#B91C1C",
+             title="STAGE 4: ASSET RISK OVERLAP", tag="Level-3 \u00b7 Humanitarian Early Action",
+             bullets=[
+                 ("\u2022 Direct spatial raster multiplication", None),
+                 ("\u2022 ASAP Cropland Mask (~500m grid) \u2192", "inundated staple hectares"),
+                 ("\u2022 ICPAC Cattle Density (~9km grid) \u2192", "exposed head of livestock"),
+             ]),
+    ]
+    with plt.rc_context({"font.family": "DejaVu Sans", "svg.fonttype": "none",
+                 "savefig.bbox": "standard"}):
+        fig = plt.figure(figsize=(W / 100.0, H / 100.0), dpi=100)
+        ax = fig.add_axes([0, 0, 1, 1])
+        ax.set_xlim(0, W)
+        ax.set_ylim(H, 0)  # SVG y grows downward
+        ax.axis("off")
+        ax.add_patch(mpatches.Rectangle((0, 0), W, H, facecolor="#F8FAFC",
+                                        edgecolor="none", zorder=0))
+        for stg in stages:
+            x, y, w, h = stg["x"], 30, stg["w"], 310
+            _soft_shadow(ax, x, y, w, h, 14, (4, 8, 12, 16),
+                         (0.035, 0.028, 0.022, 0.015), zorder=1)
+            ax.add_patch(mpatches.FancyBboxPatch(
+                (x, y), w, h, boxstyle="round,pad=0,rounding_size=14",
+                facecolor="#FFFFFF", edgecolor="#CBD5E1", linewidth=_px(1.8), zorder=2))
+            ax.add_patch(mpatches.PathPatch(_rounded_top_rect(x, y, w, 52, 14),
+                                            facecolor=stg["hdr"], edgecolor="none", zorder=3))
+            ax.text(x + w / 2, y + 33, stg["title"], ha="center", va="baseline",
+                    fontsize=_px(17), fontweight="bold", color="#FFFFFF", zorder=4)
+            ax.add_patch(mpatches.FancyBboxPatch(
+                (x + 20, y + 66), w - 40, 26, boxstyle="round,pad=0,rounding_size=6",
+                facecolor=stg["tag_bg"], edgecolor=stg["tag_edge"],
+                linewidth=_px(1), zorder=3))
+            ax.text(x + w / 2, y + 83, stg["tag"], ha="center", va="baseline",
+                    fontsize=_px(11.5), fontweight="bold", color=stg["tag_fg"], zorder=4)
+            for i, (line1, line2) in enumerate(stg["bullets"]):
+                cy = y + 118 + 50 * i  # bullet circle centre (SVG group y+112, cy=6+50i)
+                ax.add_patch(mpatches.Circle((x + 28, cy), 5, facecolor=stg["dot"],
+                                             edgecolor="none", zorder=4))
+                ax.text(x + 44, cy + 4, line1, ha="left", va="baseline",
+                        fontsize=_px(13), color="#334155", zorder=4)
+                if line2:
+                    ax.text(x + 60, cy + 24, line2, ha="left", va="baseline",
+                            fontsize=_px(13), color="#334155", zorder=4)
+        # Connector arrows: line + triangle head replicating the SVG marker geometry
+        for x1, x2 in ((380, 425), (770, 815), (1160, 1205)):
+            ax.plot([x1, x2], [185, 185], color="#0284C7", linewidth=_px(4),
+                    solid_capstyle="round", zorder=5)
+            ax.add_patch(mpatches.Polygon(
+                [[x2 - 4.2, 182.2], [x2 + 2.8, 185], [x2 - 4.2, 187.8]],
+                closed=True, facecolor="#0284C7", edgecolor="none", zorder=6))
+        fig.savefig(svg_path)
+        plt.close(fig)
+
+
 def generate_diagram1_pipeline(output_dir: Path) -> tuple[Path, Path, Path]:
     """Generate professional vector and 300 DPI flowchart of the ML pipeline."""
     set_poster_style()
@@ -283,179 +399,10 @@ def generate_diagram1_pipeline(output_dir: Path) -> tuple[Path, Path, Path]:
     png_path = output_dir / "Diagram1_Pipeline_Architecture.png"
     pdf_path = output_dir / "Diagram1_Pipeline_Architecture.pdf"
 
-    # SVG pure vector implementation with modern cards, typography, and badges
-    svg_content = """<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<svg width="1600" height="380" viewBox="0 0 1600 380" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <!-- Drop Shadow Filter -->
-    <filter id="cardShadow" x="-5%" y="-5%" width="110%" height="115%" filterUnits="userSpaceOnUse">
-      <feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#0F172A" flood-opacity="0.10" />
-    </filter>
-    <filter id="badgeShadow" x="-5%" y="-5%" width="110%" height="115%" filterUnits="userSpaceOnUse">
-      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#0F172A" flood-opacity="0.12" />
-    </filter>
-
-    <!-- Gradients -->
-    <linearGradient id="hdrGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#1E3A8A" />
-      <stop offset="100%" stop-color="#0369A1" />
-    </linearGradient>
-
-    <!-- Markers -->
-    <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-      <path d="M 0 1 L 10 5 L 0 9 z" fill="#0284C7" />
-    </marker>
-  </defs>
-
-  <style>
-    .title { font-family: 'DejaVu Sans', Helvetica, Arial, sans-serif; font-size: 26px; font-weight: bold; fill: #0F172A; }
-    .subtitle { font-family: 'DejaVu Sans', Helvetica, Arial, sans-serif; font-size: 15px; fill: #475569; }
-    .stage-hdr { font-family: 'DejaVu Sans', Helvetica, Arial, sans-serif; font-size: 17px; font-weight: bold; fill: #FFFFFF; }
-    .card-title { font-family: 'DejaVu Sans', Helvetica, Arial, sans-serif; font-size: 16px; font-weight: bold; fill: #0F172A; }
-    .card-sub { font-family: 'DejaVu Sans', Helvetica, Arial, sans-serif; font-size: 13px; font-weight: bold; }
-    .body-txt { font-family: 'DejaVu Sans', Helvetica, Arial, sans-serif; font-size: 13px; fill: #334155; line-height: 1.45; }
-    .badge-txt { font-family: 'DejaVu Sans', Helvetica, Arial, sans-serif; font-size: 11.5px; font-weight: bold; }
-    .audit-txt { font-family: 'DejaVu Sans', Helvetica, Arial, sans-serif; font-size: 12px; font-style: italic; fill: #64748B; }
-  </style>
-
-  <!-- Background -->
-  <rect width="100%" height="100%" fill="#F8FAFC" />
-
-
-  <!-- ======================================================================= -->
-  <!-- STAGE 1: DATA PREPARATION -->
-  <!-- ======================================================================= -->
-  <g transform="translate(45, 30)">
-    <rect width="330" height="310" rx="14" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.8" filter="url(#cardShadow)" />
-    <!-- Stage Header -->
-    <path d="M 0 14 Q 0 0 14 0 L 316 0 Q 330 0 330 14 L 330 52 L 0 52 Z" fill="#1E3A8A" />
-    <text x="165" y="33" text-anchor="middle" class="stage-hdr">STAGE 1: DATA PREPARATION</text>
-
-    <!-- Subtitle tag -->
-    <rect x="20" y="66" width="290" height="26" rx="6" fill="#EFF6FF" stroke="#3B82F6" stroke-width="1" />
-    <text x="165" y="83" text-anchor="middle" fill="#1E40AF" class="badge-txt">Raw data → one clean weekly table</text>
-
-    <!-- Content Items -->
-    <g transform="translate(20, 112)">
-      <circle cx="8" cy="6" r="5" fill="#2563EB" />
-      <text x="24" y="10" class="body-txt">• One clean weekly table:</text>
-      <text x="40" y="30" class="body-txt">5 counties, 26 years (2000–2025)</text>
-
-      <circle cx="8" cy="56" r="5" fill="#2563EB" />
-      <text x="24" y="60" class="body-txt">• Weather rolled into 1–30-day sums:</text>
-      <text x="40" y="80" class="body-txt">local + upstream, rivers &amp; lakes</text>
-
-      <circle cx="8" cy="106" r="5" fill="#2563EB" />
-      <text x="24" y="110" class="body-txt">• Flood history &amp; time-of-year,</text>
-      <text x="40" y="130" class="body-txt">encoded as predictive features</text>
-
-      <circle cx="8" cy="156" r="5" fill="#2563EB" />
-      <text x="24" y="160" class="body-txt">• No peeking ahead: only data</text>
-      <text x="40" y="180" class="body-txt">known by forecast Friday</text>
-    </g>
-  </g>
-
-  <!-- Connecting Arrow 1 -> 2 -->
-  <path d="M 380 185 L 425 185" stroke="#0284C7" stroke-width="4.0" stroke-linecap="round" marker-end="url(#arrow)" />
-
-  <!-- ======================================================================= -->
-  <!-- STAGE 2: HAZARD ENGINE (LEVEL-1) -->
-  <!-- ======================================================================= -->
-  <g transform="translate(435, 30)">
-    <rect width="330" height="310" rx="14" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.8" filter="url(#cardShadow)" />
-    <!-- Stage Header -->
-    <path d="M 0 14 Q 0 0 14 0 L 316 0 Q 330 0 330 14 L 330 52 L 0 52 Z" fill="#0D9488" />
-    <text x="165" y="33" text-anchor="middle" class="stage-hdr">STAGE 2: HAZARD ENGINE</text>
-
-    <!-- Subtitle tag -->
-    <rect x="20" y="66" width="290" height="26" rx="6" fill="#F0FDFA" stroke="#14B8A6" stroke-width="1" />
-    <text x="165" y="83" text-anchor="middle" fill="#0F766E" class="badge-txt">Level-1 · County Probabilistic Engine</text>
-
-    <!-- Content Items -->
-    <g transform="translate(20, 112)">
-      <circle cx="8" cy="6" r="5" fill="#0D9488" />
-      <text x="24" y="10" class="body-txt">• Multi-Head LightGBM</text>
-      <text x="40" y="30" class="body-txt">(50 weekly engineered features)</text>
-
-      <circle cx="8" cy="56" r="5" fill="#0D9488" />
-      <text x="24" y="60" class="body-txt">• Predicts flood occurrence probability</text>
-      <text x="40" y="80" class="body-txt">&amp; multi-horizon duration (1–4 wks)</text>
-
-      <circle cx="8" cy="106" r="5" fill="#0D9488" />
-      <text x="24" y="110" class="body-txt">• Quantile area regression: q10 (best),</text>
-      <text x="40" y="130" class="body-txt">q50 (median), q90 (worst)</text>
-    </g>
-
-  </g>
-
-  <!-- Connecting Arrow 2 -> 3 -->
-  <path d="M 770 185 L 815 185" stroke="#0284C7" stroke-width="4.0" stroke-linecap="round" marker-end="url(#arrow)" />
-
-  <!-- ======================================================================= -->
-  <!-- STAGE 3: PIXEL DOWNSCALER (LEVEL-2) -->
-  <!-- ======================================================================= -->
-  <g transform="translate(825, 30)">
-    <rect width="330" height="310" rx="14" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.8" filter="url(#cardShadow)" />
-    <!-- Stage Header -->
-    <path d="M 0 14 Q 0 0 14 0 L 316 0 Q 330 0 330 14 L 330 52 L 0 52 Z" fill="#D97706" />
-    <text x="165" y="33" text-anchor="middle" class="stage-hdr">STAGE 3: PIXEL DOWNSCALER</text>
-
-    <!-- Subtitle tag -->
-    <rect x="20" y="66" width="290" height="26" rx="6" fill="#FFFBEB" stroke="#F59E0B" stroke-width="1" />
-    <text x="165" y="83" text-anchor="middle" fill="#B45309" class="badge-txt">Level-2 · Spatial Allocation (~232m)</text>
-
-    <!-- Content Items -->
-    <g transform="translate(20, 112)">
-      <circle cx="8" cy="6" r="5" fill="#D97706" />
-      <text x="24" y="10" class="body-txt">• 26-year conditional pixel climatology</text>
-      <text x="40" y="30" class="body-txt">(MODIS MCDWD)</text>
-
-      <circle cx="8" cy="56" r="5" fill="#D97706" />
-      <text x="24" y="60" class="body-txt">• Golden Rule: allocates WHERE water</text>
-      <text x="40" y="80" class="body-txt">pools based on county q50</text>
-
-      <circle cx="8" cy="106" r="5" fill="#D97706" />
-      <text x="24" y="110" class="body-txt">• Coordinate snapping guarantees exact</text>
-      <text x="40" y="130" class="body-txt">area conservation (0.0 km² error)</text>
-    </g>
-
-  </g>
-
-  <!-- Connecting Arrow 3 -> 4 -->
-  <path d="M 1160 185 L 1205 185" stroke="#0284C7" stroke-width="4.0" stroke-linecap="round" marker-end="url(#arrow)" />
-
-  <!-- ======================================================================= -->
-  <!-- STAGE 4: ASSET RISK OVERLAP (LEVEL-3) -->
-  <!-- ======================================================================= -->
-  <g transform="translate(1215, 30)">
-    <rect width="340" height="310" rx="14" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.8" filter="url(#cardShadow)" />
-    <!-- Stage Header -->
-    <path d="M 0 14 Q 0 0 14 0 L 326 0 Q 340 0 340 14 L 340 52 L 0 52 Z" fill="#DC2626" />
-    <text x="170" y="33" text-anchor="middle" class="stage-hdr">STAGE 4: ASSET RISK OVERLAP</text>
-
-    <!-- Subtitle tag -->
-    <rect x="20" y="66" width="300" height="26" rx="6" fill="#FEF2F2" stroke="#EF4444" stroke-width="1" />
-    <text x="170" y="83" text-anchor="middle" fill="#B91C1C" class="badge-txt">Level-3 · Humanitarian Early Action</text>
-
-    <!-- Content Items -->
-    <g transform="translate(20, 112)">
-      <circle cx="8" cy="6" r="5" fill="#DC2626" />
-      <text x="24" y="10" class="body-txt">• Direct spatial raster multiplication</text>
-
-      <circle cx="8" cy="56" r="5" fill="#DC2626" />
-      <text x="24" y="60" class="body-txt">• ASAP Cropland Mask (~500m grid) →</text>
-      <text x="40" y="80" class="body-txt">inundated staple hectares</text>
-
-      <circle cx="8" cy="106" r="5" fill="#DC2626" />
-      <text x="24" y="110" class="body-txt">• ICPAC Cattle Density (~9km grid) →</text>
-      <text x="40" y="130" class="body-txt">exposed head of livestock</text>
-    </g>
-
-  </g>
-</svg>
-"""
-    with open(svg_path, "w", encoding="utf-8") as f:
-        f.write(svg_content)
+    # Vector SVG: rendered directly by matplotlib (pure Python; no hand-authored
+    # markup). The previous hand-written SVG design (1600x380) is reproduced 1:1;
+    # the PNG and PDF twins below remain untouched matplotlib renderings.
+    _render_diagram1_svg(svg_path)
 
     # Render high-resolution PNG & PDF via matplotlib to guarantee 300 DPI publication standards
     fig, ax = plt.subplots(figsize=(16, 3.8), dpi=300)
@@ -1036,6 +983,57 @@ def generate_map2_downscaled_raster(output_dir: Path) -> tuple[Path, Path, Path]
 # =============================================================================
 # 6. Benchmark Performance Callout Box & Summary Table
 # =============================================================================
+def _render_badges_svg(svg_path: Path) -> None:
+    """Render the three Benchmark Statistical Badges as a matplotlib vector SVG.
+
+    Pure-Python replacement for the previous hand-authored SVG markup string:
+    identical 1200x380 design (three rounded colour-coded cards with large
+    statistics, labels, two-line descriptions, divider and footer line).
+    """
+    W, H = 1200, 380
+    cards = [
+        dict(x=40, bg="#ECFDF5", edge="#10B981", fg="#059669", stat="+34.8%",
+             label="BSS vs. CLIMATOLOGY",
+             desc=("34.8% probabilistic skill over", "the 26-year calendar baseline"),
+             foot="Brier: 0.0650 vs 0.0996 (Clim)"),
+        dict(x=425, bg="#EFF6FF", edge="#3B82F6", fg="#2563EB", stat="+21.7%",
+             label="BSS vs. PERSISTENCE",
+             desc=("21.7% skill over latest week's", "satellite flood observation"),
+             foot="Brier: 0.0650 vs 0.0830 (Persist)"),
+        dict(x=810, bg="#FFFBEB", edge="#F59E0B", fg="#D97706", stat="8.68 km\u00b2",
+             label="FLOOD-WEEK MAE",
+             desc=("44.1% error reduction in flooded", "area forecast during active floods"),
+             foot="LightGBM: 8.68 vs Clim: 15.52 km\u00b2"),
+    ]
+    with plt.rc_context({"font.family": "DejaVu Sans", "svg.fonttype": "none",
+                 "savefig.bbox": "standard"}):
+        fig = plt.figure(figsize=(W / 100.0, H / 100.0), dpi=100)
+        ax = fig.add_axes([0, 0, 1, 1])
+        ax.set_xlim(0, W)
+        ax.set_ylim(H, 0)  # SVG y grows downward
+        ax.axis("off")
+        for c in cards:
+            x = c["x"]
+            ax.add_patch(mpatches.FancyBboxPatch(
+                (x, 30), 345, 320, boxstyle="round,pad=0,rounding_size=16",
+                facecolor=c["bg"], edgecolor=c["edge"], linewidth=_px(2.5), zorder=2))
+            cx = x + 172.5
+            ax.text(cx, 130, c["stat"], ha="center", va="baseline",
+                    fontsize=_px(46), fontweight="bold", color=c["fg"], zorder=3)
+            ax.text(cx, 175, c["label"], ha="center", va="baseline",
+                    fontsize=_px(16), fontweight="bold", color="#0F172A", zorder=3)
+            ax.text(cx, 215, c["desc"][0], ha="center", va="baseline",
+                    fontsize=_px(12.5), color="#334155", zorder=3)
+            ax.text(cx, 235, c["desc"][1], ha="center", va="baseline",
+                    fontsize=_px(12.5), color="#334155", zorder=3)
+            ax.plot([x + 25, x + 320], [270, 270], color=c["edge"],
+                    linewidth=_px(1), alpha=0.4, zorder=3)
+            ax.text(cx, 305, c["foot"], ha="center", va="baseline",
+                    fontsize=_px(12), fontweight="bold", color=c["fg"], zorder=3)
+        fig.savefig(svg_path, transparent=True)
+        plt.close(fig)
+
+
 def generate_benchmark_visuals(output_dir: Path) -> tuple[Path, Path, Path, Path]:
     """Generate compact 3-row benchmark table and high-impact statistical badge callouts."""
     set_poster_style()
@@ -1170,52 +1168,9 @@ def generate_benchmark_visuals(output_dir: Path) -> tuple[Path, Path, Path, Path
     fig_b.savefig(badges_png, dpi=300, bbox_inches="tight")
     plt.close(fig_b)
 
-    # Pure SVG of badges
-    badges_svg_content = """<?xml version="1.0" encoding="UTF-8"?>
-<svg width="1200" height="380" viewBox="0 0 1200 380" xmlns="http://www.w3.org/2000/svg">
-  <style>
-    .stat { font-family: 'DejaVu Sans', Helvetica, Arial, sans-serif; font-size: 46px; font-weight: bold; }
-    .label { font-family: 'DejaVu Sans', Helvetica, Arial, sans-serif; font-size: 16px; font-weight: bold; fill: #0F172A; }
-    .desc { font-family: 'DejaVu Sans', Helvetica, Arial, sans-serif; font-size: 12.5px; fill: #334155; line-height: 1.4; }
-    .footer { font-family: 'DejaVu Sans', Helvetica, Arial, sans-serif; font-size: 12px; font-weight: bold; }
-  </style>
-
-  <!-- Card 1 -->
-  <g transform="translate(40, 30)">
-    <rect width="345" height="320" rx="16" fill="#ECFDF5" stroke="#10B981" stroke-width="2.5" />
-    <text x="172" y="100" text-anchor="middle" class="stat" fill="#059669">+34.8%</text>
-    <text x="172" y="145" text-anchor="middle" class="label">BSS vs. CLIMATOLOGY</text>
-    <text x="172" y="185" text-anchor="middle" class="desc">34.8% probabilistic skill over</text>
-    <text x="172" y="205" text-anchor="middle" class="desc">the 26-year calendar baseline</text>
-    <line x1="25" y1="240" x2="320" y2="240" stroke="#10B981" stroke-width="1" opacity="0.4" />
-    <text x="172" y="275" text-anchor="middle" class="footer" fill="#059669">Brier: 0.0650 vs 0.0996 (Clim)</text>
-  </g>
-
-  <!-- Card 2 -->
-  <g transform="translate(425, 30)">
-    <rect width="345" height="320" rx="16" fill="#EFF6FF" stroke="#3B82F6" stroke-width="2.5" />
-    <text x="172" y="100" text-anchor="middle" class="stat" fill="#2563EB">+21.7%</text>
-    <text x="172" y="145" text-anchor="middle" class="label">BSS vs. PERSISTENCE</text>
-    <text x="172" y="185" text-anchor="middle" class="desc">21.7% skill over latest week's</text>
-    <text x="172" y="205" text-anchor="middle" class="desc">satellite flood observation</text>
-    <line x1="25" y1="240" x2="320" y2="240" stroke="#3B82F6" stroke-width="1" opacity="0.4" />
-    <text x="172" y="275" text-anchor="middle" class="footer" fill="#2563EB">Brier: 0.0650 vs 0.0830 (Persist)</text>
-  </g>
-
-  <!-- Card 3 -->
-  <g transform="translate(810, 30)">
-    <rect width="345" height="320" rx="16" fill="#FFFBEB" stroke="#F59E0B" stroke-width="2.5" />
-    <text x="172" y="100" text-anchor="middle" class="stat" fill="#D97706">8.68 km²</text>
-    <text x="172" y="145" text-anchor="middle" class="label">FLOOD-WEEK MAE</text>
-    <text x="172" y="185" text-anchor="middle" class="desc">44.1% error reduction in flooded</text>
-    <text x="172" y="205" text-anchor="middle" class="desc">area forecast during active floods</text>
-    <line x1="25" y1="240" x2="320" y2="240" stroke="#F59E0B" stroke-width="1" opacity="0.4" />
-    <text x="172" y="275" text-anchor="middle" class="footer" fill="#D97706">LightGBM: 8.68 vs Clim: 15.52 km²</text>
-  </g>
-</svg>
-"""
-    with open(badges_svg, "w", encoding="utf-8") as f:
-        f.write(badges_svg_content)
+    # Vector SVG: rendered directly by matplotlib (pure Python; design identical
+    # to the previous hand-authored markup).
+    _render_badges_svg(badges_svg)
 
     print(f"  [Benchmark Callouts] Benchmark visuals successfully exported to:\n    - {table_png}\n    - {table_pdf}\n    - {badges_png}\n    - {badges_svg}")
     return table_png, table_pdf, badges_png, badges_svg

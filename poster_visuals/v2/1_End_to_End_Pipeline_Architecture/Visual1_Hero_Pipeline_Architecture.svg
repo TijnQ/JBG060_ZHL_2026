@@ -1,140 +1,632 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1900 820" width="100%" height="100%" style="background:#FFFFFF; font-family:'Segoe UI', Helvetica, Arial, sans-serif;">
-  <defs>
-    <filter id="shadow" x="-5%" y="-5%" width="110%" height="110%">
-      <feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#0F172A" flood-opacity="0.08"/>
-    </filter>
-    <marker id="arrow-blue" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
-      <path d="M0,0 L0,6 L8,3 z" fill="#0284C7" />
-    </marker>
-    <marker id="arrow-indigo" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
-      <path d="M0,0 L0,6 L8,3 z" fill="#4F46E5" />
-    </marker>
-  </defs>
-
-  <!-- Title Banner -->
-  <text x="950" y="45" text-anchor="middle" font-size="28" font-weight="800" fill="#0F172A">END-TO-END FLOOD FORECASTING &amp; ANTICIPATORY ACTION PIPELINE</text>
-  <text x="950" y="78" text-anchor="middle" font-size="16" font-weight="600" fill="#475569">Operational Multi-Head GBDT Engine (Task A)  ⟶  Area-Preserving ~232 m Downscaler (Task B)  ⟶  Multi-Asset Exposure Action</text>
-
-  <!-- ==================== LEFT CONTAINER: DATA INGESTION ==================== -->
-  <g transform="translate(40, 100)" filter="url(#shadow)">
-    <rect width="520" height="680" rx="16" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="2"/>
-    <rect width="520" height="60" rx="16" fill="#0284C7"/>
-    <rect y="40" width="520" height="20" fill="#0284C7"/>
-    <text x="260" y="38" text-anchor="middle" font-size="18" font-weight="700" fill="#FFFFFF">1. DATA INGESTION &amp; EMBARGO</text>
-
-    <!-- Embargo Badge -->
-    <rect x="25" y="80" width="470" height="50" rx="8" fill="#FEF2F2" stroke="#DC2626" stroke-width="1.5"/>
-    <text x="260" y="102" text-anchor="middle" font-size="13" font-weight="800" fill="#991B1B">STRICT FRIDAY 00:00 UTC OPERATIONAL EMBARGO</text>
-    <text x="260" y="120" text-anchor="middle" font-size="11.5" font-weight="600" fill="#B91C1C">Zero lookahead leakage; mirrors humanitarian anticipatory cycle</text>
-
-    <!-- Card 1: Upstream Hydro -->
-    <rect x="25" y="145" width="470" height="150" rx="10" fill="#FFFFFF" stroke="#BAE6FD" stroke-width="1.5"/>
-    <text x="45" y="175" font-size="16" font-weight="700" fill="#0369A1">Upstream Hydrometeorology (ERA5-Land)</text>
-    <text x="45" y="202" font-size="13" fill="#1E293B">• Catchment Runoff (Q_upstream): 1, 7, 14, 30-day cumulative lags</text>
-    <text x="45" y="226" font-size="13" fill="#1E293B">• Net Water Balance: P - ET₀ surplus balance</text>
-    <text x="45" y="250" font-size="13" fill="#1E293B">• Spatial Catchment: ~300 km Congo-Nile divide transit</text>
-    <text x="45" y="274" font-size="12" font-weight="600" fill="#0284C7">Key Signal: Runoff accumulation drives downstream floodplain ponding</text>
-
-    <!-- Card 2: Gauges & Altimetry -->
-    <rect x="25" y="315" width="470" height="150" rx="10" fill="#FFFFFF" stroke="#BAE6FD" stroke-width="1.5"/>
-    <text x="45" y="345" font-size="16" font-weight="700" fill="#0369A1">Remote Water Levels &amp; River Gauges</text>
-    <text x="45" y="372" font-size="13" fill="#1E293B">• River Lol Gauges: gauge_w1, w7, w14 &amp; 7-day stage rate-of-change</text>
-    <text x="45" y="396" font-size="13" fill="#1E293B">• Lake Albert &amp; Sudd Altimetry remote water level monitoring</text>
-    <text x="45" y="420" font-size="13" fill="#1E293B">• Hydraulic routing delay delivers 2 to 4 weeks of actionable lead time</text>
-    <text x="45" y="444" font-size="12" font-weight="600" fill="#0284C7">Physical Mechanism: Flat River Lol floodplain slows flood transit</text>
-
-    <!-- Card 3: MODIS Satellite -->
-    <rect x="25" y="485" width="470" height="165" rx="10" fill="#FFFFFF" stroke="#BAE6FD" stroke-width="1.5"/>
-    <text x="45" y="515" font-size="16" font-weight="700" fill="#0369A1">Historical Satellite Baseline (MODIS)</text>
-    <text x="45" y="542" font-size="13" fill="#1E293B">• 26-Year Historical Inundation Record (2000–2025 Terra/Aqua)</text>
-    <text x="45" y="566" font-size="13" fill="#1E293B">• Native ~232 m Spatial Resolution (MODIS 8-day composites)</text>
-    <text x="45" y="590" font-size="13" fill="#1E293B">• Establishes empirical pixel climatology &amp; permanent water masks</text>
-    <text x="45" y="614" font-size="12" font-weight="600" fill="#0284C7">High Spatial Fidelity: Resolves localized drainage channels</text>
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" width="1368pt" height="590.4pt" viewBox="0 0 1368 590.4" xmlns="http://www.w3.org/2000/svg" version="1.1">
+ <metadata>
+  <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+   <cc:Work>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:date>2026-10-19T15:06:44.086514</dc:date>
+    <dc:format>image/svg+xml</dc:format>
+    <dc:creator>
+     <cc:Agent>
+      <dc:title>Matplotlib v3.10.9, https://matplotlib.org/</dc:title>
+     </cc:Agent>
+    </dc:creator>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <defs>
+  <style type="text/css">*{stroke-linejoin: round; stroke-linecap: butt}</style>
+ </defs>
+ <g id="figure_1">
+  <g id="patch_1">
+   <path d="M 0 590.4 
+L 1368 590.4 
+L 1368 0 
+L 0 0 
+z
+" style="fill: #ffffff"/>
   </g>
-
-  <!-- Arrow 1: Left -> Center -->
-  <path d="M570,440 L630,440" stroke="#0284C7" stroke-width="4" marker-end="url(#arrow-blue)"/>
-  <text x="600" y="425" text-anchor="middle" font-size="12" font-weight="700" fill="#0284C7">Lagged Feats</text>
-
-  <!-- ==================== CENTER CONTAINER: MODEL ENGINE ==================== -->
-  <g transform="translate(640, 100)" filter="url(#shadow)">
-    <rect width="600" height="680" rx="16" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="2"/>
-    <rect width="600" height="60" rx="16" fill="#4F46E5"/>
-    <rect y="40" width="600" height="20" fill="#4F46E5"/>
-    <text x="300" y="38" text-anchor="middle" font-size="18" font-weight="700" fill="#FFFFFF">2. MULTI-HEAD GBDT ENGINE (LIGHTGBM)</text>
-
-    <!-- Feature Harmonization Card -->
-    <rect x="25" y="80" width="550" height="75" rx="10" fill="#EEF2FF" stroke="#A5B4FC" stroke-width="1.5"/>
-    <text x="275" y="105" text-anchor="middle" font-size="15" font-weight="700" fill="#3730A3">Feature Ingestion &amp; Autoregression</text>
-    <text x="275" y="128" text-anchor="middle" font-size="12" fill="#1E293B">Hydrometeorological Lags + Harmonic Seasonality (sin/cos) + Autoregressive Extent (y_lag1, y_lag2)</text>
-    <text x="275" y="145" text-anchor="middle" font-size="11.5" font-weight="600" fill="#4338CA">Weekly county tabular state: 1,810 pooled observation weeks across 5 Aweil counties</text>
-
-    <!-- Head 1: Detection -->
-    <rect x="25" y="170" width="550" height="110" rx="10" fill="#FDF4FF" stroke="#D946EF" stroke-width="1.5"/>
-    <text x="45" y="200" font-size="15" font-weight="700" fill="#86198F">Head 1: Flood Detection Classifier [P(flood &gt; 0)]</text>
-    <text x="45" y="225" font-size="12.5" fill="#1E293B">• Objective: Binary Cross-Entropy / LogLoss</text>
-    <text x="45" y="247" font-size="12.5" fill="#1E293B">• High Reliability: Brier Score = 0.0766 | BSS vs Climatology = +24.6%</text>
-    <text x="45" y="268" font-size="12" font-weight="600" fill="#A21CAF">Discriminates wet vs. dry weeks prior to extent quantification</text>
-
-    <!-- Head 2: Extent Quantiles -->
-    <rect x="25" y="295" width="550" height="115" rx="10" fill="#F0FDF4" stroke="#16A34A" stroke-width="1.5"/>
-    <text x="45" y="325" font-size="15" font-weight="700" fill="#14532D">Head 2: Tabular County Extent Quantiles [q10, q50, q90 km²]</text>
-    <text x="45" y="350" font-size="12.5" fill="#1E293B">• Objective: Asymmetric Pinball Loss (Quantile Regression)</text>
-    <text x="45" y="372" font-size="12.5" fill="#1E293B">• Calibrated Uncertainty Bounds: q10 (conservative) to q90 (extreme surge)</text>
-    <text x="45" y="394" font-size="12" font-weight="600" fill="#15803D">Central Forecast: Median q50 (km²) feeds area-conserving spatial downscaler</text>
-
-    <!-- Head 3: Duration / Persistence -->
-    <rect x="25" y="425" width="550" height="115" rx="10" fill="#FFFBEB" stroke="#D97706" stroke-width="1.5"/>
-    <text x="45" y="455" font-size="15" font-weight="700" fill="#92400E">Head 3: Flood Persistence / Duration [h1, h2, h3, h4 weeks]</text>
-    <text x="45" y="480" font-size="12.5" fill="#1E293B">• Multi-Horizon Survival Heads: 1, 2, 3, and 4 weeks forward survival</text>
-    <text x="45" y="502" font-size="12.5" fill="#1E293B">• Beats Persistence: Markov persistence collapses by W3 (-6.8%), GBDT holds +26% BSS</text>
-    <text x="45" y="524" font-size="12" font-weight="600" fill="#B45309">Essential for prolonged standing water risk (crop rotting &amp; livestock diseases)</text>
-
-    <!-- Optuna Node -->
-    <rect x="25" y="555" width="550" height="100" rx="10" fill="#F1F5F9" stroke="#64748B" stroke-width="1.2" stroke-dasharray="6,4"/>
-    <text x="275" y="582" text-anchor="middle" font-size="13.5" font-weight="700" fill="#334155">Optuna Bayesian Hyperparameter Optimization</text>
-    <text x="275" y="606" text-anchor="middle" font-size="12" fill="#475569">50+ TPE trials across learning rate, num_leaves, and L1/L2 alpha/lambda regularization.</text>
-    <text x="275" y="628" text-anchor="middle" font-size="12" font-weight="600" fill="#1E293B">Discovery: Objective loss rapidly saturates at ~0.366 (noise floor); further architectural</text>
-    <text x="275" y="646" text-anchor="middle" font-size="12" font-weight="600" fill="#1E293B">complexity cannot overcome irreducible observational variance.</text>
+  <g id="axes_1">
+   <g id="patch_2">
+    <path d="M 0 0 
+L 1368 0 
+L 1368 590.4 
+L 0 590.4 
+z
+" clip-path="url(#pc743c2ae5a)" style="fill: #ffffff"/>
+   </g>
+   <g id="patch_3">
+    <path d="M 40.32 73.44 
+L 391.68 73.44 
+Q 403.2 73.44 403.2 84.96 
+L 403.2 551.52 
+Q 403.2 563.04 391.68 563.04 
+L 40.32 563.04 
+Q 28.8 563.04 28.8 551.52 
+L 28.8 84.96 
+Q 28.8 73.44 40.32 73.44 
+z
+" clip-path="url(#pc743c2ae5a)" style="fill: #0f172a; opacity: 0.03"/>
+   </g>
+   <g id="patch_4">
+    <path d="M 40.32 74.88 
+L 391.68 74.88 
+Q 403.2 74.88 403.2 86.4 
+L 403.2 552.96 
+Q 403.2 564.48 391.68 564.48 
+L 40.32 564.48 
+Q 28.8 564.48 28.8 552.96 
+L 28.8 86.4 
+Q 28.8 74.88 40.32 74.88 
+z
+" clip-path="url(#pc743c2ae5a)" style="fill: #0f172a; opacity: 0.03"/>
+   </g>
+   <g id="patch_5">
+    <path d="M 40.32 76.32 
+L 391.68 76.32 
+Q 403.2 76.32 403.2 87.84 
+L 403.2 554.4 
+Q 403.2 565.92 391.68 565.92 
+L 40.32 565.92 
+Q 28.8 565.92 28.8 554.4 
+L 28.8 87.84 
+Q 28.8 76.32 40.32 76.32 
+z
+" clip-path="url(#pc743c2ae5a)" style="fill: #0f172a; opacity: 0.02"/>
+   </g>
+   <g id="patch_6">
+    <path d="M 472.32 73.44 
+L 881.28 73.44 
+Q 892.8 73.44 892.8 84.96 
+L 892.8 551.52 
+Q 892.8 563.04 881.28 563.04 
+L 472.32 563.04 
+Q 460.8 563.04 460.8 551.52 
+L 460.8 84.96 
+Q 460.8 73.44 472.32 73.44 
+z
+" clip-path="url(#pc743c2ae5a)" style="fill: #0f172a; opacity: 0.03"/>
+   </g>
+   <g id="patch_7">
+    <path d="M 472.32 74.88 
+L 881.28 74.88 
+Q 892.8 74.88 892.8 86.4 
+L 892.8 552.96 
+Q 892.8 564.48 881.28 564.48 
+L 472.32 564.48 
+Q 460.8 564.48 460.8 552.96 
+L 460.8 86.4 
+Q 460.8 74.88 472.32 74.88 
+z
+" clip-path="url(#pc743c2ae5a)" style="fill: #0f172a; opacity: 0.03"/>
+   </g>
+   <g id="patch_8">
+    <path d="M 472.32 76.32 
+L 881.28 76.32 
+Q 892.8 76.32 892.8 87.84 
+L 892.8 554.4 
+Q 892.8 565.92 881.28 565.92 
+L 472.32 565.92 
+Q 460.8 565.92 460.8 554.4 
+L 460.8 87.84 
+Q 460.8 76.32 472.32 76.32 
+z
+" clip-path="url(#pc743c2ae5a)" style="fill: #0f172a; opacity: 0.02"/>
+   </g>
+   <g id="patch_9">
+    <path d="M 961.92 73.44 
+L 1327.68 73.44 
+Q 1339.2 73.44 1339.2 84.96 
+L 1339.2 551.52 
+Q 1339.2 563.04 1327.68 563.04 
+L 961.92 563.04 
+Q 950.4 563.04 950.4 551.52 
+L 950.4 84.96 
+Q 950.4 73.44 961.92 73.44 
+z
+" clip-path="url(#pc743c2ae5a)" style="fill: #0f172a; opacity: 0.03"/>
+   </g>
+   <g id="patch_10">
+    <path d="M 961.92 74.88 
+L 1327.68 74.88 
+Q 1339.2 74.88 1339.2 86.4 
+L 1339.2 552.96 
+Q 1339.2 564.48 1327.68 564.48 
+L 961.92 564.48 
+Q 950.4 564.48 950.4 552.96 
+L 950.4 86.4 
+Q 950.4 74.88 961.92 74.88 
+z
+" clip-path="url(#pc743c2ae5a)" style="fill: #0f172a; opacity: 0.03"/>
+   </g>
+   <g id="patch_11">
+    <path d="M 961.92 76.32 
+L 1327.68 76.32 
+Q 1339.2 76.32 1339.2 87.84 
+L 1339.2 554.4 
+Q 1339.2 565.92 1327.68 565.92 
+L 961.92 565.92 
+Q 950.4 565.92 950.4 554.4 
+L 950.4 87.84 
+Q 950.4 76.32 961.92 76.32 
+z
+" clip-path="url(#pc743c2ae5a)" style="fill: #0f172a; opacity: 0.02"/>
+   </g>
+   <g id="patch_12">
+    <path d="M 40.32 72 
+L 391.68 72 
+Q 403.2 72 403.2 83.52 
+L 403.2 550.08 
+Q 403.2 561.6 391.68 561.6 
+L 40.32 561.6 
+Q 28.8 561.6 28.8 550.08 
+L 28.8 83.52 
+Q 28.8 72 40.32 72 
+z
+" clip-path="url(#pc743c2ae5a)" style="fill: #f8fafc; stroke: #cbd5e1; stroke-width: 1.44; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_13">
+    <path d="M 472.32 72 
+L 881.28 72 
+Q 892.8 72 892.8 83.52 
+L 892.8 550.08 
+Q 892.8 561.6 881.28 561.6 
+L 472.32 561.6 
+Q 460.8 561.6 460.8 550.08 
+L 460.8 83.52 
+Q 460.8 72 472.32 72 
+z
+" clip-path="url(#pc743c2ae5a)" style="fill: #f8fafc; stroke: #cbd5e1; stroke-width: 1.44; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_14">
+    <path d="M 961.92 72 
+L 1327.68 72 
+Q 1339.2 72 1339.2 83.52 
+L 1339.2 550.08 
+Q 1339.2 561.6 1327.68 561.6 
+L 961.92 561.6 
+Q 950.4 561.6 950.4 550.08 
+L 950.4 83.52 
+Q 950.4 72 961.92 72 
+z
+" clip-path="url(#pc743c2ae5a)" style="fill: #f8fafc; stroke: #cbd5e1; stroke-width: 1.44; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_15">
+    <path d="M 40.32 72 
+L 391.68 72 
+Q 403.2 72 403.2 83.52 
+L 403.2 103.68 
+Q 403.2 115.2 391.68 115.2 
+L 40.32 115.2 
+Q 28.8 115.2 28.8 103.68 
+L 28.8 83.52 
+Q 28.8 72 40.32 72 
+z
+" clip-path="url(#pc743c2ae5a)" style="fill: #0284c7"/>
+   </g>
+   <g id="patch_16">
+    <path d="M 28.8 100.8 
+L 403.2 100.8 
+L 403.2 115.2 
+L 28.8 115.2 
+z
+" clip-path="url(#pc743c2ae5a)" style="fill: #0284c7"/>
+   </g>
+   <g id="patch_17">
+    <path d="M 472.32 72 
+L 881.28 72 
+Q 892.8 72 892.8 83.52 
+L 892.8 103.68 
+Q 892.8 115.2 881.28 115.2 
+L 472.32 115.2 
+Q 460.8 115.2 460.8 103.68 
+L 460.8 83.52 
+Q 460.8 72 472.32 72 
+z
+" clip-path="url(#pc743c2ae5a)" style="fill: #4f46e5"/>
+   </g>
+   <g id="patch_18">
+    <path d="M 460.8 100.8 
+L 892.8 100.8 
+L 892.8 115.2 
+L 460.8 115.2 
+z
+" clip-path="url(#pc743c2ae5a)" style="fill: #4f46e5"/>
+   </g>
+   <g id="patch_19">
+    <path d="M 961.92 72 
+L 1327.68 72 
+Q 1339.2 72 1339.2 83.52 
+L 1339.2 103.68 
+Q 1339.2 115.2 1327.68 115.2 
+L 961.92 115.2 
+Q 950.4 115.2 950.4 103.68 
+L 950.4 83.52 
+Q 950.4 72 961.92 72 
+z
+" clip-path="url(#pc743c2ae5a)" style="fill: #059669"/>
+   </g>
+   <g id="patch_20">
+    <path d="M 950.4 100.8 
+L 1339.2 100.8 
+L 1339.2 115.2 
+L 950.4 115.2 
+z
+" clip-path="url(#pc743c2ae5a)" style="fill: #059669"/>
+   </g>
+   <g id="patch_21">
+    <path d="M 52.56 129.6 
+L 379.44 129.6 
+Q 385.2 129.6 385.2 135.36 
+L 385.2 159.84 
+Q 385.2 165.6 379.44 165.6 
+L 52.56 165.6 
+Q 46.8 165.6 46.8 159.84 
+L 46.8 135.36 
+Q 46.8 129.6 52.56 129.6 
+z
+" clip-path="url(#pc743c2ae5a)" style="fill: #fef2f2; stroke: #dc2626; stroke-width: 1.08; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_22">
+    <path d="M 54 176.4 
+L 378 176.4 
+Q 385.2 176.4 385.2 183.6 
+L 385.2 277.2 
+Q 385.2 284.4 378 284.4 
+L 54 284.4 
+Q 46.8 284.4 46.8 277.2 
+L 46.8 183.6 
+Q 46.8 176.4 54 176.4 
+z
+" clip-path="url(#pc743c2ae5a)" style="fill: #ffffff; stroke: #bae6fd; stroke-width: 1.08; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_23">
+    <path d="M 54 298.8 
+L 378 298.8 
+Q 385.2 298.8 385.2 306 
+L 385.2 399.6 
+Q 385.2 406.8 378 406.8 
+L 54 406.8 
+Q 46.8 406.8 46.8 399.6 
+L 46.8 306 
+Q 46.8 298.8 54 298.8 
+z
+" clip-path="url(#pc743c2ae5a)" style="fill: #ffffff; stroke: #bae6fd; stroke-width: 1.08; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_24">
+    <path d="M 54 421.2 
+L 378 421.2 
+Q 385.2 421.2 385.2 428.4 
+L 385.2 532.8 
+Q 385.2 540 378 540 
+L 54 540 
+Q 46.8 540 46.8 532.8 
+L 46.8 428.4 
+Q 46.8 421.2 54 421.2 
+z
+" clip-path="url(#pc743c2ae5a)" style="fill: #ffffff; stroke: #bae6fd; stroke-width: 1.08; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_25">
+    <path d="M 486 129.6 
+L 867.6 129.6 
+Q 874.8 129.6 874.8 136.8 
+L 874.8 176.4 
+Q 874.8 183.6 867.6 183.6 
+L 486 183.6 
+Q 478.8 183.6 478.8 176.4 
+L 478.8 136.8 
+Q 478.8 129.6 486 129.6 
+z
+" clip-path="url(#pc743c2ae5a)" style="fill: #eef2ff; stroke: #a5b4fc; stroke-width: 1.08; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_26">
+    <path d="M 486 194.4 
+L 867.6 194.4 
+Q 874.8 194.4 874.8 201.6 
+L 874.8 266.4 
+Q 874.8 273.6 867.6 273.6 
+L 486 273.6 
+Q 478.8 273.6 478.8 266.4 
+L 478.8 201.6 
+Q 478.8 194.4 486 194.4 
+z
+" clip-path="url(#pc743c2ae5a)" style="fill: #fdf4ff; stroke: #d946ef; stroke-width: 1.08; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_27">
+    <path d="M 486 284.4 
+L 867.6 284.4 
+Q 874.8 284.4 874.8 291.6 
+L 874.8 360 
+Q 874.8 367.2 867.6 367.2 
+L 486 367.2 
+Q 478.8 367.2 478.8 360 
+L 478.8 291.6 
+Q 478.8 284.4 486 284.4 
+z
+" clip-path="url(#pc743c2ae5a)" style="fill: #f0fdf4; stroke: #16a34a; stroke-width: 1.08; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_28">
+    <path d="M 486 378 
+L 867.6 378 
+Q 874.8 378 874.8 385.2 
+L 874.8 453.6 
+Q 874.8 460.8 867.6 460.8 
+L 486 460.8 
+Q 478.8 460.8 478.8 453.6 
+L 478.8 385.2 
+Q 478.8 378 486 378 
+z
+" clip-path="url(#pc743c2ae5a)" style="fill: #fffbeb; stroke: #d97706; stroke-width: 1.08; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_29">
+    <path d="M 486 471.6 
+L 867.6 471.6 
+Q 874.8 471.6 874.8 478.8 
+L 874.8 536.4 
+Q 874.8 543.6 867.6 543.6 
+L 486 543.6 
+Q 478.8 543.6 478.8 536.4 
+L 478.8 478.8 
+Q 478.8 471.6 486 471.6 
+z
+" clip-path="url(#pc743c2ae5a)" style="fill: #f1f5f9; stroke-dasharray: 3.73248,2.48832; stroke-dashoffset: 0; stroke: #64748b; stroke-width: 0.864; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_30">
+    <path d="M 975.6 129.6 
+L 1314 129.6 
+Q 1321.2 129.6 1321.2 136.8 
+L 1321.2 259.2 
+Q 1321.2 266.4 1314 266.4 
+L 975.6 266.4 
+Q 968.4 266.4 968.4 259.2 
+L 968.4 136.8 
+Q 968.4 129.6 975.6 129.6 
+z
+" clip-path="url(#pc743c2ae5a)" style="fill: #ffffff; stroke: #a7f3d0; stroke-width: 1.08; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_31">
+    <path d="M 975.6 277.2 
+L 1314 277.2 
+Q 1321.2 277.2 1321.2 284.4 
+L 1321.2 396 
+Q 1321.2 403.2 1314 403.2 
+L 975.6 403.2 
+Q 968.4 403.2 968.4 396 
+L 968.4 284.4 
+Q 968.4 277.2 975.6 277.2 
+z
+" clip-path="url(#pc743c2ae5a)" style="fill: #fefce8; stroke: #facc15; stroke-width: 1.08; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_32">
+    <path d="M 975.6 414 
+L 1314 414 
+Q 1321.2 414 1321.2 421.2 
+L 1321.2 532.8 
+Q 1321.2 540 1314 540 
+L 975.6 540 
+Q 968.4 540 968.4 532.8 
+L 968.4 421.2 
+Q 968.4 414 975.6 414 
+z
+" clip-path="url(#pc743c2ae5a)" style="fill: #fff1f2; stroke: #fda4af; stroke-width: 1.08; stroke-linejoin: miter"/>
+   </g>
+   <g id="text_1">
+    <text style="font-weight: 700; font-size: 20.16px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #0f172a" x="684" y="32.4" transform="rotate(-0 684 32.4)">END-TO-END FLOOD FORECASTING &amp; ANTICIPATORY ACTION PIPELINE</text>
+   </g>
+   <g id="text_2">
+    <text style="font-weight: 700; font-size: 11.52px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #475569" x="684" y="56.16" transform="rotate(-0 684 56.16)">Operational Multi-Head GBDT Engine (Task A)  ⟶  Area-Preserving ~232 m Downscaler (Task B)  ⟶  Multi-Asset Exposure Action</text>
+   </g>
+   <g id="text_3">
+    <text style="font-weight: 700; font-size: 12.96px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #ffffff" x="216" y="99.36" transform="rotate(-0 216 99.36)">1. DATA INGESTION &amp; EMBARGO</text>
+   </g>
+   <g id="text_4">
+    <text style="font-weight: 700; font-size: 12.96px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #ffffff" x="676.8" y="99.36" transform="rotate(-0 676.8 99.36)">2. MULTI-HEAD GBDT ENGINE (LIGHTGBM)</text>
+   </g>
+   <g id="text_5">
+    <text style="font-weight: 700; font-size: 12.96px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #ffffff" x="1144.8" y="99.36" transform="rotate(-0 1144.8 99.36)">3. DOWNSCALING &amp; EXPOSURE</text>
+   </g>
+   <g id="text_6">
+    <text style="font-weight: 700; font-size: 9.36px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #991b1b" x="216" y="145.44" transform="rotate(-0 216 145.44)">STRICT FRIDAY 00:00 UTC OPERATIONAL EMBARGO</text>
+   </g>
+   <g id="text_7">
+    <text style="font-weight: 700; font-size: 8.28px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #b91c1c" x="216" y="158.4" transform="rotate(-0 216 158.4)">Zero lookahead leakage; mirrors humanitarian anticipatory cycle</text>
+   </g>
+   <g id="text_8">
+    <text style="font-weight: 700; font-size: 11.52px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #0369a1" x="61.2" y="198" transform="rotate(-0 61.2 198)">Upstream Hydrometeorology (ERA5-Land)</text>
+   </g>
+   <g id="text_9">
+    <text style="font-size: 9.36px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #1e293b" x="61.2" y="217.44" transform="rotate(-0 61.2 217.44)">• Catchment Runoff (Q_upstream): 1, 7, 14, 30-day cumulative lags</text>
+   </g>
+   <g id="text_10">
+    <text style="font-size: 9.36px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #1e293b" x="61.2" y="234.72" transform="rotate(-0 61.2 234.72)">• Net Water Balance: P - ET₀ surplus balance</text>
+   </g>
+   <g id="text_11">
+    <text style="font-size: 9.36px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #1e293b" x="61.2" y="252" transform="rotate(-0 61.2 252)">• Spatial Catchment: ~300 km Congo-Nile divide transit</text>
+   </g>
+   <g id="text_12">
+    <text style="font-weight: 700; font-size: 8.64px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #0284c7" x="61.2" y="269.28" transform="rotate(-0 61.2 269.28)">Key Signal: Runoff accumulation drives downstream floodplain ponding</text>
+   </g>
+   <g id="text_13">
+    <text style="font-weight: 700; font-size: 11.52px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #0369a1" x="61.2" y="320.4" transform="rotate(-0 61.2 320.4)">Remote Water Levels &amp; River Gauges</text>
+   </g>
+   <g id="text_14">
+    <text style="font-size: 9.36px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #1e293b" x="61.2" y="339.84" transform="rotate(-0 61.2 339.84)">• River Lol Gauges: gauge_w1, w7, w14 &amp; 7-day stage rate-of-change</text>
+   </g>
+   <g id="text_15">
+    <text style="font-size: 9.36px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #1e293b" x="61.2" y="357.12" transform="rotate(-0 61.2 357.12)">• Lake Albert &amp; Sudd Altimetry remote water level monitoring</text>
+   </g>
+   <g id="text_16">
+    <text style="font-size: 9.36px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #1e293b" x="61.2" y="374.4" transform="rotate(-0 61.2 374.4)">• Hydraulic routing delay delivers 2 to 4 weeks of actionable lead time</text>
+   </g>
+   <g id="text_17">
+    <text style="font-weight: 700; font-size: 8.64px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #0284c7" x="61.2" y="391.68" transform="rotate(-0 61.2 391.68)">Physical Mechanism: Flat River Lol floodplain slows flood transit</text>
+   </g>
+   <g id="text_18">
+    <text style="font-weight: 700; font-size: 11.52px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #0369a1" x="61.2" y="442.8" transform="rotate(-0 61.2 442.8)">Historical Satellite Baseline (MODIS)</text>
+   </g>
+   <g id="text_19">
+    <text style="font-size: 9.36px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #1e293b" x="61.2" y="462.24" transform="rotate(-0 61.2 462.24)">• 26-Year Historical Inundation Record (2000–2025 Terra/Aqua)</text>
+   </g>
+   <g id="text_20">
+    <text style="font-size: 9.36px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #1e293b" x="61.2" y="479.52" transform="rotate(-0 61.2 479.52)">• Native ~232 m Spatial Resolution (MODIS 8-day composites)</text>
+   </g>
+   <g id="text_21">
+    <text style="font-size: 9.36px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #1e293b" x="61.2" y="496.8" transform="rotate(-0 61.2 496.8)">• Establishes empirical pixel climatology &amp; permanent water masks</text>
+   </g>
+   <g id="text_22">
+    <text style="font-weight: 700; font-size: 8.64px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #0284c7" x="61.2" y="514.08" transform="rotate(-0 61.2 514.08)">High Spatial Fidelity: Resolves localized drainage channels</text>
+   </g>
+   <g id="text_23">
+    <text style="font-weight: 700; font-size: 10.8px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #3730a3" x="658.8" y="147.6" transform="rotate(-0 658.8 147.6)">Feature Ingestion &amp; Autoregression</text>
+   </g>
+   <g id="text_24">
+    <text style="font-size: 8.64px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #1e293b" x="658.8" y="164.16" transform="rotate(-0 658.8 164.16)">Hydrometeorological Lags + Harmonic Seasonality (sin/cos) + Autoregressive Extent (y_lag1, y_lag2)</text>
+   </g>
+   <g id="text_25">
+    <text style="font-weight: 700; font-size: 8.28px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #4338ca" x="658.8" y="176.4" transform="rotate(-0 658.8 176.4)">Weekly county tabular state: 1,810 pooled observation weeks across 5 Aweil counties</text>
+   </g>
+   <g id="text_26">
+    <text style="font-weight: 700; font-size: 10.8px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #86198f" x="493.2" y="216" transform="rotate(-0 493.2 216)">Head 1: Flood Detection Classifier [P(flood &gt; 0)]</text>
+   </g>
+   <g id="text_27">
+    <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #1e293b" x="493.2" y="234" transform="rotate(-0 493.2 234)">• Objective: Binary Cross-Entropy / LogLoss</text>
+   </g>
+   <g id="text_28">
+    <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #1e293b" x="493.2" y="249.84" transform="rotate(-0 493.2 249.84)">• High Reliability: Brier Score = 0.0766 | BSS vs Climatology = +24.6%</text>
+   </g>
+   <g id="text_29">
+    <text style="font-weight: 700; font-size: 8.64px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #a21caf" x="493.2" y="264.96" transform="rotate(-0 493.2 264.96)">Discriminates wet vs. dry weeks prior to extent quantification</text>
+   </g>
+   <g id="text_30">
+    <text style="font-weight: 700; font-size: 10.8px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #14532d" x="493.2" y="306" transform="rotate(-0 493.2 306)">Head 2: Tabular County Extent Quantiles [q10, q50, q90 km²]</text>
+   </g>
+   <g id="text_31">
+    <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #1e293b" x="493.2" y="324" transform="rotate(-0 493.2 324)">• Objective: Asymmetric Pinball Loss (Quantile Regression)</text>
+   </g>
+   <g id="text_32">
+    <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #1e293b" x="493.2" y="339.84" transform="rotate(-0 493.2 339.84)">• Calibrated Uncertainty Bounds: q10 (conservative) to q90 (extreme surge)</text>
+   </g>
+   <g id="text_33">
+    <text style="font-weight: 700; font-size: 8.64px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #15803d" x="493.2" y="355.68" transform="rotate(-0 493.2 355.68)">Central Forecast: Median q50 (km²) feeds area-conserving spatial downscaler</text>
+   </g>
+   <g id="text_34">
+    <text style="font-weight: 700; font-size: 10.8px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #92400e" x="493.2" y="399.6" transform="rotate(-0 493.2 399.6)">Head 3: Flood Persistence / Duration [h1, h2, h3, h4 weeks]</text>
+   </g>
+   <g id="text_35">
+    <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #1e293b" x="493.2" y="417.6" transform="rotate(-0 493.2 417.6)">• Multi-Horizon Survival Heads: 1, 2, 3, and 4 weeks forward survival</text>
+   </g>
+   <g id="text_36">
+    <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #1e293b" x="493.2" y="433.44" transform="rotate(-0 493.2 433.44)">• Beats Persistence: Markov persistence collapses by W3 (-6.8%), GBDT holds +26% BSS</text>
+   </g>
+   <g id="text_37">
+    <text style="font-weight: 700; font-size: 8.64px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #b45309" x="493.2" y="449.28" transform="rotate(-0 493.2 449.28)">Essential for prolonged standing water risk (crop rotting &amp; livestock diseases)</text>
+   </g>
+   <g id="text_38">
+    <text style="font-weight: 700; font-size: 9.72px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #334155" x="658.8" y="491.04" transform="rotate(-0 658.8 491.04)">Optuna Bayesian Hyperparameter Optimization</text>
+   </g>
+   <g id="text_39">
+    <text style="font-size: 8.64px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #475569" x="658.8" y="508.32" transform="rotate(-0 658.8 508.32)">50+ TPE trials across learning rate, num_leaves, and L1/L2 alpha/lambda regularization.</text>
+   </g>
+   <g id="text_40">
+    <text style="font-weight: 700; font-size: 8.64px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #1e293b" x="658.8" y="524.16" transform="rotate(-0 658.8 524.16)">Discovery: Objective loss rapidly saturates at ~0.366 (noise floor); further architectural</text>
+   </g>
+   <g id="text_41">
+    <text style="font-weight: 700; font-size: 8.64px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #1e293b" x="658.8" y="537.12" transform="rotate(-0 658.8 537.12)">complexity cannot overcome irreducible observational variance.</text>
+   </g>
+   <g id="text_42">
+    <text style="font-weight: 700; font-size: 11.52px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #065f46" x="1144.8" y="151.2" transform="rotate(-0 1144.8 151.2)">Area-Preserving Spatial Downscaling (Task B)</text>
+   </g>
+   <g id="text_43">
+    <text style="font-size: 9.36px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #1e293b" x="982.8" y="171.36" transform="rotate(-0 982.8 171.36)">• Step 1: Ingest tabular county median extent q50 (km²)</text>
+   </g>
+   <g id="text_44">
+    <text style="font-size: 9.36px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #1e293b" x="982.8" y="188.64" transform="rotate(-0 982.8 188.64)">• Step 2: Sample conditional pixel climatology P(pixel | month, county)</text>
+   </g>
+   <g id="text_45">
+    <text style="font-size: 9.36px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #1e293b" x="982.8" y="205.92" transform="rotate(-0 982.8 205.92)">• Step 3: Discrete rank-order step merge: k = round(v / step - 0.5)</text>
+   </g>
+   <g id="text_46">
+    <text style="font-weight: 700; font-size: 9.36px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #047857" x="982.8" y="223.2" transform="rotate(-0 982.8 223.2)">• Exact Mathematical Area Conservation: Σ sev_p × A_p ≡ q50</text>
+   </g>
+   <g id="text_47">
+    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #065f46" x="982.8" y="240.48" transform="rotate(-0 982.8 240.48)">  Mathematical Area Distortion: Δ = 0.000 km² (100% Exact Conservation)</text>
+   </g>
+   <g id="text_48">
+    <text style="font-size: 8.64px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #334155" x="982.8" y="256.32" transform="rotate(-0 982.8 256.32)">Output: Calibrated ~232 m resolution inundation severity raster [sev ∈ (0, 1)]</text>
+   </g>
+   <g id="text_49">
+    <text style="font-weight: 700; font-size: 11.52px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #854d0e" x="982.8" y="298.8" transform="rotate(-0 982.8 298.8)">[CROPLAND EXPOSURE] Stationary Food Security</text>
+   </g>
+   <g id="text_50">
+    <text style="font-size: 9.36px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #1e293b" x="982.8" y="318.24" transform="rotate(-0 982.8 318.24)">• ASAP High-Resolution Cropland Mask (Sorghum &amp; Groundnuts)</text>
+   </g>
+   <g id="text_51">
+    <text style="font-size: 9.36px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #1e293b" x="982.8" y="335.52" transform="rotate(-0 982.8 335.52)">• Critical Collision: Ripening &amp; Harvest season (Sep–Nov) vs. flood peak</text>
+   </g>
+   <g id="text_52">
+    <text style="font-size: 9.36px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #1e293b" x="982.8" y="352.8" transform="rotate(-0 982.8 352.8)">• Stationary Vulnerability: Standing water &gt;48h leads to 100% crop spoilage</text>
+   </g>
+   <g id="text_53">
+    <text style="font-weight: 700; font-size: 9.36px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #a16207" x="982.8" y="370.08" transform="rotate(-0 982.8 370.08)">• Anticipatory Trigger (2–3 wk lead): Emergency early harvesting,</text>
+   </g>
+   <g id="text_54">
+    <text style="font-weight: 700; font-size: 9.36px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #a16207" x="982.8" y="384.48" transform="rotate(-0 982.8 384.48)">  drainage embankment clearing, &amp; elevated grain bag storage</text>
+   </g>
+   <g id="text_55">
+    <text style="font-weight: 700; font-size: 11.52px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #9f1239" x="982.8" y="435.6" transform="rotate(-0 982.8 435.6)">[CATTLE EXPOSURE] Mobile Pastoral Livestock</text>
+   </g>
+   <g id="text_56">
+    <text style="font-size: 9.36px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #1e293b" x="982.8" y="455.04" transform="rotate(-0 982.8 455.04)">• GeoNode Livestock Density Layer (Dinka transhumance herds)</text>
+   </g>
+   <g id="text_57">
+    <text style="font-size: 9.36px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #1e293b" x="982.8" y="472.32" transform="rotate(-0 982.8 472.32)">• River basin grazing corridors cut off by backwater flooding</text>
+   </g>
+   <g id="text_58">
+    <text style="font-size: 9.36px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #1e293b" x="982.8" y="489.6" transform="rotate(-0 982.8 489.6)">• Mobile Vulnerability: Herds can relocate if dry routes are identified</text>
+   </g>
+   <g id="text_59">
+    <text style="font-weight: 700; font-size: 9.36px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #be123c" x="982.8" y="506.88" transform="rotate(-0 982.8 506.88)">• Anticipatory Trigger (7–14 d lead): Prophylactic liver-fluke dosing,</text>
+   </g>
+   <g id="text_60">
+    <text style="font-weight: 700; font-size: 9.36px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #be123c" x="982.8" y="521.28" transform="rotate(-0 982.8 521.28)">  coordinated dry transhumance passage, &amp; intercommunal peace pacts</text>
+   </g>
+   <g id="line2d_1">
+    <path d="M 410.4 316.8 
+L 453.6 316.8 
+" clip-path="url(#pc743c2ae5a)" style="fill: none; stroke: #0284c7; stroke-width: 2.88; stroke-linecap: round"/>
+   </g>
+   <g id="text_61">
+    <text style="font-weight: 700; font-size: 8.64px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #0284c7" x="432" y="306" transform="rotate(-0 432 306)">Lagged Feats</text>
+   </g>
+   <g id="line2d_2">
+    <path d="M 900 316.8 
+L 943.2 316.8 
+" clip-path="url(#pc743c2ae5a)" style="fill: none; stroke: #4f46e5; stroke-width: 2.88; stroke-linecap: round"/>
+   </g>
+   <g id="text_62">
+    <text style="font-weight: 700; font-size: 8.64px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #4f46e5" x="921.6" y="306" transform="rotate(-0 921.6 306)">q50 (km²)</text>
+   </g>
+   <g id="patch_33">
+    <path d="M 449.28 314.64 
+L 455.04 316.8 
+L 449.28 318.96 
+z
+" clip-path="url(#pc743c2ae5a)" style="fill: #0284c7"/>
+   </g>
+   <g id="patch_34">
+    <path d="M 938.88 314.64 
+L 944.64 316.8 
+L 938.88 318.96 
+z
+" clip-path="url(#pc743c2ae5a)" style="fill: #4f46e5"/>
+   </g>
   </g>
-
-  <!-- Arrow 2: Center -> Right -->
-  <path d="M1250,440 L1310,440" stroke="#4F46E5" stroke-width="4" marker-end="url(#arrow-indigo)"/>
-  <text x="1280" y="425" text-anchor="middle" font-size="12" font-weight="700" fill="#4F46E5">q50 (km²)</text>
-
-  <!-- ==================== RIGHT CONTAINER: DOWNSCALING & EXPOSURE ==================== -->
-  <g transform="translate(1320, 100)" filter="url(#shadow)">
-    <rect width="540" height="680" rx="16" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="2"/>
-    <rect width="540" height="60" rx="16" fill="#059669"/>
-    <rect y="40" width="540" height="20" fill="#059669"/>
-    <text x="270" y="38" text-anchor="middle" font-size="18" font-weight="700" fill="#FFFFFF">3. DOWNSCALING &amp; EXPOSURE</text>
-
-    <!-- Downscaling Engine Card -->
-    <rect x="25" y="80" width="490" height="190" rx="10" fill="#FFFFFF" stroke="#A7F3D0" stroke-width="1.5"/>
-    <text x="270" y="110" text-anchor="middle" font-size="16" font-weight="700" fill="#065F46">Area-Preserving Spatial Downscaling (Task B)</text>
-    <text x="45" y="138" font-size="13" fill="#1E293B">• Step 1: Ingest tabular county median extent q50 (km²)</text>
-    <text x="45" y="162" font-size="13" fill="#1E293B">• Step 2: Sample conditional pixel climatology P(pixel | month, county)</text>
-    <text x="45" y="186" font-size="13" fill="#1E293B">• Step 3: Discrete rank-order step merge: k = round(v / step - 0.5)</text>
-    <text x="45" y="210" font-size="13" font-weight="700" fill="#047857">• Exact Mathematical Area Conservation: Σ sev_p × A_p ≡ q50</text>
-    <text x="45" y="234" font-size="12.5" font-weight="700" fill="#065F46">  Mathematical Area Distortion: Δ = 0.000 km² (100% Exact Conservation)</text>
-    <text x="45" y="256" font-size="12" fill="#334155">Output: Calibrated ~232 m resolution inundation severity raster [sev ∈ (0, 1)]</text>
-
-    <!-- Split Branch A: Cropland Exposure -->
-    <rect x="25" y="285" width="490" height="175" rx="10" fill="#FEFCE8" stroke="#FACC15" stroke-width="1.5"/>
-    <text x="45" y="315" font-size="16" font-weight="700" fill="#854D0E">[CROPLAND EXPOSURE] Stationary Food Security</text>
-    <text x="45" y="342" font-size="13" fill="#1E293B">• ASAP High-Resolution Cropland Mask (Sorghum &amp; Groundnuts)</text>
-    <text x="45" y="366" font-size="13" fill="#1E293B">• Critical Collision: Ripening &amp; Harvest season (Sep–Nov) vs. flood peak</text>
-    <text x="45" y="390" font-size="13" fill="#1E293B">• Stationary Vulnerability: Standing water &gt;48h leads to 100% crop spoilage</text>
-    <text x="45" y="414" font-size="13" font-weight="700" fill="#A16207">• Anticipatory Trigger (2–3 wk lead): Emergency early harvesting,</text>
-    <text x="45" y="434" font-size="13" font-weight="700" fill="#A16207">  drainage embankment clearing, &amp; elevated grain bag storage</text>
-
-    <!-- Split Branch B: Cattle Exposure -->
-    <rect x="25" y="475" width="490" height="175" rx="10" fill="#FFF1F2" stroke="#FDA4AF" stroke-width="1.5"/>
-    <text x="45" y="505" font-size="16" font-weight="700" fill="#9F1239">[CATTLE EXPOSURE] Mobile Pastoral Livestock</text>
-    <text x="45" y="532" font-size="13" fill="#1E293B">• GeoNode Livestock Density Layer (Dinka transhumance herds)</text>
-    <text x="45" y="556" font-size="13" fill="#1E293B">• River basin grazing corridors cut off by backwater flooding</text>
-    <text x="45" y="580" font-size="13" fill="#1E293B">• Mobile Vulnerability: Herds can relocate if dry routes are identified</text>
-    <text x="45" y="604" font-size="13" font-weight="700" fill="#BE123C">• Anticipatory Trigger (7–14 d lead): Prophylactic liver-fluke dosing,</text>
-    <text x="45" y="624" font-size="13" font-weight="700" fill="#BE123C">  coordinated dry transhumance passage, &amp; intercommunal peace pacts</text>
-  </g>
+ </g>
+ <defs>
+  <clipPath id="pc743c2ae5a">
+   <rect x="0" y="0" width="1368" height="590.4"/>
+  </clipPath>
+ </defs>
 </svg>

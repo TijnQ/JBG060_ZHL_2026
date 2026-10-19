@@ -1,42 +1,139 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<svg width="1200" height="380" viewBox="0 0 1200 380" xmlns="http://www.w3.org/2000/svg">
-  <style>
-    .stat { font-family: 'DejaVu Sans', Helvetica, Arial, sans-serif; font-size: 46px; font-weight: bold; }
-    .label { font-family: 'DejaVu Sans', Helvetica, Arial, sans-serif; font-size: 16px; font-weight: bold; fill: #0F172A; }
-    .desc { font-family: 'DejaVu Sans', Helvetica, Arial, sans-serif; font-size: 12.5px; fill: #334155; line-height: 1.4; }
-    .footer { font-family: 'DejaVu Sans', Helvetica, Arial, sans-serif; font-size: 12px; font-weight: bold; }
-  </style>
-
-  <!-- Card 1 -->
-  <g transform="translate(40, 30)">
-    <rect width="345" height="320" rx="16" fill="#ECFDF5" stroke="#10B981" stroke-width="2.5" />
-    <text x="172" y="100" text-anchor="middle" class="stat" fill="#059669">+34.8%</text>
-    <text x="172" y="145" text-anchor="middle" class="label">BSS vs. CLIMATOLOGY</text>
-    <text x="172" y="185" text-anchor="middle" class="desc">34.8% probabilistic skill over</text>
-    <text x="172" y="205" text-anchor="middle" class="desc">the 26-year calendar baseline</text>
-    <line x1="25" y1="240" x2="320" y2="240" stroke="#10B981" stroke-width="1" opacity="0.4" />
-    <text x="172" y="275" text-anchor="middle" class="footer" fill="#059669">Brier: 0.0650 vs 0.0996 (Clim)</text>
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" width="864pt" height="273.6pt" viewBox="0 0 864 273.6" xmlns="http://www.w3.org/2000/svg" version="1.1">
+ <metadata>
+  <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+   <cc:Work>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:date>2026-10-19T15:06:41.182029</dc:date>
+    <dc:format>image/svg+xml</dc:format>
+    <dc:creator>
+     <cc:Agent>
+      <dc:title>Matplotlib v3.10.9, https://matplotlib.org/</dc:title>
+     </cc:Agent>
+    </dc:creator>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <defs>
+  <style type="text/css">*{stroke-linejoin: round; stroke-linecap: butt}</style>
+ </defs>
+ <g id="figure_1">
+  <g id="patch_1">
+   <path d="M 0 273.6 
+L 864 273.6 
+L 864 0 
+L 0 0 
+L 0 273.6 
+z
+" style="fill: none"/>
   </g>
-
-  <!-- Card 2 -->
-  <g transform="translate(425, 30)">
-    <rect width="345" height="320" rx="16" fill="#EFF6FF" stroke="#3B82F6" stroke-width="2.5" />
-    <text x="172" y="100" text-anchor="middle" class="stat" fill="#2563EB">+21.7%</text>
-    <text x="172" y="145" text-anchor="middle" class="label">BSS vs. PERSISTENCE</text>
-    <text x="172" y="185" text-anchor="middle" class="desc">21.7% skill over latest week's</text>
-    <text x="172" y="205" text-anchor="middle" class="desc">satellite flood observation</text>
-    <line x1="25" y1="240" x2="320" y2="240" stroke="#3B82F6" stroke-width="1" opacity="0.4" />
-    <text x="172" y="275" text-anchor="middle" class="footer" fill="#2563EB">Brier: 0.0650 vs 0.0830 (Persist)</text>
+  <g id="axes_1">
+   <g id="patch_2">
+    <path d="M 40.32 21.6 
+L 265.68 21.6 
+Q 277.2 21.6 277.2 33.12 
+L 277.2 240.48 
+Q 277.2 252 265.68 252 
+L 40.32 252 
+Q 28.8 252 28.8 240.48 
+L 28.8 33.12 
+Q 28.8 21.6 40.32 21.6 
+z
+" clip-path="url(#pee0eaed0af)" style="fill: #ecfdf5; stroke: #10b981; stroke-width: 1.8; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_3">
+    <path d="M 317.52 21.6 
+L 542.88 21.6 
+Q 554.4 21.6 554.4 33.12 
+L 554.4 240.48 
+Q 554.4 252 542.88 252 
+L 317.52 252 
+Q 306 252 306 240.48 
+L 306 33.12 
+Q 306 21.6 317.52 21.6 
+z
+" clip-path="url(#pee0eaed0af)" style="fill: #eff6ff; stroke: #3b82f6; stroke-width: 1.8; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_4">
+    <path d="M 594.72 21.6 
+L 820.08 21.6 
+Q 831.6 21.6 831.6 33.12 
+L 831.6 240.48 
+Q 831.6 252 820.08 252 
+L 594.72 252 
+Q 583.2 252 583.2 240.48 
+L 583.2 33.12 
+Q 583.2 21.6 594.72 21.6 
+z
+" clip-path="url(#pee0eaed0af)" style="fill: #fffbeb; stroke: #f59e0b; stroke-width: 1.8; stroke-linejoin: miter"/>
+   </g>
+   <g id="text_1">
+    <text style="font-weight: 700; font-size: 33.12px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #059669" x="153" y="93.6" transform="rotate(-0 153 93.6)">+34.8%</text>
+   </g>
+   <g id="text_2">
+    <text style="font-weight: 700; font-size: 11.52px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #0f172a" x="153" y="126" transform="rotate(-0 153 126)">BSS vs. CLIMATOLOGY</text>
+   </g>
+   <g id="text_3">
+    <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #334155" x="153" y="154.8" transform="rotate(-0 153 154.8)">34.8% probabilistic skill over</text>
+   </g>
+   <g id="text_4">
+    <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #334155" x="153" y="169.2" transform="rotate(-0 153 169.2)">the 26-year calendar baseline</text>
+   </g>
+   <g id="line2d_1">
+    <path d="M 46.8 194.4 
+L 259.2 194.4 
+" clip-path="url(#pee0eaed0af)" style="fill: none; stroke: #10b981; stroke-opacity: 0.4; stroke-width: 0.72; stroke-linecap: square"/>
+   </g>
+   <g id="text_5">
+    <text style="font-weight: 700; font-size: 8.64px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #059669" x="153" y="219.6" transform="rotate(-0 153 219.6)">Brier: 0.0650 vs 0.0996 (Clim)</text>
+   </g>
+   <g id="text_6">
+    <text style="font-weight: 700; font-size: 33.12px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #2563eb" x="430.2" y="93.6" transform="rotate(-0 430.2 93.6)">+21.7%</text>
+   </g>
+   <g id="text_7">
+    <text style="font-weight: 700; font-size: 11.52px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #0f172a" x="430.2" y="126" transform="rotate(-0 430.2 126)">BSS vs. PERSISTENCE</text>
+   </g>
+   <g id="text_8">
+    <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #334155" x="430.2" y="154.8" transform="rotate(-0 430.2 154.8)">21.7% skill over latest week's</text>
+   </g>
+   <g id="text_9">
+    <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #334155" x="430.2" y="169.2" transform="rotate(-0 430.2 169.2)">satellite flood observation</text>
+   </g>
+   <g id="line2d_2">
+    <path d="M 324 194.4 
+L 536.4 194.4 
+" clip-path="url(#pee0eaed0af)" style="fill: none; stroke: #3b82f6; stroke-opacity: 0.4; stroke-width: 0.72; stroke-linecap: square"/>
+   </g>
+   <g id="text_10">
+    <text style="font-weight: 700; font-size: 8.64px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #2563eb" x="430.2" y="219.6" transform="rotate(-0 430.2 219.6)">Brier: 0.0650 vs 0.0830 (Persist)</text>
+   </g>
+   <g id="text_11">
+    <text style="font-weight: 700; font-size: 33.12px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #d97706" x="707.4" y="93.6" transform="rotate(-0 707.4 93.6)">8.68 km²</text>
+   </g>
+   <g id="text_12">
+    <text style="font-weight: 700; font-size: 11.52px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #0f172a" x="707.4" y="126" transform="rotate(-0 707.4 126)">FLOOD-WEEK MAE</text>
+   </g>
+   <g id="text_13">
+    <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #334155" x="707.4" y="154.8" transform="rotate(-0 707.4 154.8)">44.1% error reduction in flooded</text>
+   </g>
+   <g id="text_14">
+    <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #334155" x="707.4" y="169.2" transform="rotate(-0 707.4 169.2)">area forecast during active floods</text>
+   </g>
+   <g id="line2d_3">
+    <path d="M 601.2 194.4 
+L 813.6 194.4 
+" clip-path="url(#pee0eaed0af)" style="fill: none; stroke: #f59e0b; stroke-opacity: 0.4; stroke-width: 0.72; stroke-linecap: square"/>
+   </g>
+   <g id="text_15">
+    <text style="font-weight: 700; font-size: 8.64px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #d97706" x="707.4" y="219.6" transform="rotate(-0 707.4 219.6)">LightGBM: 8.68 vs Clim: 15.52 km²</text>
+   </g>
   </g>
-
-  <!-- Card 3 -->
-  <g transform="translate(810, 30)">
-    <rect width="345" height="320" rx="16" fill="#FFFBEB" stroke="#F59E0B" stroke-width="2.5" />
-    <text x="172" y="100" text-anchor="middle" class="stat" fill="#D97706">8.68 km²</text>
-    <text x="172" y="145" text-anchor="middle" class="label">FLOOD-WEEK MAE</text>
-    <text x="172" y="185" text-anchor="middle" class="desc">44.1% error reduction in flooded</text>
-    <text x="172" y="205" text-anchor="middle" class="desc">area forecast during active floods</text>
-    <line x1="25" y1="240" x2="320" y2="240" stroke="#F59E0B" stroke-width="1" opacity="0.4" />
-    <text x="172" y="275" text-anchor="middle" class="footer" fill="#D97706">LightGBM: 8.68 vs Clim: 15.52 km²</text>
-  </g>
+ </g>
+ <defs>
+  <clipPath id="pee0eaed0af">
+   <rect x="0" y="0" width="864" height="273.6"/>
+  </clipPath>
+ </defs>
 </svg>
