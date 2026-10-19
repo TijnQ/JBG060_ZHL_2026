@@ -109,11 +109,10 @@ def draw_stat_card(ax, stat: str, label: str, accent: str) -> None:
             fontsize=20, fontweight="bold", color=TEXT, linespacing=1.25, zorder=3)
 
 
-def add_table_panel(ax, header: list[str], rows: list[list[str]], title: str,
+def add_table_panel(ax, header: list[str], rows: list[list[str]],
                     col_widths: list[float], bbox: list[float]) -> None:
     """Supporting context: small concrete-example table decoding the boasted %."""
     ax.axis("off")
-    ax.set_title(title, pad=14, fontsize=20, fontweight="bold", color=TITLE)
     tbl = ax.table(cellText=rows, colLabels=header, cellLoc="center",
                    colWidths=col_widths, bbox=bbox)
     tbl.auto_set_font_size(False)
@@ -144,12 +143,12 @@ def generate_model1_overview(output_dir: Path) -> tuple[Path, Path]:
 
     draw_stat_card(fig.add_subplot(gs[0, 0]), f"+{bss_clim:.1f}%",
                    "BSS vs.\nClimatology", C_GREEN)
-    draw_stat_card(fig.add_subplot(gs[0, 1]), f"+{pinball_cut:.1f}%",
-                   "Pinball\nImprovement\nvs. Climatology", C_BLUE)
+    draw_stat_card(fig.add_subplot(gs[0, 1]), f"\u2212{pinball_cut:.1f}%",
+                   "Pinball Loss vs.\nClimatology", C_BLUE)
     draw_stat_card(fig.add_subplot(gs[0, 2]), f"+{bss_pers:.1f}%",
                    "BSS vs.\nPersistence", C_ORANGE)
-    draw_stat_card(fig.add_subplot(gs[0, 3]), f"+{pinball_cut_pers:.1f}%",
-                   "Pinball\nImprovement\nvs. Persistence", C_GREEN)
+    draw_stat_card(fig.add_subplot(gs[0, 3]), f"\u2212{pinball_cut_pers:.1f}%",
+                   "Pinball Loss vs.\nPersistence", C_GREEN)
 
     ax_tbl = fig.add_subplot(gs[1, :])
     add_table_panel(
@@ -158,9 +157,8 @@ def generate_model1_overview(output_dir: Path) -> tuple[Path, Path]:
                 "Model vs.\nClimatology", "Model vs.\nPersistence"],
         rows=[["Brier", f"{clim['brier_score']:.4f}", f"{persist['brier_score']:.4f}",
                f"{lgbm['brier_score']:.4f}", f"+{bss_clim:.1f}%", f"+{bss_pers:.1f}%"],
-              ["Pinball", f"{clim['mean_pinball_loss']:.3f}", f"{persist['mean_pinball_loss']:.3f}",
-               f"{lgbm['mean_pinball_loss']:.3f}", f"+{pinball_cut:.1f}%", f"+{pinball_cut_pers:.1f}%"]],
-        title="What the Numbers Mean",
+              ["Pinball loss", f"{clim['mean_pinball_loss']:.3f}", f"{persist['mean_pinball_loss']:.3f}",
+               f"{lgbm['mean_pinball_loss']:.3f}", f"\u2212{pinball_cut:.1f}%", f"\u2212{pinball_cut_pers:.1f}%"]],
         col_widths=[0.13, 0.145, 0.145, 0.12, 0.23, 0.23],
         bbox=[0.03, 0.20, 0.94, 0.60],
     )

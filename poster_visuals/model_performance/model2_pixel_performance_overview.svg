@@ -6,7 +6,7 @@
   <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
    <cc:Work>
     <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
-    <dc:date>2026-10-19T17:28:30.281592</dc:date>
+    <dc:date>2026-10-19T17:36:14.502305</dc:date>
     <dc:format>image/svg+xml</dc:format>
     <dc:creator>
      <cc:Agent>
@@ -41,7 +41,7 @@ Q 13.27814 71.553744 13.27814 90.187632
 L 13.27814 344.850768 
 Q 13.27814 363.484656 31.512558 363.484656 
 z
-" clip-path="url(#pad281d652c)" style="fill: #ecfdf5; stroke: #059669; stroke-width: 2.5; stroke-linejoin: miter"/>
+" clip-path="url(#p8c5cbfaca7)" style="fill: #ecfdf5; stroke: #059669; stroke-width: 2.5; stroke-linejoin: miter"/>
    </g>
    <g id="text_1">
     <text style="font-weight: 700; font-size: 52px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #059669" x="159.153488" y="200.81147" transform="rotate(-0 159.153488 200.81147)">0.92</text>
@@ -63,7 +63,7 @@ Q 384.044651 71.553744 384.044651 90.187632
 L 384.044651 344.850768 
 Q 384.044651 363.484656 402.27907 363.484656 
 z
-" clip-path="url(#pa190cb3ada)" style="fill: #e8eef2; stroke: #1e3f52; stroke-width: 2.5; stroke-linejoin: miter"/>
+" clip-path="url(#p5ca4c7b947)" style="fill: #e8eef2; stroke: #1e3f52; stroke-width: 2.5; stroke-linejoin: miter"/>
    </g>
    <g id="text_3">
     <text style="font-weight: 700; font-size: 52px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #1e3f52" x="529.92" y="200.81147" transform="rotate(-0 529.92 200.81147)">+5.8%</text>
@@ -85,7 +85,7 @@ Q 754.811163 71.553744 754.811163 90.187632
 L 754.811163 344.850768 
 Q 754.811163 363.484656 773.045581 363.484656 
 z
-" clip-path="url(#p46e1de3893)" style="fill: #faece5; stroke: #d96b43; stroke-width: 2.5; stroke-linejoin: miter"/>
+" clip-path="url(#p9f0bfe08a1)" style="fill: #faece5; stroke: #d96b43; stroke-width: 2.5; stroke-linejoin: miter"/>
    </g>
    <g id="text_5">
     <text style="font-weight: 700; font-size: 52px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #d96b43" x="900.686512" y="200.81147" transform="rotate(-0 900.686512 200.81147)">5 / 5</text>
@@ -100,13 +100,13 @@ z
   </g>
  </g>
  <defs>
-  <clipPath id="pad281d652c">
+  <clipPath id="p8c5cbfaca7">
    <rect x="7.2" y="62.2368" width="303.906977" height="310.5648"/>
   </clipPath>
-  <clipPath id="pa190cb3ada">
+  <clipPath id="p5ca4c7b947">
    <rect x="377.966512" y="62.2368" width="303.906977" height="310.5648"/>
   </clipPath>
-  <clipPath id="p46e1de3893">
+  <clipPath id="p9f0bfe08a1">
    <rect x="748.733023" y="62.2368" width="303.906977" height="310.5648"/>
   </clipPath>
  </defs>
