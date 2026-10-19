@@ -95,7 +95,8 @@ def load_pixel_metrics() -> dict:
     }
 
 
-def draw_stat_card(ax, stat: str, label: str, accent: str) -> None:
+def draw_stat_card(ax, stat: str, label: str, accent: str,
+                   stat_size: int = 52, label_size: int = 20) -> None:
     """One attention-grabbing stat card: big positive number + label."""
     ax.axis("off")
     ax.set_xlim(0, 1)
@@ -104,9 +105,9 @@ def draw_stat_card(ax, stat: str, label: str, accent: str) -> None:
         (0.02, 0.03), 0.96, 0.94, boxstyle="round,pad=0.0,rounding_size=0.06",
         facecolor=TINT[accent], edgecolor=accent, linewidth=2.5, zorder=2))
     ax.text(0.5, 0.60, stat, ha="center", va="center",
-            fontsize=52, fontweight="bold", color=accent, zorder=3)
+            fontsize=stat_size, fontweight="bold", color=accent, zorder=3)
     ax.text(0.5, 0.26, label, ha="center", va="center",
-            fontsize=20, fontweight="bold", color=TEXT, linespacing=1.25, zorder=3)
+            fontsize=label_size, fontweight="bold", color=TEXT, linespacing=1.25, zorder=3)
 
 
 def add_table_panel(ax, header: list[str], rows: list[list[str]],
@@ -183,20 +184,24 @@ def generate_model2_overview(output_dir: Path) -> tuple[Path, Path]:
     bss_all = px["bss_vs_clim"] * 100
     n_pos = sum(1 for s in px["county_stats"] if s[3] > 0)
 
-    fig = plt.figure(figsize=(16.5, 5.46), dpi=300)
+    fig = plt.figure(figsize=(16.5, 9.0), dpi=300)
     fig.patch.set_alpha(0.0)
-    gs = fig.add_gridspec(1, 3, wspace=0.22)
+    gs = fig.add_gridspec(2, 2, width_ratios=[1.35, 1.0],
+                          height_ratios=[1.0, 1.0], wspace=0.22, hspace=0.28)
 
-    draw_stat_card(fig.add_subplot(gs[0]), f"{auroc:.2f}",
-                   "AUROC \u2014 Flood\nRanking Skill", C_GREEN)
-    draw_stat_card(fig.add_subplot(gs[1]), f"+{bss_all:.1f}%",
+    # Hero card: the headline ranking skill
+    draw_stat_card(fig.add_subplot(gs[:, 0]), f"{auroc:.2f}",
+                   "AUROC \u2014 Flood\nRanking Skill", C_GREEN,
+                   stat_size=100, label_size=24)
+    # Smaller supporting cards
+    draw_stat_card(fig.add_subplot(gs[0, 1]), f"+{bss_all:.1f}%",
                    "BSS vs. Climatology\n(pixel probabilities)", C_BLUE)
-    draw_stat_card(fig.add_subplot(gs[2]), f"{n_pos} / 5",
+    draw_stat_card(fig.add_subplot(gs[1, 1]), f"{n_pos} / 5",
                    "Counties with\nPositive Skill", C_ORANGE)
 
     fig.suptitle("Model 2 \u00b7 Pixel Downscaling Performance (~232 m Grid)",
                  fontsize=22, fontweight="bold", y=0.98, color=TITLE)
-    fig.subplots_adjust(left=0.06, right=0.94, top=0.84, bottom=0.05)
+    fig.subplots_adjust(left=0.06, right=0.94, top=0.86, bottom=0.05)
 
     png_path = output_dir / "model2_pixel_performance_overview.png"
     svg_path = output_dir / "model2_pixel_performance_overview.svg"

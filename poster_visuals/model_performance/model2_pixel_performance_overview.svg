@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8" standalone="no"?>
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
   "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-<svg xmlns:xlink="http://www.w3.org/1999/xlink" width="1059.84pt" height="380.0016pt" viewBox="0 0 1059.84 380.0016" xmlns="http://www.w3.org/2000/svg" version="1.1">
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" width="1059.84pt" height="617.04pt" viewBox="0 0 1059.84 617.04" xmlns="http://www.w3.org/2000/svg" version="1.1">
  <metadata>
   <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
    <cc:Work>
     <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
-    <dc:date>2026-10-19T17:47:42.756312</dc:date>
+    <dc:date>2026-10-19T18:00:43.068421</dc:date>
     <dc:format>image/svg+xml</dc:format>
     <dc:creator>
      <cc:Agent>
@@ -21,78 +21,78 @@
  </defs>
  <g id="figure_1">
   <g id="patch_1">
-   <path d="M 0 380.0016 
-L 1059.84 380.0016 
+   <path d="M 0 617.04 
+L 1059.84 617.04 
 L 1059.84 0 
 L 0 0 
-L 0 380.0016 
+L 0 617.04 
 z
 " style="fill: none; opacity: 0"/>
   </g>
   <g id="axes_1">
    <g id="patch_2">
-    <path d="M 31.512558 363.484656 
-L 286.794419 363.484656 
-Q 305.028837 363.484656 305.028837 344.850768 
-L 305.028837 90.187632 
-Q 305.028837 71.553744 286.794419 71.553744 
-L 31.512558 71.553744 
-Q 13.27814 71.553744 13.27814 90.187632 
-L 13.27814 344.850768 
-Q 13.27814 363.484656 31.512558 363.484656 
+    <path d="M 50.484462 594.0936 
+L 504.971317 594.0936 
+Q 537.434664 594.0936 537.434664 562.6008 
+L 537.434664 132.1992 
+Q 537.434664 100.7064 504.971317 100.7064 
+L 50.484462 100.7064 
+Q 18.021116 100.7064 18.021116 132.1992 
+L 18.021116 562.6008 
+Q 18.021116 594.0936 50.484462 594.0936 
 z
-" clip-path="url(#p59b085f125)" style="fill: #ecfdf5; stroke: #059669; stroke-width: 2.5; stroke-linejoin: miter"/>
+" clip-path="url(#p8486865633)" style="fill: #ecfdf5; stroke: #059669; stroke-width: 2.5; stroke-linejoin: miter"/>
    </g>
    <g id="text_1">
-    <text style="font-weight: 700; font-size: 52px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #059669" x="159.153488" y="200.81147" transform="rotate(-0 159.153488 200.81147)">0.92</text>
+    <text style="font-weight: 700; font-size: 100px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #059669" x="277.72789" y="322.50575" transform="rotate(-0 277.72789 322.50575)">0.92</text>
    </g>
    <g id="text_2">
-    <text style="font-weight: 700; font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; fill: #363432" transform="translate(71.945676 285.917643)">AUROC — Flood</text>
-    <text style="font-weight: 700; font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; fill: #363432" transform="translate(85.614426 309.073111)">Ranking Skill</text>
+    <text style="font-weight: 700; font-size: 24px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; fill: #363432" transform="translate(173.078515 466.006669)">AUROC — Flood</text>
+    <text style="font-weight: 700; font-size: 24px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; fill: #363432" transform="translate(189.481015 493.793231)">Ranking Skill</text>
    </g>
   </g>
   <g id="axes_2">
    <g id="patch_3">
-    <path d="M 402.27907 363.484656 
-L 657.56093 363.484656 
-Q 675.795349 363.484656 675.795349 344.850768 
-L 675.795349 90.187632 
-Q 675.795349 71.553744 657.56093 71.553744 
-L 402.27907 71.553744 
-Q 384.044651 71.553744 384.044651 90.187632 
-L 384.044651 344.850768 
-Q 384.044651 363.484656 402.27907 363.484656 
+    <path d="M 683.920506 308.264211 
+L 1020.577435 308.264211 
+Q 1044.624359 308.264211 1044.624359 294.451579 
+L 1044.624359 105.678947 
+Q 1044.624359 91.866316 1020.577435 91.866316 
+L 683.920506 91.866316 
+Q 659.873583 91.866316 659.873583 105.678947 
+L 659.873583 294.451579 
+Q 659.873583 308.264211 683.920506 308.264211 
 z
-" clip-path="url(#pd4a83913d4)" style="fill: #e8eef2; stroke: #1e3f52; stroke-width: 2.5; stroke-linejoin: miter"/>
+" clip-path="url(#p7c704d78bd)" style="fill: #e8eef2; stroke: #1e3f52; stroke-width: 2.5; stroke-linejoin: miter"/>
    </g>
    <g id="text_3">
-    <text style="font-weight: 700; font-size: 52px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #1e3f52" x="529.92" y="200.81147" transform="rotate(-0 529.92 200.81147)">+5.8%</text>
+    <text style="font-weight: 700; font-size: 52px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #1e3f52" x="852.248971" y="191.392961" transform="rotate(-0 852.248971 191.392961)">+5.8%</text>
    </g>
    <g id="text_4">
-    <text style="font-weight: 700; font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; fill: #363432" transform="translate(418.124687 285.917643)">BSS vs. Climatology</text>
-    <text style="font-weight: 700; font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; fill: #363432" transform="translate(418.80125 309.229361)">(pixel probabilities)</text>
+    <text style="font-weight: 700; font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; fill: #363432" transform="translate(740.453658 249.17868)">BSS vs. Climatology</text>
+    <text style="font-weight: 700; font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; fill: #363432" transform="translate(741.130221 272.490399)">(pixel probabilities)</text>
    </g>
   </g>
   <g id="axes_3">
    <g id="patch_4">
-    <path d="M 773.045581 363.484656 
-L 1028.327442 363.484656 
-Q 1046.56186 363.484656 1046.56186 344.850768 
-L 1046.56186 90.187632 
-Q 1046.56186 71.553744 1028.327442 71.553744 
-L 773.045581 71.553744 
-Q 754.811163 71.553744 754.811163 90.187632 
-L 754.811163 344.850768 
-Q 754.811163 363.484656 773.045581 363.484656 
+    <path d="M 683.920506 602.933684 
+L 1020.577435 602.933684 
+Q 1044.624359 602.933684 1044.624359 589.121053 
+L 1044.624359 400.348421 
+Q 1044.624359 386.535789 1020.577435 386.535789 
+L 683.920506 386.535789 
+Q 659.873583 386.535789 659.873583 400.348421 
+L 659.873583 589.121053 
+Q 659.873583 602.933684 683.920506 602.933684 
 z
-" clip-path="url(#pc5f08859fa)" style="fill: #faece5; stroke: #d96b43; stroke-width: 2.5; stroke-linejoin: miter"/>
+" clip-path="url(#pb2a2dab2c4)" style="fill: #faece5; stroke: #d96b43; stroke-width: 2.5; stroke-linejoin: miter"/>
    </g>
    <g id="text_5">
-    <text style="font-weight: 700; font-size: 52px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #d96b43" x="900.686512" y="200.81147" transform="rotate(-0 900.686512 200.81147)">5 / 5</text>
+    <text style="font-weight: 700; font-size: 52px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #d96b43" x="852.248971" y="486.062434" transform="rotate(-0 852.248971 486.062434)">5 / 5</text>
    </g>
    <g id="text_6">
-    <text style="font-weight: 700; font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; fill: #363432" transform="translate(823.250574 285.995768)">Counties with</text>
-    <text style="font-weight: 700; font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; fill: #363432" transform="translate(827.980262 309.151236)">Positive Skill</text>
+    <text style="font-weight: 700; font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; fill: #363432" transform="translate(774.813033 543.926279)">Counties with</text>
+    <text style="font-weight: 700; font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; fill: #363432" transform="translate(779.542721 567.081748)">Positive Skill</text>
    </g>
   </g>
   <g id="text_7">
@@ -100,14 +100,14 @@ z
   </g>
  </g>
  <defs>
-  <clipPath id="p59b085f125">
-   <rect x="7.2" y="62.2368" width="303.906977" height="310.5648"/>
+  <clipPath id="p8486865633">
+   <rect x="7.2" y="84.96" width="541.055779" height="524.88"/>
   </clipPath>
-  <clipPath id="pd4a83913d4">
-   <rect x="377.966512" y="62.2368" width="303.906977" height="310.5648"/>
+  <clipPath id="p7c704d78bd">
+   <rect x="651.857941" y="84.96" width="400.782059" height="230.210526"/>
   </clipPath>
-  <clipPath id="pc5f08859fa">
-   <rect x="748.733023" y="62.2368" width="303.906977" height="310.5648"/>
+  <clipPath id="pb2a2dab2c4">
+   <rect x="651.857941" y="379.629474" width="400.782059" height="230.210526"/>
   </clipPath>
  </defs>
 </svg>
