@@ -875,7 +875,7 @@ def generate_map2_downscaled_raster(output_dir: Path) -> tuple[Path, Path, Path]
 
     # Custom high-contrast colormap against boundaries
     cm = plt.get_cmap("YlOrRd").copy()
-    cm.set_bad("#F1F5F9")  # light clean slate for dry/outside pixels
+    cm.set_bad((1.0, 1.0, 1.0, 0.0))  # fully transparent outside-grid pixels for clean edges
 
     im = ax.imshow(
         matrix,
@@ -896,7 +896,7 @@ def generate_map2_downscaled_raster(output_dir: Path) -> tuple[Path, Path, Path]
         shift_y = 0.04 if "Centre" in c_name else (-0.03 if "East" in c_name else 0.0)
         ax.text(
             c_pt[0], c_pt[1] + shift_y, c_name.upper(),
-            ha="center", va="center", fontsize=9.5, fontweight="bold", color="#0F172A",
+            ha="center", va="center", fontsize=20, fontweight="bold", color="#0F172A",
             bbox=dict(boxstyle="round,pad=0.3,rounding_size=0.15", facecolor="#FFFFFF", edgecolor="#334155", lw=1.2, alpha=0.96),
             zorder=7
         )
@@ -906,23 +906,14 @@ def generate_map2_downscaled_raster(output_dir: Path) -> tuple[Path, Path, Path]
     ax.set_axis_off()
 
     cbar = fig.colorbar(im, ax=ax, shrink=0.72, pad=0.03)
-    cbar.set_label("Expected Flood Inundation Fraction per Pixel [0.0 to 1.0]", rotation=270, labelpad=18, fontsize=10.5, fontweight="bold")
+    cbar.ax.tick_params(labelsize=20)
+    cbar.set_label("Expected Flood Inundation Fraction per Pixel [0.0 to 1.0]", rotation=270, labelpad=18, fontsize=20, fontweight="bold")
 
-    title = (
-        f"Map 2: Downscaled Forecast Raster — Week of Nov 4, 2024\n"
-        f"Task B Severity Layer (~232m MODIS Grid, Area-Conserving q50 = {q50_target:.1f} km²)"
-    )
-    ax.set_title(title, fontsize=13.0, pad=12)
+    # Stakeholder-friendly poster title (internal task/audit wording removed)
+    ax.set_title("~232m Downscaled Flood Inundation Map (Week of Nov 4, 2024)",
+                 fontsize=20, fontweight="bold", pad=14)
 
-    # Audit annotation badge at bottom
-    audit_note = (
-        "Audit Verified: 100% cell merge (coordinate-snapping bugfix reflected) | "
-        f"Exact area conservation: Σ sev × A = {implied_sev_unclipped:.2f} km² == q50 model forecast"
-    )
-    fig.text(0.5, 0.03, audit_note, ha="center", va="bottom", fontsize=8.5, color="#475569",
-             bbox=dict(boxstyle="round,pad=0.25", facecolor="#F8FAFC", edgecolor="#CBD5E1", lw=0.8))
-
-    fig.savefig(png_single, dpi=300, bbox_inches="tight")
+    fig.savefig(png_single, dpi=300, bbox_inches="tight", transparent=True)
     fig.savefig(pdf_single, bbox_inches="tight")
     plt.close(fig)
 
