@@ -140,7 +140,7 @@ def generate_model1_overview(output_dir: Path) -> tuple[Path, Path]:
 
     fig = plt.figure(figsize=(16.5, 10.25), dpi=300)
     fig.patch.set_alpha(0.0)
-    gs = fig.add_gridspec(2, 4, height_ratios=[1.05, 1.0], hspace=0.42, wspace=0.12)
+    gs = fig.add_gridspec(2, 4, height_ratios=[1.05, 1.0], hspace=0.08, wspace=0.12)
 
     draw_stat_card(fig.add_subplot(gs[0, 0]), f"+{bss_clim:.1f}%",
                    "BSS vs.\nClimatology", C_GREEN)
@@ -161,7 +161,7 @@ def generate_model1_overview(output_dir: Path) -> tuple[Path, Path]:
               ["Pinball loss", f"{clim['mean_pinball_loss']:.3f}", f"{persist['mean_pinball_loss']:.3f}",
                f"{lgbm['mean_pinball_loss']:.3f}", f"+{pinball_cut:.1f}%", f"+{pinball_cut_pers:.1f}%"]],
         col_widths=[0.13, 0.145, 0.145, 0.12, 0.23, 0.23],
-        bbox=[0.03, 0.20, 0.94, 0.60],
+        bbox=[0.03, 0.0, 0.94, 1.0],
     )
 
     fig.suptitle("Model 1 \u00b7 County Flood Forecast (LightGBM)",
@@ -186,22 +186,38 @@ def generate_model2_overview(output_dir: Path) -> tuple[Path, Path]:
 
     fig = plt.figure(figsize=(16.5, 9.0), dpi=300)
     fig.patch.set_alpha(0.0)
-    gs = fig.add_gridspec(2, 2, width_ratios=[1.35, 1.0],
-                          height_ratios=[1.0, 1.0], wspace=0.22, hspace=0.28)
+    ax = fig.add_axes([0.02, 0.02, 0.96, 0.88])
+    ax.axis("off")
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 1)
 
-    # Hero card: the headline ranking skill
-    draw_stat_card(fig.add_subplot(gs[:, 0]), f"{auroc:.2f}",
-                   "AUROC \u2014 Flood\nRanking Skill", C_GREEN,
-                   stat_size=100, label_size=24)
-    # Smaller supporting cards
-    draw_stat_card(fig.add_subplot(gs[0, 1]), f"+{bss_all:.1f}%",
-                   "BSS vs. Climatology\n(pixel probabilities)", C_BLUE)
-    draw_stat_card(fig.add_subplot(gs[1, 1]), f"{n_pos} / 5",
-                   "Counties with\nPositive Skill", C_ORANGE)
+    # Card group: hero (left, full height) + two stacked smaller cards.
+    # Uniform gaps, outer edges aligned -> the trio forms one clean rectangle.
+    gap_x, gap_y = 0.015, 0.0303       # both gaps render ~0.24 in on this canvas
+    hero_w = 0.50                      # makes the hero card square on this canvas
+    small_w = 1.0 - (hero_w + gap_x)   # right edge flush with the hero's span
+    small_h = (1.0 - gap_y) / 2
+    rects = [
+        (0.0, 0.0, hero_w, 1.0),
+        (hero_w + gap_x, small_h + gap_y, small_w, small_h),
+        (hero_w + gap_x, 0.0, small_w, small_h),
+    ]
+    cards = [
+        (f"{auroc:.2f}", "AUROC \u2014 Flood\nRanking Skill", C_GREEN, 110, 24),
+        (f"+{bss_all:.1f}%", "BSS vs. Climatology\n(pixel probabilities)", C_BLUE, 48, 20),
+        (f"{n_pos} / 5", "Counties with\nPositive Skill", C_ORANGE, 48, 20),
+    ]
+    for (x, y, w, h), (stat, label, accent, ss, ls) in zip(rects, cards):
+        ax.add_patch(mpatches.FancyBboxPatch(
+            (x, y), w, h, boxstyle="round,pad=0.0,rounding_size=0.015",
+            facecolor=TINT[accent], edgecolor=accent, linewidth=2.5, zorder=2))
+        ax.text(x + w / 2, y + h * 0.60, stat, ha="center", va="center",
+                fontsize=ss, fontweight="bold", color=accent, zorder=3)
+        ax.text(x + w / 2, y + h * 0.26, label, ha="center", va="center",
+                fontsize=ls, fontweight="bold", color=TEXT, linespacing=1.25, zorder=3)
 
     fig.suptitle("Model 2 \u00b7 Pixel Downscaling Performance (~232 m Grid)",
                  fontsize=22, fontweight="bold", y=0.98, color=TITLE)
-    fig.subplots_adjust(left=0.06, right=0.94, top=0.86, bottom=0.05)
 
     png_path = output_dir / "model2_pixel_performance_overview.png"
     svg_path = output_dir / "model2_pixel_performance_overview.svg"

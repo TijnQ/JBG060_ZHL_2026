@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8" standalone="no"?>
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
   "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-<svg xmlns:xlink="http://www.w3.org/1999/xlink" width="1059.84pt" height="617.04pt" viewBox="0 0 1059.84 617.04" xmlns="http://www.w3.org/2000/svg" version="1.1">
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" width="1154.88pt" height="636.48pt" viewBox="0 0 1154.88 636.48" xmlns="http://www.w3.org/2000/svg" version="1.1">
  <metadata>
   <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
    <cc:Work>
     <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
-    <dc:date>2026-10-19T18:00:43.068421</dc:date>
+    <dc:date>2026-10-19T18:05:11.585397</dc:date>
     <dc:format>image/svg+xml</dc:format>
     <dc:creator>
      <cc:Agent>
@@ -21,93 +21,83 @@
  </defs>
  <g id="figure_1">
   <g id="patch_1">
-   <path d="M 0 617.04 
-L 1059.84 617.04 
-L 1059.84 0 
+   <path d="M 0 636.48 
+L 1154.88 636.48 
+L 1154.88 0 
 L 0 0 
-L 0 617.04 
+L 0 636.48 
 z
 " style="fill: none; opacity: 0"/>
   </g>
   <g id="axes_1">
    <g id="patch_2">
-    <path d="M 50.484462 594.0936 
-L 504.971317 594.0936 
-Q 537.434664 594.0936 537.434664 562.6008 
-L 537.434664 132.1992 
-Q 537.434664 100.7064 504.971317 100.7064 
-L 50.484462 100.7064 
-Q 18.021116 100.7064 18.021116 132.1992 
-L 18.021116 562.6008 
-Q 18.021116 594.0936 50.484462 594.0936 
+    <path d="M 24.3072 629.28 
+L 560.3328 629.28 
+Q 577.44 629.28 577.44 620.7264 
+L 577.44 67.5936 
+Q 577.44 59.04 560.3328 59.04 
+L 24.3072 59.04 
+Q 7.2 59.04 7.2 67.5936 
+L 7.2 620.7264 
+Q 7.2 629.28 24.3072 629.28 
 z
-" clip-path="url(#p8486865633)" style="fill: #ecfdf5; stroke: #059669; stroke-width: 2.5; stroke-linejoin: miter"/>
+" clip-path="url(#pc12fbaa024)" style="fill: #ecfdf5; stroke: #059669; stroke-width: 2.5; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_3">
+    <path d="M 611.6544 335.520864 
+L 1130.5728 335.520864 
+Q 1147.68 335.520864 1147.68 326.967264 
+L 1147.68 67.5936 
+Q 1147.68 59.04 1130.5728 59.04 
+L 611.6544 59.04 
+Q 594.5472 59.04 594.5472 67.5936 
+L 594.5472 326.967264 
+Q 594.5472 335.520864 611.6544 335.520864 
+z
+" clip-path="url(#pc12fbaa024)" style="fill: #e8eef2; stroke: #1e3f52; stroke-width: 2.5; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_4">
+    <path d="M 611.6544 629.28 
+L 1130.5728 629.28 
+Q 1147.68 629.28 1147.68 620.7264 
+L 1147.68 361.352736 
+Q 1147.68 352.799136 1130.5728 352.799136 
+L 611.6544 352.799136 
+Q 594.5472 352.799136 594.5472 361.352736 
+L 594.5472 620.7264 
+Q 594.5472 629.28 611.6544 629.28 
+z
+" clip-path="url(#pc12fbaa024)" style="fill: #faece5; stroke: #d96b43; stroke-width: 2.5; stroke-linejoin: miter"/>
    </g>
    <g id="text_1">
-    <text style="font-weight: 700; font-size: 100px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #059669" x="277.72789" y="322.50575" transform="rotate(-0 277.72789 322.50575)">0.92</text>
+    <text style="font-weight: 700; font-size: 110px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #059669" x="292.32" y="317.489125" transform="rotate(-0 292.32 317.489125)">0.92</text>
    </g>
    <g id="text_2">
-    <text style="font-weight: 700; font-size: 24px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; fill: #363432" transform="translate(173.078515 466.006669)">AUROC — Flood</text>
-    <text style="font-weight: 700; font-size: 24px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; fill: #363432" transform="translate(189.481015 493.793231)">Ranking Skill</text>
-   </g>
-  </g>
-  <g id="axes_2">
-   <g id="patch_3">
-    <path d="M 683.920506 308.264211 
-L 1020.577435 308.264211 
-Q 1044.624359 308.264211 1044.624359 294.451579 
-L 1044.624359 105.678947 
-Q 1044.624359 91.866316 1020.577435 91.866316 
-L 683.920506 91.866316 
-Q 659.873583 91.866316 659.873583 105.678947 
-L 659.873583 294.451579 
-Q 659.873583 308.264211 683.920506 308.264211 
-z
-" clip-path="url(#p7c704d78bd)" style="fill: #e8eef2; stroke: #1e3f52; stroke-width: 2.5; stroke-linejoin: miter"/>
+    <text style="font-weight: 700; font-size: 24px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; fill: #363432" transform="translate(187.670625 473.653069)">AUROC — Flood</text>
+    <text style="font-weight: 700; font-size: 24px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; fill: #363432" transform="translate(204.073125 501.439631)">Ranking Skill</text>
    </g>
    <g id="text_3">
-    <text style="font-weight: 700; font-size: 52px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #1e3f52" x="852.248971" y="191.392961" transform="rotate(-0 852.248971 191.392961)">+5.8%</text>
+    <text style="font-weight: 700; font-size: 48px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #1e3f52" x="871.1136" y="182.877346" transform="rotate(-0 871.1136 182.877346)">+5.8%</text>
    </g>
    <g id="text_4">
-    <text style="font-weight: 700; font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; fill: #363432" transform="translate(740.453658 249.17868)">BSS vs. Climatology</text>
-    <text style="font-weight: 700; font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; fill: #363432" transform="translate(741.130221 272.490399)">(pixel probabilities)</text>
-   </g>
-  </g>
-  <g id="axes_3">
-   <g id="patch_4">
-    <path d="M 683.920506 602.933684 
-L 1020.577435 602.933684 
-Q 1044.624359 602.933684 1044.624359 589.121053 
-L 1044.624359 400.348421 
-Q 1044.624359 386.535789 1020.577435 386.535789 
-L 683.920506 386.535789 
-Q 659.873583 386.535789 659.873583 400.348421 
-L 659.873583 589.121053 
-Q 659.873583 602.933684 683.920506 602.933684 
-z
-" clip-path="url(#pb2a2dab2c4)" style="fill: #faece5; stroke: #d96b43; stroke-width: 2.5; stroke-linejoin: miter"/>
+    <text style="font-weight: 700; font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; fill: #363432" transform="translate(759.318288 257.49873)">BSS vs. Climatology</text>
+    <text style="font-weight: 700; font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; fill: #363432" transform="translate(759.99485 280.810449)">(pixel probabilities)</text>
    </g>
    <g id="text_5">
-    <text style="font-weight: 700; font-size: 52px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #d96b43" x="852.248971" y="486.062434" transform="rotate(-0 852.248971 486.062434)">5 / 5</text>
+    <text style="font-weight: 700; font-size: 48px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #d96b43" x="871.1136" y="476.636482" transform="rotate(-0 871.1136 476.636482)">5 / 5</text>
    </g>
    <g id="text_6">
-    <text style="font-weight: 700; font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; fill: #363432" transform="translate(774.813033 543.926279)">Counties with</text>
-    <text style="font-weight: 700; font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; fill: #363432" transform="translate(779.542721 567.081748)">Positive Skill</text>
+    <text style="font-weight: 700; font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; fill: #363432" transform="translate(793.677663 551.335991)">Counties with</text>
+    <text style="font-weight: 700; font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; fill: #363432" transform="translate(798.40735 574.49146)">Positive Skill</text>
    </g>
   </g>
   <g id="text_7">
-   <text style="font-weight: 700; font-size: 22px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #1e3f52" x="529.92" y="23.916562" transform="rotate(-0 529.92 23.916562)">Model 2 · Pixel Downscaling Performance (~232 m Grid)</text>
+   <text style="font-weight: 700; font-size: 22px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #1e3f52" x="577.44" y="23.916562" transform="rotate(-0 577.44 23.916562)">Model 2 · Pixel Downscaling Performance (~232 m Grid)</text>
   </g>
  </g>
  <defs>
-  <clipPath id="p8486865633">
-   <rect x="7.2" y="84.96" width="541.055779" height="524.88"/>
-  </clipPath>
-  <clipPath id="p7c704d78bd">
-   <rect x="651.857941" y="84.96" width="400.782059" height="230.210526"/>
-  </clipPath>
-  <clipPath id="pb2a2dab2c4">
-   <rect x="651.857941" y="379.629474" width="400.782059" height="230.210526"/>
+  <clipPath id="pc12fbaa024">
+   <rect x="7.2" y="59.04" width="1140.48" height="570.24"/>
   </clipPath>
  </defs>
 </svg>
