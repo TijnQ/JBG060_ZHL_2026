@@ -42,10 +42,10 @@ POSTER_DIR = REPO_ROOT / "poster_visuals" / "model_performance"
 
 TEXT = "#363432"     # dark anthracite: body text
 TITLE = "#1E3F52"    # deep slate blue: titles
-C_MODEL = "#1E3F52"  # model accent
-C_PERSIST = "#7A8B99"  # persistence accent
-C_CORAL = "#D96B43"  # coral accent (headline deltas)
-TINT = {"#1E3F52": "#E8EEF2", "#D96B43": "#FAECE5", "#7A8B99": "#EDF0F2"}
+C_GREEN = "#059669"  # green card accent
+C_BLUE = "#1E3F52"   # deep slate blue card accent
+C_ORANGE = "#D96B43" # coral/amber card accent
+TINT = {"#059669": "#ECFDF5", "#1E3F52": "#E8EEF2", "#D96B43": "#FAECE5"}
 
 
 def set_style() -> None:
@@ -113,7 +113,7 @@ def draw_stat_card(ax, stat: str, label: str, sub: str, accent: str) -> None:
 
 
 def add_table_panel(ax, header: list[str], rows: list[list[str]], title: str,
-                    caption: str, col_widths: list[float], bbox: list[float]) -> None:
+                    col_widths: list[float], bbox: list[float]) -> None:
     """Supporting context: small concrete-example table decoding the boasted %."""
     ax.axis("off")
     ax.set_title(title, pad=14, fontsize=20, fontweight="bold", color=TITLE)
@@ -129,8 +129,7 @@ def add_table_panel(ax, header: list[str], rows: list[list[str]], title: str,
         else:
             cell.set_facecolor("#FFFFFF" if r == 1 else "#F8FAFC")
             cell.set_text_props(color=TEXT, fontweight="bold" if c == len(header) - 1 else "normal")
-    ax.text(0.5, 0.14, caption, ha="center", va="top", fontsize=20,
-            color=TEXT, linespacing=1.3, transform=ax.transAxes)
+
 
 
 def generate_model1_overview(output_dir: Path) -> tuple[Path, Path]:
@@ -147,13 +146,13 @@ def generate_model1_overview(output_dir: Path) -> tuple[Path, Path]:
 
     draw_stat_card(fig.add_subplot(gs[0, 0]), f"+{bss_clim:.1f}%",
                    "BSS vs. Calendar\nClimatology",
-                   f"Brier error\n{clim['brier_score']:.4f} \u2192 {lgbm['brier_score']:.4f}", C_MODEL)
+                   f"Brier error\n{clim['brier_score']:.4f} \u2192 {lgbm['brier_score']:.4f}", C_GREEN)
     draw_stat_card(fig.add_subplot(gs[0, 1]), f"\u2212{pinball_cut:.1f}%",
                    "Pinball Loss vs.\nCalendar",
-                   f"Quantile error\n{clim['mean_pinball_loss']:.3f} \u2192 {lgbm['mean_pinball_loss']:.3f}", C_CORAL)
+                   f"Quantile error\n{clim['mean_pinball_loss']:.3f} \u2192 {lgbm['mean_pinball_loss']:.3f}", C_BLUE)
     draw_stat_card(fig.add_subplot(gs[0, 2]), f"+{bss_pers:.1f}%",
                    "BSS vs. Persistence\nBaseline",
-                   f"Brier error\n{persist['brier_score']:.4f} \u2192 {lgbm['brier_score']:.4f}", C_PERSIST)
+                   f"Brier error\n{persist['brier_score']:.4f} \u2192 {lgbm['brier_score']:.4f}", C_ORANGE)
 
     ax_tbl = fig.add_subplot(gs[1, :])
     add_table_panel(
@@ -163,12 +162,9 @@ def generate_model1_overview(output_dir: Path) -> tuple[Path, Path]:
                f"{lgbm['brier_score']:.4f}", f"\u2212{bss_clim:.1f}%"],
               ["Pinball loss (area)", f"{clim['mean_pinball_loss']:.3f}", f"{persist['mean_pinball_loss']:.3f}",
                f"{lgbm['mean_pinball_loss']:.3f}", f"\u2212{pinball_cut:.1f}%"]],
-        title="What the Numbers Mean (Concrete Example)",
-        caption="Error scores: lower = better. Change = model vs. the calendar climatology.\n"
-                "Prob. error = weekly flood-probability error (0 = perfect forecast).\n"
-                f"Pinball = quantile area-error loss; also \u2212{(1 - lgbm['mean_pinball_loss'] / persist['mean_pinball_loss']) * 100:.1f}% vs. persistence.",
+        title="What the Numbers Mean",
         col_widths=[0.30, 0.17, 0.19, 0.15, 0.19],
-        bbox=[0.10, 0.34, 0.80, 0.48],
+        bbox=[0.10, 0.22, 0.80, 0.58],
     )
 
     fig.suptitle("Model 1 \u00b7 County Flood Forecast (LightGBM)",
@@ -199,25 +195,22 @@ def generate_model2_overview(output_dir: Path) -> tuple[Path, Path]:
 
     draw_stat_card(fig.add_subplot(gs[0, 0]), f"{auroc:.2f}",
                    "AUROC \u2014 Flood\nRanking Skill",
-                   "vs. 0.50 for random\nguessing", C_MODEL)
+                   "vs. 0.50 for random\nguessing", C_GREEN)
     draw_stat_card(fig.add_subplot(gs[0, 1]), f"+{bss_all:.1f}%",
                    "BSS vs. Calendar\n(pixel probabilities)",
-                   "Out-of-fold test:\n211.5M pixel-weeks", C_CORAL)
+                   "Out-of-fold test:\n211.5M pixel-weeks", C_BLUE)
     draw_stat_card(fig.add_subplot(gs[0, 2]), f"{n_pos} / 5",
                    "Counties with\nPositive Skill",
-                   f"+{bss_lo:.1f}% to +{bss_hi:.1f}% BSS", C_PERSIST)
+                   f"+{bss_lo:.1f}% to +{bss_hi:.1f}% BSS", C_ORANGE)
 
     ax_tbl = fig.add_subplot(gs[1, :])
     add_table_panel(
         ax_tbl,
         header=["County", "BSS vs. Calendar"],
         rows=[[c, f"+{bss * 100:.1f}%"] for c, bss in county_bss],
-        title="Skill in Every County \u2014 What It Means",
-        caption="BSS > 0 = the downscaled ~232 m map beats the 26-year calendar average\n"
-                "in that county, week after week. Positive in all five counties means the\n"
-                "skill is real everywhere \u2014 not driven by a single flood hotspot.",
+        title="Skill in Every County (BSS)",
         col_widths=[0.55, 0.45],
-        bbox=[0.36, 0.30, 0.28, 0.56],
+        bbox=[0.36, 0.18, 0.28, 0.64],
     )
 
     fig.suptitle("Model 2 \u00b7 Pixel Downscaling Performance (~232 m Grid)",
