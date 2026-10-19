@@ -136,33 +136,38 @@ def generate_model1_overview(output_dir: Path) -> tuple[Path, Path]:
     bss_clim = lgbm["bss_vs_climatology"] * 100
     bss_pers = lgbm["bss_vs_persistence"] * 100
     pinball_cut = (1 - lgbm["mean_pinball_loss"] / clim["mean_pinball_loss"]) * 100
+    pinball_cut_pers = (1 - lgbm["mean_pinball_loss"] / persist["mean_pinball_loss"]) * 100
 
     fig = plt.figure(figsize=(16.5, 9.5), dpi=300)
     fig.patch.set_alpha(0.0)
-    gs = fig.add_gridspec(2, 3, height_ratios=[1.05, 1.0], hspace=0.42, wspace=0.22)
+    gs = fig.add_gridspec(2, 4, height_ratios=[1.05, 1.0], hspace=0.42, wspace=0.12)
 
     draw_stat_card(fig.add_subplot(gs[0, 0]), f"+{bss_clim:.1f}%",
-                   "BSS vs. Calendar\nClimatology", C_GREEN)
+                   "BSS vs.\nClimatology", C_GREEN)
     draw_stat_card(fig.add_subplot(gs[0, 1]), f"+{pinball_cut:.1f}%",
-                   "Pinball Improvement\nvs. Calendar", C_BLUE)
+                   "Pinball\nImprovement\nvs. Climatology", C_BLUE)
     draw_stat_card(fig.add_subplot(gs[0, 2]), f"+{bss_pers:.1f}%",
-                   "BSS vs. Persistence\nBaseline", C_ORANGE)
+                   "BSS vs.\nPersistence", C_ORANGE)
+    draw_stat_card(fig.add_subplot(gs[0, 3]), f"+{pinball_cut_pers:.1f}%",
+                   "Pinball\nImprovement\nvs. Persistence", C_GREEN)
 
     ax_tbl = fig.add_subplot(gs[1, :])
     add_table_panel(
         ax_tbl,
-        header=["Measure", "Calendar", "Persistence", "Model", "Improvement"],
-        rows=[["Prob. error (Brier)", f"{clim['brier_score']:.4f}", f"{persist['brier_score']:.4f}",
-               f"{lgbm['brier_score']:.4f}", f"+{bss_clim:.1f}%"],
-              ["Pinball loss (area)", f"{clim['mean_pinball_loss']:.3f}", f"{persist['mean_pinball_loss']:.3f}",
-               f"{lgbm['mean_pinball_loss']:.3f}", f"+{pinball_cut:.1f}%"]],
+        header=["Measure", "Climatology", "Persistence", "Model",
+                "Improvement\nvs. Climatology", "Improvement\nvs. Persistence"],
+        rows=[["Brier", f"{clim['brier_score']:.4f}", f"{persist['brier_score']:.4f}",
+               f"{lgbm['brier_score']:.4f}", f"+{bss_clim:.1f}%", f"+{bss_pers:.1f}%"],
+              ["Pinball", f"{clim['mean_pinball_loss']:.3f}", f"{persist['mean_pinball_loss']:.3f}",
+               f"{lgbm['mean_pinball_loss']:.3f}", f"+{pinball_cut:.1f}%", f"+{pinball_cut_pers:.1f}%"]],
         title="What the Numbers Mean",
-        col_widths=[0.30, 0.17, 0.19, 0.15, 0.19],
-        bbox=[0.10, 0.22, 0.80, 0.58],
+        col_widths=[0.13, 0.145, 0.145, 0.12, 0.23, 0.23],
+        bbox=[0.03, 0.20, 0.94, 0.60],
     )
 
     fig.suptitle("Model 1 \u00b7 County Flood Forecast (LightGBM)",
                  fontsize=22, fontweight="bold", y=0.98, color=TITLE)
+    fig.subplots_adjust(left=0.04, right=0.96, top=0.88, bottom=0.06)
 
     png_path = output_dir / "model1_county_forecast_performance.png"
     svg_path = output_dir / "model1_county_forecast_performance.svg"
@@ -187,12 +192,13 @@ def generate_model2_overview(output_dir: Path) -> tuple[Path, Path]:
     draw_stat_card(fig.add_subplot(gs[0]), f"{auroc:.2f}",
                    "AUROC \u2014 Flood\nRanking Skill", C_GREEN)
     draw_stat_card(fig.add_subplot(gs[1]), f"+{bss_all:.1f}%",
-                   "BSS vs. Calendar\n(pixel probabilities)", C_BLUE)
+                   "BSS vs. Climatology\n(pixel probabilities)", C_BLUE)
     draw_stat_card(fig.add_subplot(gs[2]), f"{n_pos} / 5",
                    "Counties with\nPositive Skill", C_ORANGE)
 
     fig.suptitle("Model 2 \u00b7 Pixel Downscaling Performance (~232 m Grid)",
                  fontsize=22, fontweight="bold", y=0.98, color=TITLE)
+    fig.subplots_adjust(left=0.06, right=0.94, top=0.86, bottom=0.06)
 
     png_path = output_dir / "model2_pixel_performance_overview.png"
     svg_path = output_dir / "model2_pixel_performance_overview.svg"
