@@ -502,17 +502,32 @@ def generate_hero_pipeline_svg(svg_path: Path) -> None:
 # 2. Upstream Feature Lag & Lead-Time Schematic (Sub-Objective 1)
 # =============================================================================
 def generate_visual2_upstream_lag(output_dir: Path) -> tuple[Path, Path]:
-    """Generate multi-lead feature attribution plot alongside hydrological catchment schematic."""
+    """Generate A0-poster-proof upstream-lag attribution + catchment cross-section.
+
+    Poster specification (ZOA & Zero Hunger Lab presentation):
+      * every text element >= 20 pt (readable from 1 m distance on A0)
+      * internal jargon removed ("PHYSICAL MEMORY HIGHLIGHT (Sub-Objective 1)");
+        the blue highlight card now carries the stakeholder message about the
+        6-8 week upstream lag paradox
+      * main text/axes colour #363432 (dark anthracite), titles #1E3F52
+      * transparent background; exports visual3a_upstream_lag_poster.{png,svg}
+        plus the canonical Visual2 PNG/PDF twins with the same design
+    """
     set_poster_style()
     output_dir.mkdir(parents=True, exist_ok=True)
+    poster_png = output_dir / "visual3a_upstream_lag_poster.png"
+    poster_svg = output_dir / "visual3a_upstream_lag_poster.svg"
     png_path = output_dir / "Visual2_Upstream_Lag_and_Catchment_Schematic.png"
     pdf_path = output_dir / "Visual2_Upstream_Lag_and_Catchment_Schematic.pdf"
 
-    fig = plt.figure(figsize=(16.5, 8.2), dpi=300)
-    gs = fig.add_gridspec(1, 2, width_ratios=[1.15, 1.0], wspace=0.18)
+    fig = plt.figure(figsize=(16.5, 13.0), dpi=300)
+    gs = fig.add_gridspec(1, 2, width_ratios=[1.0, 1.25], wspace=0.18)
 
     ax_left = fig.add_subplot(gs[0])
     ax_right = fig.add_subplot(gs[1])
+
+    TEXT = "#363432"   # dark anthracite: body text and axes
+    TITLE = "#1E3F52"  # deep slate blue: titles
 
     # -------------------------------------------------------------------------
     # Panel A: Time-Lag Feature Attribution across Lead Windows (Left)
@@ -521,62 +536,64 @@ def generate_visual2_upstream_lag(output_dir: Path) -> tuple[Path, Path]:
     y_pos = np.arange(len(lead_windows))
     bar_height = 0.18
 
-    # Feature groups importance shares (%) from model gains:
     ro_importance = [1.16, 1.48, 2.34, 3.11]
     gauge_importance = [1.28, 1.25, 1.10, 0.88]
     net_importance = [0.97, 0.82, 0.65, 0.52]
     tp_importance = [0.74, 0.65, 0.58, 0.67]
 
-    # Plot grouped horizontal bars
     rects1 = ax_left.barh(y_pos + 1.5 * bar_height, ro_importance, bar_height,
                           label="Upstream Catchment Runoff (Q_upstream)", color="#0284C7", edgecolor="#0369A1")
     rects2 = ax_left.barh(y_pos + 0.5 * bar_height, gauge_importance, bar_height,
                           label="River Gauges & Remote Water Levels", color="#6366F1", edgecolor="#4338CA")
     rects3 = ax_left.barh(y_pos - 0.5 * bar_height, net_importance, bar_height,
-                          label="Net Hydrological Balance (P - ET₀)", color="#10B981", edgecolor="#059669")
+                          label="Net Hydrological Balance (P - ET\u2080)", color="#10B981", edgecolor="#059669")
     rects4 = ax_left.barh(y_pos - 1.5 * bar_height, tp_importance, bar_height,
                           label="Upstream Precipitation (P_upstream)", color="#F59E0B", edgecolor="#D97706")
 
-    # Add value labels
+    # Value tags: featured runoff bars tagged outside, gauge bars tagged inside
+    # (at 20 pt two side-by-side tags in one group would collide vertically)
     for rect in rects1:
         w = rect.get_width()
         ax_left.text(w + 0.08, rect.get_y() + rect.get_height() / 2, f"{w:.2f}%",
-                     va="center", ha="left", fontsize=8.2, fontweight="bold", color="#0369A1")
+                     va="center", ha="left", fontsize=20, fontweight="bold", color=TEXT)
     for rect in rects2:
         w = rect.get_width()
-        ax_left.text(w + 0.08, rect.get_y() + rect.get_height() / 2, f"{w:.2f}%",
-                     va="center", ha="left", fontsize=8.2, fontweight="bold", color="#4338CA")
+        ax_left.text(w - 0.06, rect.get_y() + rect.get_height() / 2, f"{w:.2f}%",
+                     va="center", ha="right", fontsize=20, fontweight="bold", color="#FFFFFF")
 
-    # Set ample headroom so callout card never touches Week 4 bars
     ax_left.set_yticks(y_pos)
-    ax_left.set_yticklabels(lead_windows, fontweight="bold", fontsize=10.5)
-    ax_left.set_xlabel("Predictive Feature Gain Share (%)", fontsize=11.0, labelpad=8)
-    ax_left.set_xlim(0, 3.8)
-    # Set ample headroom so callout card never touches Week 4 bars
-    ax_left.set_yticks(y_pos)
-    ax_left.set_yticklabels(lead_windows, fontweight="bold", fontsize=10.5)
-    ax_left.set_xlabel("Predictive Feature Gain Share (%)", fontsize=11.0, labelpad=8)
-    ax_left.set_xlim(0, 3.8)
-    ax_left.set_ylim(-0.6, 4.6)
+    ax_left.set_yticklabels(lead_windows, fontweight="bold", fontsize=20, color=TEXT)
+    ax_left.set_xlabel("Predictive Feature Gain Share (%)", fontsize=20, labelpad=12, color=TEXT)
+    ax_left.tick_params(axis="x", labelsize=20, colors=TEXT)
+    ax_left.tick_params(axis="y", colors=TEXT)
+    ax_left.set_xlim(0, 3.9)
+    ax_left.set_ylim(-0.55, 6.5)
     ax_left.xaxis.set_major_locator(MultipleLocator(0.5))
     ax_left.grid(axis="x", linestyle=":", alpha=0.5, color="#CBD5E1")
     ax_left.spines["top"].set_visible(False)
     ax_left.spines["right"].set_visible(False)
+    for spine in ("left", "bottom"):
+        ax_left.spines[spine].set_color(TEXT)
 
-    ax_left.legend(loc="lower right", frameon=True, facecolor="#FFFFFF", edgecolor="#CBD5E1", fontsize=9.0)
-    ax_left.set_title("A. Predictive Power of Upstream Signals Across Lead Windows", pad=12, fontsize=12.5)
+    ax_left.set_title("A. Predictive Power of Upstream\nSignals Across Lead Windows",
+                      pad=16, fontsize=20, fontweight="bold", color=TITLE)
 
-    # Key takeaway callout card cleanly placed above the bars in dedicated headroom
+    # Stakeholder takeaway card (internal sub-objective label removed)
     takeaway_box = mpatches.FancyBboxPatch(
-        (0.15, 3.68), 3.50, 0.76, boxstyle="round,pad=0.15,rounding_size=0.10",
-        facecolor="#EFF6FF", edgecolor="#3B82F6", linewidth=1.2, zorder=5
+        (0.15, 4.0), 3.50, 2.05, boxstyle="round,pad=0.15,rounding_size=0.10",
+        facecolor="#EFF6FF", edgecolor="#3B82F6", linewidth=1.6, zorder=5
     )
     ax_left.add_patch(takeaway_box)
-    ax_left.text(1.90, 4.06,
-                 "PHYSICAL MEMORY HIGHLIGHT (Sub-Objective 1):\n"
-                 "Upstream runoff predictive share swells from 1.16% at W1 to 3.11% at W4 (+168%),\n"
-                 "proving that upstream catchment accumulation sustains reliable multi-week forecast lead.",
-                 ha="center", va="center", fontsize=8.2, fontweight="bold", color="#1E40AF", zorder=6)
+    ax_left.text(1.90, 5.70,
+                 "6\u20138 Week Upstream Lag Paradox:",
+                 ha="center", va="center", fontsize=20, fontweight="bold", color=TITLE, zorder=6)
+    ax_left.text(1.90, 4.78,
+                 "Flooding is driven by 300 km\n"
+                 "upstream river runoff (+168%\n"
+                 "model importance by Week 4),\n"
+                 "explaining why August rain\n"
+                 "floods Aweil in October.",
+                 ha="center", va="center", fontsize=20, color=TEXT, linespacing=1.15, zorder=6)
 
     # -------------------------------------------------------------------------
     # Panel B: Catchment Elevation & Hydrological Cross-Section (Right)
@@ -584,93 +601,91 @@ def generate_visual2_upstream_lag(output_dir: Path) -> tuple[Path, Path]:
     ax_right.set_xlim(0, 100)
     ax_right.set_ylim(0, 100)
     ax_right.axis("off")
+    ax_right.set_title("B. Hydrological Transit Cross-Section:\nCongo-Nile Divide to Aweil",
+                       pad=16, fontsize=20, fontweight="bold", color=TITLE)
 
     # Terrain profile: Congo-Nile divide (~1000m) to Aweil (~400m)
     x_terrain = np.linspace(5, 95, 300)
     elev_profile = 22 + 50 / (1 + np.exp((x_terrain - 42) / 8))
-
-    # Fill ground
     ax_right.fill_between(x_terrain, 10, elev_profile, color="#E2E8F0", edgecolor="#64748B", linewidth=1.5, zorder=2)
     ax_right.plot(x_terrain, elev_profile, color="#475569", linewidth=2.5, zorder=3)
 
-    # Water flow line on top of terrain
     water_flow = elev_profile + 1.2
     ax_right.plot(x_terrain, water_flow, color="#0284C7", linewidth=2.8, linestyle="-", zorder=4)
 
-    # Floodplain water body (ponding in Aweil, x: 55 to 95)
     pond_x = np.linspace(55, 95, 100)
     pond_y = 22 + 50 / (1 + np.exp((pond_x - 42) / 8))
     ax_right.fill_between(pond_x, pond_y, 27, color="#BAE6FD", alpha=0.7, zorder=4)
     ax_right.plot(pond_x, np.full_like(pond_x, 27), color="#0284C7", linewidth=2.2, zorder=5)
 
-    # Cloud and rainfall over upstream headwaters (adjusted cleanly)
-    cloud = mpatches.Ellipse((22, 85), 22, 9, facecolor="#CBD5E1", edgecolor="#94A3B8", linewidth=1.2, zorder=6)
+    # Cloud and rainfall over upstream headwaters
+    cloud = mpatches.Ellipse((22, 89), 38, 10, facecolor="#CBD5E1", edgecolor="#94A3B8", linewidth=1.2, zorder=6)
     ax_right.add_patch(cloud)
-    ax_right.text(22, 85, "Upstream Storms\n(P - ET₀ Surplus)", ha="center", va="center",
-                  fontsize=8.5, fontweight="bold", color="#1E293B", zorder=7)
-
-    # Rain arrows
-    for rx in [14, 18, 22, 26, 30]:
-        ax_right.annotate("", xy=(rx, 73), xytext=(rx - 2, 79),
-                          arrowprops=dict(arrowstyle="->", color="#0284C7", lw=1.5))
+    ax_right.text(22, 89, "Upstream Storms\n(P - ET\u2080 Surplus)", ha="center", va="center",
+                  fontsize=20, fontweight="bold", color=TEXT, linespacing=1.15, zorder=7)
+    for rx in [12, 17, 22, 27, 32]:
+        ax_right.annotate("", xy=(rx, 78), xytext=(rx - 2, 83.5),
+                          arrowprops=dict(arrowstyle="->", color="#0284C7", lw=1.8))
 
     # Headwaters marker
-    ax_right.text(8, 70, "Headwaters (~1,000 m asl)\nCongo-Nile Divide", ha="left", va="center",
-                  fontsize=8.2, fontweight="bold", color="#334155",
-                  bbox=dict(boxstyle="round,pad=0.2", facecolor="#FFFFFF", edgecolor="#CBD5E1", alpha=0.9), zorder=8)
+    ax_right.text(3, 70, "Headwaters\n(~1,000 m asl)\nCongo-Nile Divide", ha="left", va="center",
+                  fontsize=20, fontweight="bold", color=TEXT, linespacing=1.15,
+                  bbox=dict(boxstyle="round,pad=0.25", facecolor="#FFFFFF", edgecolor="#CBD5E1", alpha=0.9), zorder=8)
 
-    # Transit wave arrow 1: Upstream Infiltration & Runoff
+    # Transit stage 1: catchment runoff on the divide slopes
     ax_right.annotate(
         "Day 0 to 7:\nCatchment Runoff\n(Q_upstream)",
-        xy=(34, 56), xytext=(22, 60),
-        fontsize=8.0, fontweight="bold", color="#0369A1",
-        arrowprops=dict(arrowstyle="->", color="#0284C7", lw=1.4),
-        bbox=dict(boxstyle="round,pad=0.2", facecolor="#F0F9FF", edgecolor="#0284C7", lw=0.8),
+        xy=(28, 63), xytext=(3, 52),
+        fontsize=20, fontweight="bold", color=TEXT, linespacing=1.15,
+        arrowprops=dict(arrowstyle="->", color="#0284C7", lw=2.0),
+        bbox=dict(boxstyle="round,pad=0.3", facecolor="#F0F9FF", edgecolor="#0284C7", lw=1.2),
         zorder=8
     )
 
-    # Transit wave arrow 2: River Lol Hydraulic Propagation
+    # Transit stage 2: River Lol hydraulic propagation down the valley
     ax_right.annotate(
-        "Days 7 to 14:\nChannel Transit\n(~300 km via River Lol)",
-        xy=(52, 38), xytext=(56, 52),
-        fontsize=8.0, fontweight="bold", color="#4338CA",
-        arrowprops=dict(arrowstyle="->", color="#6366F1", lw=1.4),
-        bbox=dict(boxstyle="round,pad=0.2", facecolor="#EEF2FF", edgecolor="#6366F1", lw=0.8),
+        "Days 7 to 14:\nChannel Transit\n(~300 km\nvia River Lol)",
+        xy=(54, 40.5), xytext=(97, 79), ha="right", va="center",
+        fontsize=20, fontweight="bold", color=TEXT, linespacing=1.15,
+        arrowprops=dict(arrowstyle="->", color="#6366F1", lw=2.0),
+        bbox=dict(boxstyle="round,pad=0.3", facecolor="#EEF2FF", edgecolor="#6366F1", lw=1.2),
         zorder=8
     )
 
-    # Transit wave arrow 3: Downstream Floodplain Ponding in Aweil
+    # Transit stage 3: floodplain inundation in Aweil
     ax_right.annotate(
-        "Days 21 to 28:\nFloodplain Inundation\nBackwater constriction in Aweil",
-        xy=(80, 28), xytext=(70, 44),
-        fontsize=8.0, fontweight="bold", color="#991B1B",
-        arrowprops=dict(arrowstyle="->", color="#DC2626", lw=1.4),
-        bbox=dict(boxstyle="round,pad=0.2", facecolor="#FEF2F2", edgecolor="#DC2626", lw=0.8),
+        "Days 21 to 28:\nFloodplain Inundation",
+        xy=(64, 25.8), xytext=(42, 35),
+        fontsize=20, fontweight="bold", color=TEXT, linespacing=1.15,
+        arrowprops=dict(arrowstyle="->", color="#DC2626", lw=2.0),
+        bbox=dict(boxstyle="round,pad=0.3", facecolor="#FEF2F2", edgecolor="#DC2626", lw=1.2),
         zorder=8
     )
 
-    # Floodplain Topographic Elevation Marker
-    ax_right.text(78, 16, "Aweil Floodplain\n~400 m asl (Slope < 0.05%)\nExtreme Low Gradient",
-                  ha="center", va="top", fontsize=8.2, fontweight="bold", color="#0369A1")
-
-    # Header Card for Panel B
-    title_box = mpatches.FancyBboxPatch(
-        (5, 93), 90, 6.0, boxstyle="round,pad=0.3,rounding_size=0.15",
-        facecolor="#F8FAFC", edgecolor="#CBD5E1", linewidth=1.2, zorder=6
-    )
-    ax_right.add_patch(title_box)
-    ax_right.text(50, 96, "B. Hydrological Transit Cross-Section: Congo-Nile Divide to Aweil",
-                  ha="center", va="center", fontsize=11.5, fontweight="bold", color="#0F172A", zorder=7)
+    # Floodplain topographic elevation marker
+    ax_right.text(63, 16, "Aweil Floodplain\n~400 m asl (Slope < 0.05%)\nExtreme Low Gradient",
+                  ha="center", va="top", fontsize=20, fontweight="bold", color=TEXT, linespacing=1.15, zorder=8)
 
     fig.suptitle("Visual 2: Upstream Feature Attribution & Catchment Hydrological Transit",
-                 fontsize=14.0, fontweight="bold", y=0.98)
+                 fontsize=24, fontweight="bold", y=0.97, color=TITLE)
 
-    fig.subplots_adjust(top=0.90, bottom=0.10, left=0.08, right=0.96)
-    fig.savefig(png_path, dpi=300, bbox_inches="tight")
+    # Shared legend below the panels (20 pt entries would not fit inside panel A)
+    leg = fig.legend(handles=[rects1, rects2, rects3, rects4],
+                     loc="lower center", ncol=2, fontsize=20,
+                     frameon=True, facecolor="#FFFFFF", edgecolor="#CBD5E1",
+                     bbox_to_anchor=(0.5, 0.005))
+    for t in leg.get_texts():
+        t.set_color(TEXT)
+
+    fig.subplots_adjust(top=0.88, bottom=0.17, left=0.135, right=0.97)
+    fig.savefig(poster_png, dpi=300, bbox_inches="tight", transparent=True)
+    fig.savefig(poster_svg, bbox_inches="tight", transparent=True)
+    fig.savefig(png_path, dpi=300, bbox_inches="tight", transparent=True)
     fig.savefig(pdf_path, bbox_inches="tight")
     plt.close(fig)
 
-    print(f"  [Visual 2] Upstream Feature Lag Schematic exported to:\n    - {png_path}\n    - {pdf_path}")
+    print(f"  [Visual 2] Upstream Feature Lag Schematic (A0-poster-proof) exported to:\n"
+          f"    - {poster_png}\n    - {poster_svg}\n    - {png_path}\n    - {pdf_path}")
     return png_path, pdf_path
 
 
