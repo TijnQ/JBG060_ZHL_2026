@@ -15,6 +15,8 @@ House style (consistent with the poster family):
     * every text element >= 20 pt, clean sans-serif (DejaVu Sans)
     * transparent background, light horizontal gridlines #E0E0E0 (alpha 0.5)
     * exports 300 DPI PNG (bbox_inches='tight', transparent) + vector SVG
+    * third panel in each figure: a small concrete-example table decoding
+      the advertised percentages into actual score values
 
 Outputs (poster_visuals/model_performance/):
     model1_county_forecast_performance.{png,svg}
@@ -90,18 +92,40 @@ def load_pixel_metrics() -> dict:
         if m:
             metrics[m.group(1).strip()] = float(m.group(2))
 
-    county_bss: list[tuple[str, float]] = []
+    county_stats: list[tuple[str, float, float, float]] = []
     for line in text.splitlines():
-        m = re.match(r"^\|\s*(Aweil \w+)\s*\|\s*[0-9.]+\s*\|\s*[0-9.]+\s*\|\s*([+-]?[0-9.]+)\s*\|", line)
+        m = re.match(r"^\|\s*(Aweil \w+)\s*\|\s*([0-9.]+)\s*\|\s*([0-9.]+)\s*\|\s*([+-]?[0-9.]+)\s*\|", line)
         if m:
-            county_bss.append((m.group(1).strip(), float(m.group(2))))
+            county_stats.append((m.group(1).strip(), float(m.group(2)),
+                                 float(m.group(3)), float(m.group(4))))
 
     return {
         "auroc": metrics["AUROC (model map)"],
         "bss_vs_clim": metrics["BSS vs climatology"],
         "pr_auc": metrics["PR-AUC (model map)"],
-        "county_bss": county_bss,
+        "county_stats": county_stats,  # (county, brier_model, brier_clim, bss)
     }
+
+
+def _add_explanation_table(ax, header: list[str], rows: list[list[str]],
+                           title: str, caption: str, col_widths: list[float]) -> None:
+    """Third panel: small concrete-example table decoding the advertised %."""
+    ax.axis("off")
+    ax.set_title(title, pad=14, fontsize=20, fontweight="bold", color=TITLE)
+    tbl = ax.table(cellText=rows, colLabels=header, cellLoc="center",
+                   colWidths=col_widths, bbox=[0.0, 0.48, 1.0, 0.38])
+    tbl.auto_set_font_size(False)
+    tbl.set_fontsize(20)
+    for (r, c), cell in tbl.get_celld().items():
+        cell.set_edgecolor("#CBD5E1")
+        if r == 0:
+            cell.set_facecolor(TITLE)
+            cell.set_text_props(color="#FFFFFF", fontweight="bold")
+        else:
+            cell.set_facecolor("#FFFFFF" if r == 1 else "#F8FAFC")
+            cell.set_text_props(color=TEXT, fontweight="bold" if c == 3 else "normal")
+    ax.text(0.5, 0.30, caption, ha="center", va="top", fontsize=20,
+            color=TEXT, linespacing=1.25, transform=ax.transAxes)
 
 
 def generate_model1_overview(output_dir: Path) -> tuple[Path, Path]:
@@ -109,8 +133,10 @@ def generate_model1_overview(output_dir: Path) -> tuple[Path, Path]:
     pooled = load_model1_pooled()
     lgbm, persist, clim = pooled.loc["lightgbm_fe"], pooled.loc["persistence"], pooled.loc["climatology"]
 
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 7), dpi=300)
+    fig = plt.figure(figsize=(16.5, 7), dpi=300)
     fig.patch.set_alpha(0.0)
+    gs = fig.add_gridspec(1, 3, width_ratios=[1.0, 1.0, 1.3], wspace=0.30)
+    ax1, ax2, ax3 = (fig.add_subplot(gs[i]) for i in range(3))
 
     # ---- Panel A: probabilistic skill vs. calendar climatology ----
     models = ["LightGBM", "Persistence", "Climatology"]
@@ -127,24 +153,39 @@ def generate_model1_overview(output_dir: Path) -> tuple[Path, Path]:
     ax1.set_ylabel("BSS vs. Calendar Climatology (%)", fontsize=20, labelpad=10)
     ax1.grid(axis="y", color=GRID, alpha=0.5, linewidth=1.2, zorder=0)
     _clean_axes(ax1)
-    ax1.set_title("A. Probabilistic Skill (BSS)", pad=14, fontsize=20, fontweight="bold", color=TITLE)
+    ax1.set_title("A. Probabilistic Skill", pad=14, fontsize=20, fontweight="bold", color=TITLE)
 
     # ---- Panel B: flood-week area error (lower is better) ----
     mae = [lgbm["mae_flood_weeks"], persist["mae_flood_weeks"], clim["mae_flood_weeks"]]
     bars = ax2.bar(models, mae, width=0.55, color=colors, zorder=3)
     for bar, val in zip(bars, mae):
-        ax2.text(bar.get_x() + bar.get_width() / 2.0, bar.get_height() + 0.35, f"{val:.2f} km\u00b2",
+        ax2.text(bar.get_x() + bar.get_width() / 2.0, bar.get_height() + 0.35, f"{val:.2f}",
                  ha="center", va="bottom", fontsize=20, fontweight="bold", color=TEXT)
     ax2.set_ylim(0, 19)
     ax2.yaxis.set_major_locator(MultipleLocator(5))
     ax2.set_ylabel("Area Error on Flood Weeks (km\u00b2)", fontsize=20, labelpad=10)
     ax2.grid(axis="y", color=GRID, alpha=0.5, linewidth=1.2, zorder=0)
     _clean_axes(ax2)
-    ax2.set_title("B. Flood-Week Area Error (lower is better)", pad=14, fontsize=20, fontweight="bold", color=TITLE)
+    ax2.set_title("B. Weekly Area Error", pad=14, fontsize=20, fontweight="bold", color=TITLE)
+
+    # ---- Panel C: what the percentages mean concretely ----
+    _add_explanation_table(
+        ax3,
+        header=["Measure", "Calendar", "Model", "Change"],
+        rows=[["Prob. error", f"{clim['brier_score']:.4f}", f"{lgbm['brier_score']:.4f}",
+               f"\u2212{lgbm['bss_vs_climatology'] * 100:.1f}%"],
+              ["Area error", f"{clim['mae_flood_weeks']:.2f}", f"{lgbm['mae_flood_weeks']:.2f}",
+               f"\u2212{(1 - lgbm['mae_flood_weeks'] / clim['mae_flood_weeks']) * 100:.1f}%"]],
+        title="What the % Means",
+        caption="Error scores: lower = better.\n"
+                "Change = model vs. the\n"
+                "calendar climatology.",
+        col_widths=[0.34, 0.24, 0.20, 0.22],
+    )
 
     fig.suptitle("Model 1 \u00b7 County Flood Forecast (LightGBM)",
                  fontsize=22, fontweight="bold", y=0.98, color=TITLE)
-    fig.subplots_adjust(left=0.09, right=0.96, top=0.82, bottom=0.12, wspace=0.30)
+    fig.subplots_adjust(left=0.07, right=0.97, top=0.82, bottom=0.12)
 
     png_path = output_dir / "model1_county_forecast_performance.png"
     svg_path = output_dir / "model1_county_forecast_performance.svg"
@@ -159,8 +200,10 @@ def generate_model2_overview(output_dir: Path) -> tuple[Path, Path]:
     """Model 2 (pixel downscaler): pixel ranking skill + per-county consistency."""
     px = load_pixel_metrics()
 
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 7), dpi=300)
+    fig = plt.figure(figsize=(16.5, 7), dpi=300)
     fig.patch.set_alpha(0.0)
+    gs = fig.add_gridspec(1, 3, width_ratios=[1.0, 1.0, 1.3], wspace=0.30)
+    ax1, ax2, ax3 = (fig.add_subplot(gs[i]) for i in range(3))
 
     # ---- Panel A: pixel ranking skill (AUROC) vs. random chance ----
     bars = ax1.bar(["Pixel Forecast", "Random Chance"], [px["auroc"], 0.50],
@@ -170,16 +213,17 @@ def generate_model2_overview(output_dir: Path) -> tuple[Path, Path]:
     ax1.text(bars[1].get_x() + bars[1].get_width() / 2.0, 0.50 + 0.045, "Random guessing\n(0.50)",
              ha="center", va="bottom", fontsize=20, fontweight="bold", color=C_CLIM, linespacing=1.15)
     ax1.axhline(0.5, color=C_PERSIST, linewidth=2.2, linestyle=(0, (6, 3)), zorder=2)
+    ax1.set_xlim(-0.55, 1.85)
     ax1.set_ylim(0, 1.08)
     ax1.yaxis.set_major_locator(MultipleLocator(0.25))
     ax1.set_ylabel("AUROC (Flooded vs. Dry Pixels)", fontsize=20, labelpad=10)
     ax1.grid(axis="y", color=GRID, alpha=0.5, linewidth=1.2, zorder=0)
     _clean_axes(ax1)
-    ax1.set_title("A. Pixel Ranking Skill (AUROC)", pad=14, fontsize=20, fontweight="bold", color=TITLE)
+    ax1.set_title("A. Pixel Ranking Skill", pad=14, fontsize=20, fontweight="bold", color=TITLE)
 
     # ---- Panel B: positive skill in every county ----
-    counties = [c for c, _ in px["county_bss"]]
-    bss_pct = [v * 100 for _, v in px["county_bss"]]
+    counties = [s[0] for s in px["county_stats"]]
+    bss_pct = [s[3] * 100 for s in px["county_stats"]]
     short = [c.replace("Aweil", "").strip() for c in counties]
     bars = ax2.bar(short, bss_pct, width=0.55, color=C_MODEL, zorder=3)
     for bar, val in zip(bars, bss_pct):
@@ -191,11 +235,27 @@ def generate_model2_overview(output_dir: Path) -> tuple[Path, Path]:
     ax2.set_ylabel("BSS vs. Climatology (%)", fontsize=20, labelpad=10)
     ax2.grid(axis="y", color=GRID, alpha=0.5, linewidth=1.2, zorder=0)
     _clean_axes(ax2)
-    ax2.set_title("B. Positive Skill in Every County", pad=14, fontsize=20, fontweight="bold", color=TITLE)
+    ax2.set_title("B. Skill in Every County", pad=14, fontsize=20, fontweight="bold", color=TITLE)
+
+    # ---- Panel C: what the scores mean concretely ----
+    best_county, brier_model, brier_clim, best_bss = max(px["county_stats"], key=lambda s: s[3])
+    _add_explanation_table(
+        ax3,
+        header=["Score", "Baseline", "Model", "Result"],
+        rows=[["AUROC", "0.50", f"{px['auroc']:.2f}", f"{round(px['auroc'] * 100)}/100"],
+              ["Brier error", f"{brier_clim:.4f}", f"{brier_model:.4f}",
+               f"\u2212{best_bss * 100:.1f}%"]],
+        title="What the Scores Mean",
+        caption=f"AUROC: of 100 flooded/dry\n"
+                f"pixel pairs, {round(px['auroc'] * 100)} ranked right.\n"
+                f"Brier: {best_county} pixel error,\n"
+                f"calendar vs. model per week.",
+        col_widths=[0.34, 0.24, 0.20, 0.22],
+    )
 
     fig.suptitle("Model 2 \u00b7 Pixel Downscaling Performance (~232 m Grid)",
                  fontsize=22, fontweight="bold", y=0.98, color=TITLE)
-    fig.subplots_adjust(left=0.09, right=0.96, top=0.82, bottom=0.12, wspace=0.30)
+    fig.subplots_adjust(left=0.07, right=0.97, top=0.82, bottom=0.12)
 
     png_path = output_dir / "model2_pixel_performance_overview.png"
     svg_path = output_dir / "model2_pixel_performance_overview.svg"
