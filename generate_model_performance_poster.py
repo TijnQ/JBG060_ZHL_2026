@@ -95,21 +95,18 @@ def load_pixel_metrics() -> dict:
     }
 
 
-def draw_stat_card(ax, stat: str, label: str, sub: str, accent: str) -> None:
-    """One attention-grabbing stat card: big number, label, supporting line."""
+def draw_stat_card(ax, stat: str, label: str, accent: str) -> None:
+    """One attention-grabbing stat card: big positive number + label."""
     ax.axis("off")
     ax.set_xlim(0, 1)
     ax.set_ylim(0, 1)
     ax.add_patch(mpatches.FancyBboxPatch(
-        (0.05, 0.05), 0.90, 0.90, boxstyle="round,pad=0.0,rounding_size=0.06",
+        (0.02, 0.03), 0.96, 0.94, boxstyle="round,pad=0.0,rounding_size=0.06",
         facecolor=TINT[accent], edgecolor=accent, linewidth=2.5, zorder=2))
-    ax.text(0.5, 0.72, stat, ha="center", va="center",
-            fontsize=46, fontweight="bold", color=accent, zorder=3)
-    ax.text(0.5, 0.47, label, ha="center", va="center",
-            fontsize=20, fontweight="bold", color=TEXT, linespacing=1.2, zorder=3)
-    ax.plot([0.14, 0.86], [0.30, 0.30], color=accent, linewidth=1.2, alpha=0.5, zorder=3)
-    ax.text(0.5, 0.16, sub, ha="center", va="center",
-            fontsize=20, color=TEXT, linespacing=1.2, zorder=3)
+    ax.text(0.5, 0.60, stat, ha="center", va="center",
+            fontsize=52, fontweight="bold", color=accent, zorder=3)
+    ax.text(0.5, 0.26, label, ha="center", va="center",
+            fontsize=20, fontweight="bold", color=TEXT, linespacing=1.25, zorder=3)
 
 
 def add_table_panel(ax, header: list[str], rows: list[list[str]], title: str,
@@ -142,26 +139,23 @@ def generate_model1_overview(output_dir: Path) -> tuple[Path, Path]:
 
     fig = plt.figure(figsize=(16.5, 9.5), dpi=300)
     fig.patch.set_alpha(0.0)
-    gs = fig.add_gridspec(2, 3, height_ratios=[1.05, 1.0], hspace=0.42, wspace=0.28)
+    gs = fig.add_gridspec(2, 3, height_ratios=[1.05, 1.0], hspace=0.42, wspace=0.22)
 
     draw_stat_card(fig.add_subplot(gs[0, 0]), f"+{bss_clim:.1f}%",
-                   "BSS vs. Calendar\nClimatology",
-                   f"Brier error\n{clim['brier_score']:.4f} \u2192 {lgbm['brier_score']:.4f}", C_GREEN)
-    draw_stat_card(fig.add_subplot(gs[0, 1]), f"\u2212{pinball_cut:.1f}%",
-                   "Pinball Loss vs.\nCalendar",
-                   f"Quantile error\n{clim['mean_pinball_loss']:.3f} \u2192 {lgbm['mean_pinball_loss']:.3f}", C_BLUE)
+                   "BSS vs. Calendar\nClimatology", C_GREEN)
+    draw_stat_card(fig.add_subplot(gs[0, 1]), f"+{pinball_cut:.1f}%",
+                   "Pinball Improvement\nvs. Calendar", C_BLUE)
     draw_stat_card(fig.add_subplot(gs[0, 2]), f"+{bss_pers:.1f}%",
-                   "BSS vs. Persistence\nBaseline",
-                   f"Brier error\n{persist['brier_score']:.4f} \u2192 {lgbm['brier_score']:.4f}", C_ORANGE)
+                   "BSS vs. Persistence\nBaseline", C_ORANGE)
 
     ax_tbl = fig.add_subplot(gs[1, :])
     add_table_panel(
         ax_tbl,
-        header=["Measure", "Calendar", "Persistence", "Model", "Change"],
+        header=["Measure", "Calendar", "Persistence", "Model", "Improvement"],
         rows=[["Prob. error (Brier)", f"{clim['brier_score']:.4f}", f"{persist['brier_score']:.4f}",
-               f"{lgbm['brier_score']:.4f}", f"\u2212{bss_clim:.1f}%"],
+               f"{lgbm['brier_score']:.4f}", f"+{bss_clim:.1f}%"],
               ["Pinball loss (area)", f"{clim['mean_pinball_loss']:.3f}", f"{persist['mean_pinball_loss']:.3f}",
-               f"{lgbm['mean_pinball_loss']:.3f}", f"\u2212{pinball_cut:.1f}%"]],
+               f"{lgbm['mean_pinball_loss']:.3f}", f"+{pinball_cut:.1f}%"]],
         title="What the Numbers Mean",
         col_widths=[0.30, 0.17, 0.19, 0.15, 0.19],
         bbox=[0.10, 0.22, 0.80, 0.58],
@@ -184,34 +178,18 @@ def generate_model2_overview(output_dir: Path) -> tuple[Path, Path]:
     px = load_pixel_metrics()
     auroc = px["auroc"]
     bss_all = px["bss_vs_clim"] * 100
-    county_bss = [(c, bss) for c, _, _, bss in px["county_stats"]]
-    n_pos = sum(1 for _, bss in county_bss if bss > 0)
-    bss_lo = min(bss for _, bss in county_bss) * 100
-    bss_hi = max(bss for _, bss in county_bss) * 100
+    n_pos = sum(1 for s in px["county_stats"] if s[3] > 0)
 
-    fig = plt.figure(figsize=(16.5, 9.5), dpi=300)
+    fig = plt.figure(figsize=(16.5, 8), dpi=300)
     fig.patch.set_alpha(0.0)
-    gs = fig.add_gridspec(2, 3, height_ratios=[1.05, 1.0], hspace=0.42, wspace=0.28)
+    gs = fig.add_gridspec(1, 3, wspace=0.22)
 
-    draw_stat_card(fig.add_subplot(gs[0, 0]), f"{auroc:.2f}",
-                   "AUROC \u2014 Flood\nRanking Skill",
-                   "vs. 0.50 for random\nguessing", C_GREEN)
-    draw_stat_card(fig.add_subplot(gs[0, 1]), f"+{bss_all:.1f}%",
-                   "BSS vs. Calendar\n(pixel probabilities)",
-                   "Out-of-fold test:\n211.5M pixel-weeks", C_BLUE)
-    draw_stat_card(fig.add_subplot(gs[0, 2]), f"{n_pos} / 5",
-                   "Counties with\nPositive Skill",
-                   f"+{bss_lo:.1f}% to +{bss_hi:.1f}% BSS", C_ORANGE)
-
-    ax_tbl = fig.add_subplot(gs[1, :])
-    add_table_panel(
-        ax_tbl,
-        header=["County", "BSS vs. Calendar"],
-        rows=[[c, f"+{bss * 100:.1f}%"] for c, bss in county_bss],
-        title="Skill in Every County (BSS)",
-        col_widths=[0.55, 0.45],
-        bbox=[0.36, 0.18, 0.28, 0.64],
-    )
+    draw_stat_card(fig.add_subplot(gs[0]), f"{auroc:.2f}",
+                   "AUROC \u2014 Flood\nRanking Skill", C_GREEN)
+    draw_stat_card(fig.add_subplot(gs[1]), f"+{bss_all:.1f}%",
+                   "BSS vs. Calendar\n(pixel probabilities)", C_BLUE)
+    draw_stat_card(fig.add_subplot(gs[2]), f"{n_pos} / 5",
+                   "Counties with\nPositive Skill", C_ORANGE)
 
     fig.suptitle("Model 2 \u00b7 Pixel Downscaling Performance (~232 m Grid)",
                  fontsize=22, fontweight="bold", y=0.98, color=TITLE)
