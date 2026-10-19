@@ -81,3 +81,9 @@ The main outputs are:
 - Cattle density is available in `raw_data/farmland/geonode__cattle_gha.tif`, but it is a static coarse raster and is not yet used to estimate herd displacement.
 - Lake quality checks use positive readings and flag non-zero instrument, ice and source flags. Victoria and Kyoga coverage in the supplied files is incomplete after 2002.
 - The ERA5 spatial output is a gridded table ready for joining or plotting against `ssd_admin2`; it does not silently assign coarse ERA5 cells to counties.
+
+## All-year weekly comparison
+
+Run `python -m EDA_hydrometeorology.weekly_climatology` from the repository root, or run the final section of the notebook. This uses all locally available ERA5 years, requires matching Aweil flood files and processed ET0, and saves `aweil_weekly_climatology.png` and `.svg` under `outputs_county/figures/`. The figure uses three simple monthly bar charts showing the average weekly value in each month. Weeks are assigned to their midpoint month, averaged within each year, then across years with equal weight. The plotted values are saved in `outputs_county/tables/aweil_monthly_typical_week.csv`. Individual-year curves and percentile bands are omitted for clarity; weekly statistics remain available in CSV.
+
+The CSVs `aweil_weekly_all_years.csv` and `aweil_weekly_climatology.csv` contain the annual weekly values and their means, percentile bands and contributing-year counts. Each year uses 52 complete seven-day periods from January 1, excluding the final 1–2 days. Rainfall and P−ET0 are seven-day totals; flood counts are the maximum daily detected pixel count in each period, matching the original aggregation. Missing hydroclimate days remain missing; no flood record is counted as zero detections, not confirmed dry coverage. ET0 retains the original reference grid cell.
