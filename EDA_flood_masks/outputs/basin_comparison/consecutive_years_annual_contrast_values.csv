@@ -1,0 +1,5 @@
+region,year,n_weeks,analysis_area_km2,detected_area_km2_weeks,mean_weekly_detected_area_percent,status,mean_weekly_area_km2
+White Nile / Sudd corridor candidate,2018,53,35536.404213075526,862.8765944468968,0.0458141188501895,exploratory_candidate_boundaries,16.280690461262203
+White Nile / Sudd corridor candidate,2019,52,35536.404213075526,444.4368973422007,0.0240510079725008,exploratory_candidate_boundaries,8.546863410426937
+Lol catchment candidate,2018,53,75140.97856039675,378.6461025830484,0.0095078161388731,exploratory_candidate_boundaries,7.144266086472611
+Lol catchment candidate,2019,52,75140.97856039675,1110.2451696184016,0.0284144138864871,exploratory_candidate_boundaries,21.350868646507724

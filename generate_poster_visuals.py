@@ -363,13 +363,13 @@ def _draw_diagram1_arrows(ax) -> None:
             [[x2 - 4.2, y - 2.8], [x2 + 2.8, y], [x2 - 4.2, y + 2.8]],
             closed=True, facecolor="#0284C7", edgecolor="none", zorder=6))
 
-    arrow_h(380, 425, 185)   # Stage 1 -> Stage 2 (top row)
-    arrow_h(380, 425, 555)   # Stage 3 -> Stage 4 (bottom row)
-    # Stage 2 -> Stage 3 wrap connector through the 60 px row gap (340..400)
-    ax.plot([600, 600, 210, 210], [345, 370, 370, 390.2], color="#0284C7",
+    arrow_h(470, 515, 175)   # Stage 1 -> Stage 2 (top row)
+    arrow_h(470, 515, 525)   # Stage 3 -> Stage 4 (bottom row)
+    # Stage 2 -> Stage 3 wrap connector through the 60 px row gap (320..380)
+    ax.plot([735, 735, 255, 255], [325, 350, 350, 370], color="#0284C7",
             linewidth=_px(4), solid_capstyle="round", zorder=5)
     ax.add_patch(mpatches.Polygon(
-        [[207.2, 386], [210, 393], [212.8, 386]],
+        [[252.2, 365.8], [255, 372.8], [257.8, 365.8]],
         closed=True, facecolor="#0284C7", edgecolor="none", zorder=6))
 
 
@@ -377,16 +377,17 @@ def _render_diagram1_svg(svg_path: Path) -> None:
     """Render Diagram 1 (pipeline architecture) as a matplotlib vector SVG.
 
     Pure-Python replacement for the previous hand-authored SVG markup string:
-    the four shadowed stage cards (rounded-top header bars, tag pills, bullet
-    lists) are arranged as a 2x2 flow grid -- stages 1-2 on the top row and
-    stages 3-4 directly beneath, still connected in 1 -> 2 -> 3 -> 4 order.
+    the four shadowed landscape stage cards (rounded-top header bars, tag
+    pills, bullet lists) are arranged as a 2x2 flow grid -- stages 1-2 on the
+    top row and stages 3-4 directly beneath, still connected in
+    1 -> 2 -> 3 -> 4 order.
     All coordinates are SVG pixel values with y growing downward; fonts and
     strokes are converted from px to pt (x 0.72 at 100 px/inch). The canvas
     background is fully transparent.
     """
-    W, H = 820, 740
+    W, H = 1000, 700
     stages = [
-        dict(x=45, y=30, w=330, hdr="#1E3A8A", dot="#2563EB",
+        dict(x=45, y=30, w=420, hdr="#1E3A8A", dot="#2563EB",
              tag_bg="#EFF6FF", tag_edge="#3B82F6", tag_fg="#1E40AF",
              title="STAGE 1: DATA PREPARATION", tag="Raw data \u2192 one clean weekly table",
              bullets=[
@@ -395,7 +396,7 @@ def _render_diagram1_svg(svg_path: Path) -> None:
                  ("Flood history & time-of-year,", "encoded as predictive features"),
                  ("No peeking ahead: only data", "known by forecast Friday"),
              ]),
-        dict(x=435, y=30, w=330, hdr="#0D9488", dot="#0D9488",
+        dict(x=525, y=30, w=420, hdr="#0D9488", dot="#0D9488",
              tag_bg="#F0FDFA", tag_edge="#14B8A6", tag_fg="#0F766E",
              title="STAGE 2: HAZARD ENGINE", tag="Level-1 \u00b7 County Probabilistic Engine",
              bullets=[
@@ -403,7 +404,7 @@ def _render_diagram1_svg(svg_path: Path) -> None:
                  ("Predicts flood occurrence probability", "& multi-horizon duration (1\u20134 wks)"),
                  ("Quantile area regression: q10 (best),", "q50 (median), q90 (worst)"),
              ]),
-        dict(x=45, y=400, w=330, hdr="#D97706", dot="#D97706",
+        dict(x=45, y=380, w=420, hdr="#D97706", dot="#D97706",
              tag_bg="#FFFBEB", tag_edge="#F59E0B", tag_fg="#B45309",
              title="STAGE 3: PIXEL DOWNSCALER", tag="Level-2 \u00b7 Spatial Allocation (~232m)",
              bullets=[
@@ -411,7 +412,7 @@ def _render_diagram1_svg(svg_path: Path) -> None:
                  ("Golden Rule: allocates WHERE water", "pools based on county q50"),
                  ("Coordinate snapping guarantees exact", "area conservation (0.0 km\u00b2 error)"),
              ]),
-        dict(x=435, y=400, w=340, hdr="#DC2626", dot="#DC2626",
+        dict(x=525, y=380, w=430, hdr="#DC2626", dot="#DC2626",
              tag_bg="#FEF2F2", tag_edge="#EF4444", tag_fg="#B91C1C",
              title="STAGE 4: ASSET RISK OVERLAP", tag="Level-3 \u00b7 Humanitarian Early Action",
              bullets=[
@@ -431,7 +432,7 @@ def _render_diagram1_svg(svg_path: Path) -> None:
         ax.add_patch(mpatches.Rectangle((0, 0), W, H, facecolor="none",
                                         edgecolor="none", zorder=0))
         for stg in stages:
-            x, y, w, h = stg["x"], stg["y"], stg["w"], 310
+            x, y, w, h = stg["x"], stg["y"], stg["w"], 290
             _soft_shadow(ax, x, y, w, h, 14, (4, 8, 12, 16),
                          (0.035, 0.028, 0.022, 0.015), zorder=1)
             ax.add_patch(mpatches.FancyBboxPatch(
@@ -448,7 +449,7 @@ def _render_diagram1_svg(svg_path: Path) -> None:
             ax.text(x + w / 2, y + 83, stg["tag"], ha="center", va="baseline",
                     fontsize=_px(11.5), fontweight="bold", color=stg["tag_fg"], zorder=4)
             for i, (line1, line2) in enumerate(stg["bullets"]):
-                cy = y + 118 + 50 * i  # bullet circle centre (SVG group y+112, cy=6+50i)
+                cy = y + 118 + 44 * i  # bullet circle centre (44 px row pitch)
                 ax.add_patch(mpatches.Circle((x + 28, cy), 5, facecolor=stg["dot"],
                                              edgecolor="none", zorder=4))
                 ax.text(x + 44, cy + 4, line1, ha="left", va="baseline",
@@ -461,7 +462,7 @@ def _render_diagram1_svg(svg_path: Path) -> None:
         # Self-check: every text element must sit inside its card / pill borders
         _audit_diagram1_bounds(
             fig, ax,
-            [{"x": s["x"], "y": s["y"], "w": s["w"], "h": 310} for s in stages],
+            [{"x": s["x"], "y": s["y"], "w": s["w"], "h": 290} for s in stages],
             pills=[{"x": s["x"] + 20, "y": s["y"] + 66, "w": s["w"] - 40, "h": 26}
                    for s in stages])
         fig.savefig(svg_path, transparent=True)
@@ -485,23 +486,23 @@ def generate_diagram1_pipeline(output_dir: Path) -> tuple[Path, Path, Path]:
     _render_diagram1_svg(svg_path)
 
     # Render high-resolution PNG & PDF via matplotlib to guarantee 300 DPI publication standards
-    fig, ax = plt.subplots(figsize=(8.2, 7.4), dpi=300)
+    fig, ax = plt.subplots(figsize=(10.0, 7.0), dpi=300)
     # Default subplot margins shrink the axes and scale x/y differently; force
     # the axes to fill the figure so 1 data unit = 1/100 inch, exactly like the
     # SVG renderer above (otherwise text renders ~29% too large and overflows).
     ax.set_position([0, 0, 1, 1])
-    ax.set_xlim(0, 820)
-    ax.set_ylim(0, 740)
+    ax.set_xlim(0, 1000)
+    ax.set_ylim(0, 700)
     ax.invert_yaxis()
     ax.axis("off")
     # Transparent canvas: no figure/axes/rect fill behind the cards
-    ax.add_patch(mpatches.Rectangle((0, 0), 820, 740, facecolor="none",
+    ax.add_patch(mpatches.Rectangle((0, 0), 1000, 700, facecolor="none",
                                     edgecolor="none", zorder=0))
 
     # Matplotlib parallel rendering for PNG and PDF
     stages = [
         {
-            "x": 45, "y": 30, "w": 330, "h": 310, "color": "#1E3A8A", "bg": "#EFF6FF", "tag_bg": "#DBEAFE",
+            "x": 45, "y": 30, "w": 420, "h": 290, "color": "#1E3A8A", "bg": "#EFF6FF", "tag_bg": "#DBEAFE",
             "tag": "Raw data → one clean weekly table", "title": "STAGE 1: DATA PREPARATION",
             "bullets": [
                 ["One clean weekly table:", "5 counties, 26 years (2000–2025)"],
@@ -511,7 +512,7 @@ def generate_diagram1_pipeline(output_dir: Path) -> tuple[Path, Path, Path]:
             ],
         },
         {
-            "x": 435, "y": 30, "w": 330, "h": 310, "color": "#0D9488", "bg": "#F0FDFA", "tag_bg": "#CCFBF1",
+            "x": 525, "y": 30, "w": 420, "h": 290, "color": "#0D9488", "bg": "#F0FDFA", "tag_bg": "#CCFBF1",
             "tag": "Level-1 · County Probabilistic Engine", "title": "STAGE 2: HAZARD ENGINE",
             "bullets": [
                 ["Multi-Head LightGBM", "(50 weekly engineered features)"],
@@ -520,7 +521,7 @@ def generate_diagram1_pipeline(output_dir: Path) -> tuple[Path, Path, Path]:
             ],
         },
         {
-            "x": 45, "y": 400, "w": 330, "h": 310, "color": "#D97706", "bg": "#FFFBEB", "tag_bg": "#FEF3C7",
+            "x": 45, "y": 380, "w": 420, "h": 290, "color": "#D97706", "bg": "#FFFBEB", "tag_bg": "#FEF3C7",
             "tag": "Level-2 · Spatial Allocation (~232m)", "title": "STAGE 3: PIXEL DOWNSCALER",
             "bullets": [
                 ["26-year conditional pixel climatology", "(MODIS MCDWD)"],
@@ -529,7 +530,7 @@ def generate_diagram1_pipeline(output_dir: Path) -> tuple[Path, Path, Path]:
             ],
         },
         {
-            "x": 435, "y": 400, "w": 340, "h": 310, "color": "#DC2626", "bg": "#FEF2F2", "tag_bg": "#FEE2E2",
+            "x": 525, "y": 380, "w": 430, "h": 290, "color": "#DC2626", "bg": "#FEF2F2", "tag_bg": "#FEE2E2",
             "tag": "Level-3 · Humanitarian Early Action", "title": "STAGE 4: ASSET RISK OVERLAP",
             "bullets": [
                 ["Direct spatial raster multiplication"],
@@ -570,7 +571,7 @@ def generate_diagram1_pipeline(output_dir: Path) -> tuple[Path, Path, Path]:
         # Bullets (flat, pre-wrapped lines; the coloured dot marks the item, so
         # each bullet gets exactly ONE marker — no extra bullet glyph in the text)
         for i, lines in enumerate(stg["bullets"]):
-            cy = y + 118 + 50 * i
+            cy = y + 118 + 44 * i
             ax.plot(x + 28, cy, marker="o", markersize=7.2, color=stg["color"],
                     linestyle="none", zorder=4)
             ax.text(x + 44, cy + 4, lines[0], ha="left", va="baseline",

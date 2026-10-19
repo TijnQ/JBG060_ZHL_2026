@@ -1,0 +1,3 @@
+region,pfaf_prefix,selection_status,source,source_url,member_count,outlet_hybas_id,next_down_hybas_id,selected_sub_area_km2,outlet_total_upstream_area_km2
+White Nile / Sudd corridor candidate,1727,candidate_not_validated_named_basin,HydroBASINS v1.c Africa standard level 6,https://data.hydrosheds.org/file/hydrobasins/standard/hybas_af_lev06_v1c.zip,9,1060843030,1060800150,36656.7,1197395.8
+Lol catchment candidate,17286,candidate_not_validated_named_basin,HydroBASINS v1.c Africa standard level 6,https://data.hydrosheds.org/file/hydrobasins/standard/hybas_af_lev06_v1c.zip,9,1060852010,1060856140,75140.7,75140.9

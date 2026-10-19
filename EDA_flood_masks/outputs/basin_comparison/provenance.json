@@ -1,0 +1,9 @@
+{
+  "download_url": "https://data.hydrosheds.org/file/hydrobasins/standard/hybas_af_lev06_v1c.zip",
+  "download_sha256": "2c141c97db1b3fcd35a2914a6a39e575b6ee44a8df4b11f400b7f137648daacb",
+  "source_page": "https://www.hydrosheds.org/products/hydrobasins",
+  "selection_status": "Candidate regions. Geographic labels assigned by analyst.",
+  "white_nile_scope": "Selected corridor only, not its full upstream catchment or an official Sudd wetland boundary.",
+  "routing_note": "Both regions ultimately drain through the Nile network. Non-overlap does not imply hydrological independence.",
+  "data_coverage_note": "The supplied h20v08/h21v08 flood tiles do not cover every part of these candidate regions. Check the footprint before calculating area percentages."
+}
