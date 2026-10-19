@@ -6,7 +6,7 @@
   <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
    <cc:Work>
     <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
-    <dc:date>2026-10-19T20:11:58.940659</dc:date>
+    <dc:date>2026-10-19T20:57:06.066671</dc:date>
     <dc:format>image/svg+xml</dc:format>
     <dc:creator>
      <cc:Agent>
@@ -41,14 +41,14 @@ Q 12.213578 78.236308 12.213578 93.588923
 L 12.213578 303.408 
 Q 12.213578 318.760615 27.254312 318.760615 
 z
-" clip-path="url(#pd542d508d9)" style="fill: #ecfdf5; stroke: #059669; stroke-width: 2.5; stroke-linejoin: miter"/>
+" clip-path="url(#pb79df99fff)" style="fill: #ecfdf5; stroke: #059669; stroke-width: 2.5; stroke-linejoin: miter"/>
    </g>
    <g id="text_1">
-    <text style="font-weight: 700; font-size: 52px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #059669" x="132.53945" y="187.259519" transform="rotate(-0 132.53945 187.259519)">+24.6%</text>
+    <text style="font-weight: 700; font-size: 52px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #059669" x="132.53945" y="187.259519" transform="rotate(-0 132.53945 187.259519)">+8.0%</text>
    </g>
    <g id="text_2">
-    <text style="font-weight: 700; font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; fill: #363432" transform="translate(20.744137 253.771814)">BSS vs. Climatology</text>
-    <text style="font-weight: 700; font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; fill: #363432" transform="translate(39.312887 277.083532)">Week 1 Forecast</text>
+    <text style="font-weight: 700; font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; fill: #363432" transform="translate(21.966012 253.849939)">BSS vs. Persistence</text>
+    <text style="font-weight: 700; font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; fill: #363432" transform="translate(39.312887 277.005407)">Week 1 Forecast</text>
    </g>
   </g>
   <g id="axes_2">
@@ -63,14 +63,14 @@ Q 292.973945 78.236308 292.973945 93.588923
 L 292.973945 303.408 
 Q 292.973945 318.760615 308.014679 318.760615 
 z
-" clip-path="url(#p821b8ad4e1)" style="fill: #fef9c3; stroke: #ca8a04; stroke-width: 2.5; stroke-linejoin: miter"/>
+" clip-path="url(#p29b66bde8c)" style="fill: #fef9c3; stroke: #ca8a04; stroke-width: 2.5; stroke-linejoin: miter"/>
    </g>
    <g id="text_3">
-    <text style="font-weight: 700; font-size: 52px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #ca8a04" x="413.299817" y="187.259519" transform="rotate(-0 413.299817 187.259519)">+22.0%</text>
+    <text style="font-weight: 700; font-size: 52px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #ca8a04" x="413.299817" y="187.259519" transform="rotate(-0 413.299817 187.259519)">+1.2%</text>
    </g>
    <g id="text_4">
-    <text style="font-weight: 700; font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; fill: #363432" transform="translate(301.504504 253.771814)">BSS vs. Climatology</text>
-    <text style="font-weight: 700; font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; fill: #363432" transform="translate(320.073254 277.083532)">Week 2 Forecast</text>
+    <text style="font-weight: 700; font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; fill: #363432" transform="translate(302.726379 253.849939)">BSS vs. Persistence</text>
+    <text style="font-weight: 700; font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; fill: #363432" transform="translate(320.073254 277.005407)">Week 2 Forecast</text>
    </g>
   </g>
   <g id="axes_3">
@@ -85,14 +85,14 @@ Q 573.734312 78.236308 573.734312 93.588923
 L 573.734312 303.408 
 Q 573.734312 318.760615 588.775046 318.760615 
 z
-" clip-path="url(#p3c859ba19c)" style="fill: #ffedd5; stroke: #ea580c; stroke-width: 2.5; stroke-linejoin: miter"/>
+" clip-path="url(#pf54d7885eb)" style="fill: #ffedd5; stroke: #ea580c; stroke-width: 2.5; stroke-linejoin: miter"/>
    </g>
    <g id="text_5">
-    <text style="font-weight: 700; font-size: 52px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #ea580c" x="694.060183" y="187.259519" transform="rotate(-0 694.060183 187.259519)">+20.9%</text>
+    <text style="font-weight: 700; font-size: 52px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #ea580c" x="694.060183" y="187.259519" transform="rotate(-0 694.060183 187.259519)">−6.8%</text>
    </g>
    <g id="text_6">
-    <text style="font-weight: 700; font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; fill: #363432" transform="translate(582.264871 253.771814)">BSS vs. Climatology</text>
-    <text style="font-weight: 700; font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; fill: #363432" transform="translate(600.833621 277.083532)">Week 3 Forecast</text>
+    <text style="font-weight: 700; font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; fill: #363432" transform="translate(583.486746 253.849939)">BSS vs. Persistence</text>
+    <text style="font-weight: 700; font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; fill: #363432" transform="translate(600.833621 277.005407)">Week 3 Forecast</text>
    </g>
   </g>
   <g id="axes_4">
@@ -107,14 +107,14 @@ Q 854.494679 78.236308 854.494679 93.588923
 L 854.494679 303.408 
 Q 854.494679 318.760615 869.535413 318.760615 
 z
-" clip-path="url(#p80c1e8cff1)" style="fill: #fee2e2; stroke: #dc2626; stroke-width: 2.5; stroke-linejoin: miter"/>
+" clip-path="url(#p89240d235a)" style="fill: #fee2e2; stroke: #dc2626; stroke-width: 2.5; stroke-linejoin: miter"/>
    </g>
    <g id="text_7">
-    <text style="font-weight: 700; font-size: 52px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #dc2626" x="974.82055" y="187.259519" transform="rotate(-0 974.82055 187.259519)">+26.0%</text>
+    <text style="font-weight: 700; font-size: 52px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #dc2626" x="974.82055" y="187.259519" transform="rotate(-0 974.82055 187.259519)">−7.5%</text>
    </g>
    <g id="text_8">
-    <text style="font-weight: 700; font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; fill: #363432" transform="translate(863.025238 253.771814)">BSS vs. Climatology</text>
-    <text style="font-weight: 700; font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; fill: #363432" transform="translate(881.593988 277.083532)">Week 4 Forecast</text>
+    <text style="font-weight: 700; font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; fill: #363432" transform="translate(864.247113 253.849939)">BSS vs. Persistence</text>
+    <text style="font-weight: 700; font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; fill: #363432" transform="translate(881.593988 277.005407)">Week 4 Forecast</text>
    </g>
   </g>
   <g id="axes_5">
@@ -271,7 +271,7 @@ z
 " style="fill: #f8fafc; stroke: #cbd5e1; stroke-linejoin: miter"/>
     </g>
     <g id="text_22">
-     <text style="font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #363432" x="789.977952" y="504.246135" transform="rotate(-0 789.977952 504.246135)">+-6.8%</text>
+     <text style="font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #363432" x="789.977952" y="504.246135" transform="rotate(-0 789.977952 504.246135)">−6.8%</text>
     </g>
     <g id="patch_20">
      <path d="M 882.442368 529.188923 
@@ -282,7 +282,7 @@ z
 " style="fill: #f8fafc; stroke: #cbd5e1; stroke-linejoin: miter"/>
     </g>
     <g id="text_23">
-     <text style="font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #363432" x="974.906784" y="504.246135" transform="rotate(-0 974.906784 504.246135)">+-7.5%</text>
+     <text style="font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #363432" x="974.906784" y="504.246135" transform="rotate(-0 974.906784 504.246135)">−7.5%</text>
     </g>
     <g id="patch_21">
      <path d="M 39.9888 590.112 
@@ -346,16 +346,16 @@ z
   </g>
  </g>
  <defs>
-  <clipPath id="pd542d508d9">
+  <clipPath id="pb79df99fff">
    <rect x="7.2" y="70.56" width="250.678899" height="255.876923"/>
   </clipPath>
-  <clipPath id="p821b8ad4e1">
+  <clipPath id="p29b66bde8c">
    <rect x="287.960367" y="70.56" width="250.678899" height="255.876923"/>
   </clipPath>
-  <clipPath id="p3c859ba19c">
+  <clipPath id="pf54d7885eb">
    <rect x="568.720734" y="70.56" width="250.678899" height="255.876923"/>
   </clipPath>
-  <clipPath id="p80c1e8cff1">
+  <clipPath id="p89240d235a">
    <rect x="849.481101" y="70.56" width="250.678899" height="255.876923"/>
   </clipPath>
  </defs>

@@ -252,9 +252,10 @@ def generate_duration_skill_overview(output_dir: Path) -> tuple[Path, Path]:
     gs = fig.add_gridspec(2, 4, height_ratios=[1.05, 1.0], hspace=0.08, wspace=0.12)
 
     for i, h in enumerate((1, 2, 3, 4)):
-        bss = dur.loc[h, "bss_vs_climatology"] * 100
-        draw_stat_card(fig.add_subplot(gs[0, i]), f"+{bss:.1f}%",
-                       f"BSS vs. Climatology\nWeek {h} Forecast",
+        val = dur.loc[h, "bss_vs_persistence"] * 100
+        sign = "+" if val >= 0 else "\u2212"
+        draw_stat_card(fig.add_subplot(gs[0, i]), f"{sign}{abs(val):.1f}%",
+                       f"BSS vs. Persistence\nWeek {h} Forecast",
                        gradient[i])
 
     ax_tbl = fig.add_subplot(gs[1, :])
@@ -262,7 +263,7 @@ def generate_duration_skill_overview(output_dir: Path) -> tuple[Path, Path]:
         ax_tbl,
         header=["Measure", "Week 1", "Week 2", "Week 3", "Week 4"],
         rows=[["BSS vs. Climatology (%)"] + [f"+{dur.loc[h, 'bss_vs_climatology'] * 100:.1f}%" for h in (1, 2, 3, 4)],
-              ["BSS vs. Persistence (%)"] + [f"+{dur.loc[h, 'bss_vs_persistence'] * 100:.1f}%" for h in (1, 2, 3, 4)],
+              ["BSS vs. Persistence (%)"] + [f"{dur.loc[h, 'bss_vs_persistence'] * 100:+.1f}%".replace("-", "\u2212") for h in (1, 2, 3, 4)],
               ["Brier error"] + [f"{dur.loc[h, 'brier_score']:.4f}" for h in (1, 2, 3, 4)]],
         col_widths=[0.28, 0.18, 0.18, 0.18, 0.18],
         bbox=[0.03, 0.0, 0.94, 1.0],
