@@ -87,16 +87,16 @@ def plot_annual_contrast(summary, start, end, output_stem="consecutive_years_ann
         values = data[data.year.eq(year)].set_index("region").loc[[NILE, LOL], "mean_weekly_area_km2"]
         ax.barh([1, 0], values, height=.45, color=[COLORS[NILE], COLORS[LOL]])
         for position, value in zip([1, 0], values):
-            ax.text(value + maximum*.025, position, f"{value:.0f} km²", va="center", fontsize=17, weight="bold", color="#252525")
+            ax.text(value + maximum*.025, position, f"{value:.0f} km² per week", va="center", fontsize=17, weight="bold", color="#252525")
         ax.set_yticks([1, 0], ["White Nile / Sudd", "River Lol"], fontsize=13)
-        ax.set(xlim=(0, maximum*1.28), ylim=(-.55, 1.55))
+        ax.set(xlim=(0, maximum*1.55), ylim=(-.55, 1.55))
         ax.set_title(str(year), loc="left", fontsize=20, weight="bold", pad=10)
         ax.xaxis.set_visible(False)
         ax.tick_params(axis="y", length=0, pad=12)
         ax.spines[["top", "right", "bottom", "left"]].set_visible(False)
         ax.axvline(0, color="#DDDDDD", linewidth=1)
-    fig.text(.08,.95,"Where was more flooding detected?", fontsize=23, weight="bold", ha="left")
-    fig.subplots_adjust(left=.27, right=.95, top=.75, bottom=.15, hspace=.8)
+    fig.text(.08,.95,f"Opposite Flood Trends ({start} vs. {end})", fontsize=23, weight="bold", ha="left")
+    fig.subplots_adjust(left=.27, right=.95, top=.80, bottom=.15, hspace=.8)
     for ext in ["png", "svg"]:
         fig.savefig(OUT/f"{output_stem}.{ext}", dpi=200)
     plt.close(fig)
