@@ -2,7 +2,8 @@
 
 This module creates two clean, academic figures with zero en-dashes or em-dashes:
 1. Figure 1: Hydrological Basin Decoupling (2023 vs. 2024 Flood Divergence)
-   Saved as 'basin_decoupling_2023_2024.png'
+   Saved as 'basin_decoupling_poster.svg' + 'basin_decoupling_poster.png'
+   (A0-poster-proof typography: all text >= 20 pt)
 2. Figure 2: Staple Crop Phenology vs. Monthly Flood Risk in Northern Bahr el Ghazal
    Saved as 'crop_phenology_vs_flood_timeline_clean.png'
 """
@@ -42,112 +43,137 @@ def set_academic_style() -> None:
     })
 
 
-def generate_figure_basin_decoupling(output_path: Path | str = "basin_decoupling_2023_2024.png") -> plt.Figure:
-    """Generate Figure 1: River Basin Decoupling (2023 vs. 2024 Flood Divergence).
+def generate_figure_basin_decoupling(output_dir: Path | str | None = None) -> plt.Figure:
+    """Generate Figure 1: River Basin Decoupling, 100% A0-poster-proof.
+
+    Strict poster specification (ZOA & Zero Hunger Lab presentation):
+      * 1 row x 2 columns, figsize ~(14, 7): the huge scale gap between the
+        national (millions of detections) and local (km2-weeks) signals would
+        otherwise render the small values invisible.
+      * Typography >= 20 pt everywhere (A0-proof): suptitle 24 pt bold,
+        subplot titles 20 pt bold, axis labels + tick labels 20 pt,
+        data tags 20 pt bold. Clean sans-serif (Open Sans if installed,
+        otherwise DejaVu Sans).
+      * House-style palette: 2023 bar #1E3F52 (deep slate blue),
+        2024 bar #D96B43 (coral/amber disaster year); all text #363432
+        (dark anthracite); transparent background; light horizontal
+        gridlines #E0E0E0 (alpha 0.6).
+      * Exact data tags directly above each bar; top/right spines hidden.
+      * Export: vector 'basin_decoupling_poster.svg' + 300 DPI
+        'basin_decoupling_poster.png' (bbox_inches='tight', transparent).
 
     Parameters
     ----------
-    output_path : Path or str
-        Destination path for saving the PNG file.
+    output_dir : Path or str
+        Directory for saving the SVG and PNG files.
 
     Returns
     -------
     plt.Figure
         The rendered matplotlib figure object.
     """
-    set_academic_style()
-    output_path = Path(output_path)
+    output_dir = Path.cwd() if output_dir is None else Path(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
 
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10.5, 5.2), dpi=300)
+    poster_rc = {
+        "font.family": "sans-serif",
+        "font.sans-serif": ["Open Sans", "DejaVu Sans", "Arial"],
+        "svg.fonttype": "path",  # convert text to paths: identical rendering everywhere
+        "text.color": "#363432",
+        "axes.edgecolor": "#363432",
+        "axes.labelcolor": "#363432",
+        "xtick.color": "#363432",
+        "ytick.color": "#363432",
+        "figure.facecolor": "none",
+        "axes.facecolor": "none",
+        "savefig.facecolor": "none",
+        "savefig.dpi": 300,
+    }
 
-    years = ["2023", "2024"]
-    x = np.arange(len(years))
-    width = 0.44
+    with plt.rc_context(poster_rc):
+        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 7), dpi=300)
+        fig.patch.set_alpha(0.0)
 
-    # -------------------------------------------------------------
-    # Left Subplot: National / White Nile and Sudd Wetlands
-    # -------------------------------------------------------------
-    white_nile_detections = [12.3, 7.1]
-    color_nile = "#1E3A8A"  # Navy / Steel Blue
+        years = ["2023", "2024"]
+        x = np.arange(len(years))
+        width = 0.5
 
-    bars1 = ax1.bar(
-        x, white_nile_detections, width=width, color=color_nile,
-        edgecolor="#0F172A", linewidth=1.0, zorder=3, alpha=0.92
-    )
+        # Per-year house-style colours (consistent across both panels)
+        year_colors = ["#1E3F52", "#D96B43"]  # 2023 deep slate blue | 2024 coral/amber
 
-    ax1.set_title("White Nile and Sudd Wetlands\n(Lake Victoria Outflow System)", pad=10)
-    ax1.set_ylabel("Satellite Detections (Millions)", labelpad=8)
-    ax1.set_ylim(0, 15)
-    ax1.yaxis.set_major_locator(MultipleLocator(3))
-    ax1.set_xticks(x)
-    ax1.set_xticklabels(years, fontweight="bold")
-    ax1.grid(axis="y", linestyle=":", alpha=0.6, color="#CBD5E1", zorder=0)
+        # ---------------------------------------------------------
+        # Left Subplot: White Nile / Sudd Catchment (national scale)
+        # ---------------------------------------------------------
+        white_nile_detections = [12.3, 7.1]
+        tags_nile = ["12.3M", "7.1M"]
 
-    # Numerical labels directly on top of bars
-    for bar, val in zip(bars1, white_nile_detections):
-        height = bar.get_height()
-        ax1.text(
-            bar.get_x() + bar.get_width() / 2.0, height + 0.35,
-            f"{val:.1f} M",
-            ha="center", va="bottom", fontsize=10.5, fontweight="bold", color="#0F172A"
+        bars1 = ax1.bar(x, white_nile_detections, width=width,
+                        color=year_colors, zorder=3)
+
+        ax1.set_title("White Nile / Sudd Catchment", pad=14,
+                      fontsize=20, fontweight="bold", color="#363432")
+        ax1.set_ylabel("MODIS Flood Detections (Millions)", labelpad=10,
+                       fontsize=20, color="#363432")
+        ax1.set_ylim(0, 14.5)
+        ax1.yaxis.set_major_locator(MultipleLocator(3))
+        ax1.set_xticks(x)
+        ax1.set_xticklabels(years, fontsize=20, color="#363432")
+        ax1.tick_params(axis="y", labelsize=20, colors="#363432")
+        ax1.tick_params(axis="both", length=5, width=1.2)
+        ax1.grid(axis="y", color="#E0E0E0", alpha=0.6, linewidth=1.2, zorder=0)
+        ax1.set_axisbelow(True)
+
+        # Exact data tags directly above each bar (1-second readability)
+        for bar, tag in zip(bars1, tags_nile):
+            ax1.text(bar.get_x() + bar.get_width() / 2.0, bar.get_height() + 0.35,
+                     tag, ha="center", va="bottom",
+                     fontsize=20, fontweight="bold", color="#363432")
+
+        # ---------------------------------------------------------
+        # Right Subplot: River Lol / Aweil East (local scale)
+        # ---------------------------------------------------------
+        lol_inundation = [13.1, 851.0]
+        tags_lol = ["13.1 km²", "851.0 km²"]
+
+        bars2 = ax2.bar(x, lol_inundation, width=width,
+                        color=year_colors, zorder=3)
+
+        ax2.set_title("River Lol / Aweil East", pad=14,
+                      fontsize=20, fontweight="bold", color="#363432")
+        ax2.set_ylabel("Flood Volume (km²-weeks)", labelpad=10,
+                       fontsize=20, color="#363432")
+        ax2.set_ylim(0, 1000)
+        ax2.yaxis.set_major_locator(MultipleLocator(200))
+        ax2.set_xticks(x)
+        ax2.set_xticklabels(years, fontsize=20, color="#363432")
+        ax2.tick_params(axis="y", labelsize=20, colors="#363432")
+        ax2.tick_params(axis="both", length=5, width=1.2)
+        ax2.grid(axis="y", color="#E0E0E0", alpha=0.6, linewidth=1.2, zorder=0)
+        ax2.set_axisbelow(True)
+
+        for bar, tag in zip(bars2, tags_lol):
+            ax2.text(bar.get_x() + bar.get_width() / 2.0, bar.get_height() + 25,
+                     tag, ha="center", va="bottom",
+                     fontsize=20, fontweight="bold", color="#363432")
+
+        # Hide top/right spines on both axes
+        for ax in (ax1, ax2):
+            ax.spines["top"].set_visible(False)
+            ax.spines["right"].set_visible(False)
+
+        # Main title: 24 pt bold, dark anthracite
+        fig.suptitle(
+            "Hydrological Basin Decoupling: 2023 vs 2024 Flood Divergence",
+            fontsize=24, fontweight="bold", y=0.98, color="#363432"
         )
 
-    # -------------------------------------------------------------
-    # Right Subplot: River Lol Catchment (Aweil East, NBeG)
-    # -------------------------------------------------------------
-    lol_inundation = [13.09, 850.97]
-    color_lol = "#D97706"  # Burnt Orange / Amber
+        fig.subplots_adjust(left=0.09, right=0.96, top=0.82, bottom=0.12, wspace=0.30)
 
-    bars2 = ax2.bar(
-        x, lol_inundation, width=width, color=color_lol,
-        edgecolor="#78350F", linewidth=1.0, zorder=3, alpha=0.92
-    )
-
-    ax2.set_title("River Lol Catchment (Aweil East)\n(Northern Bahr el Ghazal Basin)", pad=10)
-    ax2.set_ylabel("Detected Inundation (km²-weeks)", labelpad=8)
-    ax2.set_ylim(0, 1000)
-    ax2.yaxis.set_major_locator(MultipleLocator(200))
-    ax2.set_xticks(x)
-    ax2.set_xticklabels(years, fontweight="bold")
-    ax2.grid(axis="y", linestyle=":", alpha=0.6, color="#CBD5E1", zorder=0)
-
-    # Numerical labels directly on top of bars
-    for bar, val in zip(bars2, lol_inundation):
-        height = bar.get_height()
-        ax2.text(
-            bar.get_x() + bar.get_width() / 2.0, height + 20,
-            f"{val:.2f}",
-            ha="center", va="bottom", fontsize=10.5, fontweight="bold", color="#78350F"
-        )
-
-    # Despine clean academic borders
-    for ax in (ax1, ax2):
-        ax.spines["top"].set_visible(False)
-        ax.spines["right"].set_visible(False)
-        ax.tick_params(axis="both", length=4, width=0.8)
-
-    # -------------------------------------------------------------
-    # Overall Title and Subtitle / Footnote
-    # -------------------------------------------------------------
-    fig.suptitle(
-        "Figure: Hydrological Basin Decoupling (2023 vs. 2024 Flood Divergence)",
-        fontsize=13.0, fontweight="bold", y=0.98, color="#0F172A"
-    )
-
-    subtitle_text = (
-        "Empirical hydrological decoupling: In 2023, record White Nile inundation occurred while Aweil East experienced drought.\n"
-        "In 2024, River Lol flooded catastrophically while White Nile levels normalized, confirming independent catchment dynamics."
-    )
-    fig.text(
-        0.5, 0.02, subtitle_text, ha="center", va="bottom",
-        fontsize=8.8, color="#475569", linespacing=1.35
-    )
-
-    fig.subplots_adjust(left=0.09, right=0.94, top=0.83, bottom=0.17, wspace=0.32)
-
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(output_path, dpi=300, bbox_inches="tight")
-    print(f"Figure 1 successfully saved to: {output_path}")
+        svg_path = output_dir / "basin_decoupling_poster.svg"
+        png_path = output_dir / "basin_decoupling_poster.png"
+        fig.savefig(svg_path, bbox_inches="tight", transparent=True)
+        fig.savefig(png_path, dpi=300, bbox_inches="tight", transparent=True)
+        print(f"Figure 1 (poster-proof) saved to:\n  {svg_path}\n  {png_path}")
 
     return fig
 
@@ -371,11 +397,10 @@ def main() -> None:
     args = parser.parse_args()
 
     args.output_dir.mkdir(parents=True, exist_ok=True)
-    fig1_path = args.output_dir / "basin_decoupling_2023_2024.png"
     fig2_path = args.output_dir / "crop_phenology_vs_flood_timeline_clean.png"
 
-    print("Generating Figure 1: River Basin Decoupling...")
-    fig1 = generate_figure_basin_decoupling(fig1_path)
+    print("Generating Figure 1: River Basin Decoupling (A0-poster-proof)...")
+    fig1 = generate_figure_basin_decoupling(args.output_dir)
     plt.close(fig1)
 
     print("Generating Figure 2: Decluttered Crop Phenology vs. Flood Timeline...")
