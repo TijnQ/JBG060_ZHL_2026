@@ -320,9 +320,14 @@ def _audit_diagram1_bounds(fig, ax, cards, pills=()):
         lx, hx = min(px0, px1), max(px0, px1)
         ly, hy = min(py0, py1), max(py0, py1)
         cx, cy = (lx + hx) / 2, (ly + hy) / 2
-        card = next((c for c in cards if c["x"] <= cx <= c["x"] + c["w"]), None)
+        # Match the card by BOTH x and y span: the 2x2 flow grid has two cards
+        # sharing each x column (top and bottom row).
+        card = next((c for c in cards
+                     if c["x"] <= cx <= c["x"] + c["w"]
+                     and c["y"] <= cy <= c["y"] + c["h"]), None)
         if card is None:
-            problems.append(f"{s[:36]!r}: x {lx:.0f}..{hx:.0f} outside every card")
+            problems.append(f"{s[:36]!r}: x {lx:.0f}..{hx:.0f} y {ly:.0f}..{hy:.0f} "
+                            f"outside every card")
             continue
         if (lx < card["x"] + 4 or hx > card["x"] + card["w"] - 4
                 or ly < card["y"] + 2 or hy > card["y"] + card["h"] - 2):
@@ -342,18 +347,46 @@ def _audit_diagram1_bounds(fig, ax, cards, pills=()):
         print(f"  [Diagram 1][AUDIT] all {checked} text elements inside card/pill borders")
 
 
+def _draw_diagram1_arrows(ax) -> None:
+    """Draw the Diagram-1 connector arrows for the 2x2 flow grid.
+
+    Same 1 -> 2 -> 3 -> 4 flow order as the original single-row layout:
+    horizontal arrows within each row plus the 2 -> 3 wrap connector that
+    drops from the bottom of card 2, runs left through the row gap, and
+    enters the top of card 3. Line + triangle heads replicate the original
+    SVG marker geometry (4 px round-cap line, 7 px long / 5.6 px wide head).
+    """
+    def arrow_h(x1: float, x2: float, y: float) -> None:
+        ax.plot([x1, x2], [y, y], color="#0284C7", linewidth=_px(4),
+                solid_capstyle="round", zorder=5)
+        ax.add_patch(mpatches.Polygon(
+            [[x2 - 4.2, y - 2.8], [x2 + 2.8, y], [x2 - 4.2, y + 2.8]],
+            closed=True, facecolor="#0284C7", edgecolor="none", zorder=6))
+
+    arrow_h(380, 425, 185)   # Stage 1 -> Stage 2 (top row)
+    arrow_h(380, 425, 555)   # Stage 3 -> Stage 4 (bottom row)
+    # Stage 2 -> Stage 3 wrap connector through the 60 px row gap (340..400)
+    ax.plot([600, 600, 210, 210], [345, 370, 370, 390.2], color="#0284C7",
+            linewidth=_px(4), solid_capstyle="round", zorder=5)
+    ax.add_patch(mpatches.Polygon(
+        [[207.2, 386], [210, 393], [212.8, 386]],
+        closed=True, facecolor="#0284C7", edgecolor="none", zorder=6))
+
+
 def _render_diagram1_svg(svg_path: Path) -> None:
     """Render Diagram 1 (pipeline architecture) as a matplotlib vector SVG.
 
     Pure-Python replacement for the previous hand-authored SVG markup string:
-    the same 1600x380 design (four shadowed stage cards, rounded-top header
-    bars, tag pills, bullet lists, connector arrows) is reproduced 1:1.
-    All coordinates are the original SVG pixel values with y growing downward;
-    fonts and strokes are converted from px to pt (x 0.72 at 100 px/inch).
+    the four shadowed stage cards (rounded-top header bars, tag pills, bullet
+    lists) are arranged as a 2x2 flow grid -- stages 1-2 on the top row and
+    stages 3-4 directly beneath, still connected in 1 -> 2 -> 3 -> 4 order.
+    All coordinates are SVG pixel values with y growing downward; fonts and
+    strokes are converted from px to pt (x 0.72 at 100 px/inch). The canvas
+    background is fully transparent.
     """
-    W, H = 1600, 380
+    W, H = 820, 740
     stages = [
-        dict(x=45, w=330, hdr="#1E3A8A", dot="#2563EB",
+        dict(x=45, y=30, w=330, hdr="#1E3A8A", dot="#2563EB",
              tag_bg="#EFF6FF", tag_edge="#3B82F6", tag_fg="#1E40AF",
              title="STAGE 1: DATA PREPARATION", tag="Raw data \u2192 one clean weekly table",
              bullets=[
@@ -362,7 +395,7 @@ def _render_diagram1_svg(svg_path: Path) -> None:
                  ("Flood history & time-of-year,", "encoded as predictive features"),
                  ("No peeking ahead: only data", "known by forecast Friday"),
              ]),
-        dict(x=435, w=330, hdr="#0D9488", dot="#0D9488",
+        dict(x=435, y=30, w=330, hdr="#0D9488", dot="#0D9488",
              tag_bg="#F0FDFA", tag_edge="#14B8A6", tag_fg="#0F766E",
              title="STAGE 2: HAZARD ENGINE", tag="Level-1 \u00b7 County Probabilistic Engine",
              bullets=[
@@ -370,7 +403,7 @@ def _render_diagram1_svg(svg_path: Path) -> None:
                  ("Predicts flood occurrence probability", "& multi-horizon duration (1\u20134 wks)"),
                  ("Quantile area regression: q10 (best),", "q50 (median), q90 (worst)"),
              ]),
-        dict(x=825, w=330, hdr="#D97706", dot="#D97706",
+        dict(x=45, y=400, w=330, hdr="#D97706", dot="#D97706",
              tag_bg="#FFFBEB", tag_edge="#F59E0B", tag_fg="#B45309",
              title="STAGE 3: PIXEL DOWNSCALER", tag="Level-2 \u00b7 Spatial Allocation (~232m)",
              bullets=[
@@ -378,7 +411,7 @@ def _render_diagram1_svg(svg_path: Path) -> None:
                  ("Golden Rule: allocates WHERE water", "pools based on county q50"),
                  ("Coordinate snapping guarantees exact", "area conservation (0.0 km\u00b2 error)"),
              ]),
-        dict(x=1215, w=340, hdr="#DC2626", dot="#DC2626",
+        dict(x=435, y=400, w=340, hdr="#DC2626", dot="#DC2626",
              tag_bg="#FEF2F2", tag_edge="#EF4444", tag_fg="#B91C1C",
              title="STAGE 4: ASSET RISK OVERLAP", tag="Level-3 \u00b7 Humanitarian Early Action",
              bullets=[
@@ -394,10 +427,11 @@ def _render_diagram1_svg(svg_path: Path) -> None:
         ax.set_xlim(0, W)
         ax.set_ylim(H, 0)  # SVG y grows downward
         ax.axis("off")
-        ax.add_patch(mpatches.Rectangle((0, 0), W, H, facecolor="#F8FAFC",
+        # Transparent canvas: no figure/axes/rect fill behind the cards
+        ax.add_patch(mpatches.Rectangle((0, 0), W, H, facecolor="none",
                                         edgecolor="none", zorder=0))
         for stg in stages:
-            x, y, w, h = stg["x"], 30, stg["w"], 310
+            x, y, w, h = stg["x"], stg["y"], stg["w"], 310
             _soft_shadow(ax, x, y, w, h, 14, (4, 8, 12, 16),
                          (0.035, 0.028, 0.022, 0.015), zorder=1)
             ax.add_patch(mpatches.FancyBboxPatch(
@@ -422,19 +456,15 @@ def _render_diagram1_svg(svg_path: Path) -> None:
                 if line2:
                     ax.text(x + 60, cy + 24, line2, ha="left", va="baseline",
                             fontsize=_px(13), color="#334155", zorder=4)
-        # Connector arrows: line + triangle head replicating the SVG marker geometry
-        for x1, x2 in ((380, 425), (770, 815), (1160, 1205)):
-            ax.plot([x1, x2], [185, 185], color="#0284C7", linewidth=_px(4),
-                    solid_capstyle="round", zorder=5)
-            ax.add_patch(mpatches.Polygon(
-                [[x2 - 4.2, 182.2], [x2 + 2.8, 185], [x2 - 4.2, 187.8]],
-                closed=True, facecolor="#0284C7", edgecolor="none", zorder=6))
+        # Connector arrows (shared recipe with the PNG/PDF renderer)
+        _draw_diagram1_arrows(ax)
         # Self-check: every text element must sit inside its card / pill borders
         _audit_diagram1_bounds(
             fig, ax,
-            [{"x": s["x"], "y": 30, "w": s["w"], "h": 310} for s in stages],
-            pills=[{"x": s["x"] + 20, "y": 96, "w": s["w"] - 40, "h": 26} for s in stages])
-        fig.savefig(svg_path)
+            [{"x": s["x"], "y": s["y"], "w": s["w"], "h": 310} for s in stages],
+            pills=[{"x": s["x"] + 20, "y": s["y"] + 66, "w": s["w"] - 40, "h": 26}
+                   for s in stages])
+        fig.savefig(svg_path, transparent=True)
         plt.close(fig)
 
 
@@ -447,23 +477,25 @@ def generate_diagram1_pipeline(output_dir: Path) -> tuple[Path, Path, Path]:
     pdf_path = output_dir / "Diagram1_Pipeline_Architecture.pdf"
 
     # Vector SVG: rendered directly by matplotlib (pure Python; no hand-authored
-    # markup). The previous hand-written SVG design (1600x380) is reproduced 1:1;
-    # the PNG and PDF twins below mirror the same design at the same
-    # 100-units-per-inch scale. _audit_diagram1_bounds then verifies for BOTH
-    # renderers that no text overflows a card or tag-pill border.
+    # markup). The four stage cards are arranged as a 2x2 flow grid (stages 1-2
+    # top row, stages 3-4 bottom row); the PNG and PDF twins below mirror the
+    # same design at the same 100-units-per-inch scale.
+    # _audit_diagram1_bounds then verifies for BOTH renderers that no text
+    # overflows a card or tag-pill border.
     _render_diagram1_svg(svg_path)
 
     # Render high-resolution PNG & PDF via matplotlib to guarantee 300 DPI publication standards
-    fig, ax = plt.subplots(figsize=(16, 3.8), dpi=300)
+    fig, ax = plt.subplots(figsize=(8.2, 7.4), dpi=300)
     # Default subplot margins shrink the axes and scale x/y differently; force
     # the axes to fill the figure so 1 data unit = 1/100 inch, exactly like the
     # SVG renderer above (otherwise text renders ~29% too large and overflows).
     ax.set_position([0, 0, 1, 1])
-    ax.set_xlim(0, 1600)
-    ax.set_ylim(0, 380)
+    ax.set_xlim(0, 820)
+    ax.set_ylim(0, 740)
     ax.invert_yaxis()
     ax.axis("off")
-    ax.add_patch(mpatches.Rectangle((0, 0), 1600, 380, facecolor="#F8FAFC",
+    # Transparent canvas: no figure/axes/rect fill behind the cards
+    ax.add_patch(mpatches.Rectangle((0, 0), 820, 740, facecolor="none",
                                     edgecolor="none", zorder=0))
 
     # Matplotlib parallel rendering for PNG and PDF
@@ -488,7 +520,7 @@ def generate_diagram1_pipeline(output_dir: Path) -> tuple[Path, Path, Path]:
             ],
         },
         {
-            "x": 825, "y": 30, "w": 330, "h": 310, "color": "#D97706", "bg": "#FFFBEB", "tag_bg": "#FEF3C7",
+            "x": 45, "y": 400, "w": 330, "h": 310, "color": "#D97706", "bg": "#FFFBEB", "tag_bg": "#FEF3C7",
             "tag": "Level-2 · Spatial Allocation (~232m)", "title": "STAGE 3: PIXEL DOWNSCALER",
             "bullets": [
                 ["26-year conditional pixel climatology", "(MODIS MCDWD)"],
@@ -497,7 +529,7 @@ def generate_diagram1_pipeline(output_dir: Path) -> tuple[Path, Path, Path]:
             ],
         },
         {
-            "x": 1215, "y": 30, "w": 340, "h": 310, "color": "#DC2626", "bg": "#FEF2F2", "tag_bg": "#FEE2E2",
+            "x": 435, "y": 400, "w": 340, "h": 310, "color": "#DC2626", "bg": "#FEF2F2", "tag_bg": "#FEE2E2",
             "tag": "Level-3 · Humanitarian Early Action", "title": "STAGE 4: ASSET RISK OVERLAP",
             "bullets": [
                 ["Direct spatial raster multiplication"],
@@ -547,13 +579,8 @@ def generate_diagram1_pipeline(output_dir: Path) -> tuple[Path, Path, Path]:
                 ax.text(x + 60, cy + 24, lines[1], ha="left", va="baseline",
                         fontsize=_px(13), color="#334155", zorder=4)
 
-    # Connecting Arrows
-    for arrow_x in [385, 775, 1165]:
-        ax.annotate(
-            "", xy=(arrow_x + 40, 185), xytext=(arrow_x, 185),
-            arrowprops=dict(facecolor="#0284C7", edgecolor="#0284C7", width=3.0, headwidth=9.0),
-            zorder=5
-        )
+    # Connecting arrows (shared recipe with the SVG renderer)
+    _draw_diagram1_arrows(ax)
 
     # Self-check: every text element must sit inside its card / pill borders
     _audit_diagram1_bounds(
@@ -561,8 +588,8 @@ def generate_diagram1_pipeline(output_dir: Path) -> tuple[Path, Path, Path]:
         [{"x": s["x"], "y": s["y"], "w": s["w"], "h": s["h"]} for s in stages],
         pills=[{"x": s["x"] + 20, "y": s["y"] + 66, "w": s["w"] - 40, "h": 26} for s in stages])
 
-    fig.savefig(png_path, dpi=300, bbox_inches="tight")
-    fig.savefig(pdf_path, bbox_inches="tight")
+    fig.savefig(png_path, dpi=300, bbox_inches="tight", transparent=True)
+    fig.savefig(pdf_path, bbox_inches="tight", transparent=True)
     plt.close(fig)
 
     print(f"  [Diagram 1] Pipeline Architecture Diagram successfully exported to:\n    - {svg_path}\n    - {png_path}\n    - {pdf_path}")
