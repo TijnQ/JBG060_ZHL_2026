@@ -262,11 +262,10 @@ def generate_duration_skill_overview(output_dir: Path) -> tuple[Path, Path]:
     add_table_panel(
         ax_tbl,
         header=["Measure", "Week 1", "Week 2", "Week 3", "Week 4"],
-        rows=[["BSS vs. Climatology (%)"] + [f"+{dur.loc[h, 'bss_vs_climatology'] * 100:.1f}%" for h in (1, 2, 3, 4)],
-              ["BSS vs. Persistence (%)"] + [f"{dur.loc[h, 'bss_vs_persistence'] * 100:+.1f}%".replace("-", "\u2212") for h in (1, 2, 3, 4)],
-              ["Brier error"] + [f"{dur.loc[h, 'brier_score']:.4f}" for h in (1, 2, 3, 4)]],
-        col_widths=[0.28, 0.18, 0.18, 0.18, 0.18],
-        bbox=[0.03, 0.0, 0.94, 1.0],
+        rows=[["BSS vs. Persistence"] + [f"{dur.loc[h, 'bss_vs_persistence'] * 100:.1f}%".replace("-", "\u2212")
+                                         for h in (1, 2, 3, 4)]],
+        col_widths=[0.32, 0.17, 0.17, 0.17, 0.17],
+        bbox=[0.10, 0.34, 0.80, 0.34],
     )
 
     fig.suptitle("Stage 2 \u00b7 Flood Duration Skill by Lead Week (LightGBM)",
