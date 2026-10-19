@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8" standalone="no"?>
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
   "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-<svg xmlns:xlink="http://www.w3.org/1999/xlink" width="1107.36pt" height="693.36pt" viewBox="0 0 1107.36 693.36" xmlns="http://www.w3.org/2000/svg" version="1.1">
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" width="1107.36pt" height="597.312pt" viewBox="0 0 1107.36 597.312" xmlns="http://www.w3.org/2000/svg" version="1.1">
  <metadata>
   <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
    <cc:Work>
     <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
-    <dc:date>2026-10-19T18:19:04.161789</dc:date>
+    <dc:date>2026-10-19T20:11:55.540720</dc:date>
     <dc:format>image/svg+xml</dc:format>
     <dc:creator>
      <cc:Agent>
@@ -21,303 +21,303 @@
  </defs>
  <g id="figure_1">
   <g id="patch_1">
-   <path d="M 0 693.36 
-L 1107.36 693.36 
+   <path d="M 0 597.312 
+L 1107.36 597.312 
 L 1107.36 0 
 L 0 0 
-L 0 693.36 
+L 0 597.312 
 z
 " style="fill: none; opacity: 0"/>
   </g>
   <g id="axes_1">
    <g id="patch_2">
-    <path d="M 27.254312 370.097308 
-L 237.824587 370.097308 
-Q 252.865321 370.097308 252.865321 352.215 
-L 252.865321 107.823462 
-Q 252.865321 89.941154 237.824587 89.941154 
-L 27.254312 89.941154 
-Q 12.213578 89.941154 12.213578 107.823462 
-L 12.213578 352.215 
-Q 12.213578 370.097308 27.254312 370.097308 
+    <path d="M 27.254312 318.760615 
+L 237.824587 318.760615 
+Q 252.865321 318.760615 252.865321 303.408 
+L 252.865321 93.588923 
+Q 252.865321 78.236308 237.824587 78.236308 
+L 27.254312 78.236308 
+Q 12.213578 78.236308 12.213578 93.588923 
+L 12.213578 303.408 
+Q 12.213578 318.760615 27.254312 318.760615 
 z
-" clip-path="url(#p50d799c5f8)" style="fill: #ecfdf5; stroke: #059669; stroke-width: 2.5; stroke-linejoin: miter"/>
+" clip-path="url(#p2f74b61054)" style="fill: #ecfdf5; stroke: #059669; stroke-width: 2.5; stroke-linejoin: miter"/>
    </g>
    <g id="text_1">
-    <text style="font-weight: 700; font-size: 52px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #059669" x="132.53945" y="214.564135" transform="rotate(-0 132.53945 214.564135)">+34.8%</text>
+    <text style="font-weight: 700; font-size: 52px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #059669" x="132.53945" y="187.259519" transform="rotate(-0 132.53945 187.259519)">+34.8%</text>
    </g>
    <g id="text_2">
-    <text style="font-weight: 700; font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; fill: #363432" transform="translate(91.21445 295.411352)">BSS vs.</text>
-    <text style="font-weight: 700; font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; fill: #363432" transform="translate(65.550387 318.566821)">Climatology</text>
+    <text style="font-weight: 700; font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; fill: #363432" transform="translate(91.21445 253.771814)">BSS vs.</text>
+    <text style="font-weight: 700; font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; fill: #363432" transform="translate(65.550387 276.927282)">Climatology</text>
    </g>
   </g>
   <g id="axes_2">
    <g id="patch_3">
-    <path d="M 308.014679 370.097308 
-L 518.584954 370.097308 
-Q 533.625688 370.097308 533.625688 352.215 
-L 533.625688 107.823462 
-Q 533.625688 89.941154 518.584954 89.941154 
-L 308.014679 89.941154 
-Q 292.973945 89.941154 292.973945 107.823462 
-L 292.973945 352.215 
-Q 292.973945 370.097308 308.014679 370.097308 
+    <path d="M 308.014679 318.760615 
+L 518.584954 318.760615 
+Q 533.625688 318.760615 533.625688 303.408 
+L 533.625688 93.588923 
+Q 533.625688 78.236308 518.584954 78.236308 
+L 308.014679 78.236308 
+Q 292.973945 78.236308 292.973945 93.588923 
+L 292.973945 303.408 
+Q 292.973945 318.760615 308.014679 318.760615 
 z
-" clip-path="url(#pc16ae67300)" style="fill: #e8eef2; stroke: #1e3f52; stroke-width: 2.5; stroke-linejoin: miter"/>
+" clip-path="url(#pdf658f826f)" style="fill: #ecfdf5; stroke: #059669; stroke-width: 2.5; stroke-linejoin: miter"/>
    </g>
    <g id="text_3">
-    <text style="font-weight: 700; font-size: 52px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #1e3f52" x="413.299817" y="214.564135" transform="rotate(-0 413.299817 214.564135)">+60.3%</text>
+    <text style="font-weight: 700; font-size: 52px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #059669" x="413.299817" y="187.259519" transform="rotate(-0 413.299817 187.259519)">+60.3%</text>
    </g>
    <g id="text_4">
-    <text style="font-weight: 700; font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; fill: #363432" transform="translate(311.848254 295.411352)">Pinball Skill Score</text>
-    <text style="font-weight: 700; font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; fill: #363432" transform="translate(326.560754 318.566821)">vs. Climatology</text>
+    <text style="font-weight: 700; font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; fill: #363432" transform="translate(311.848254 253.771814)">Pinball Skill Score</text>
+    <text style="font-weight: 700; font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; fill: #363432" transform="translate(326.560754 276.927282)">vs. Climatology</text>
    </g>
   </g>
   <g id="axes_3">
    <g id="patch_4">
-    <path d="M 588.775046 370.097308 
-L 799.345321 370.097308 
-Q 814.386055 370.097308 814.386055 352.215 
-L 814.386055 107.823462 
-Q 814.386055 89.941154 799.345321 89.941154 
-L 588.775046 89.941154 
-Q 573.734312 89.941154 573.734312 107.823462 
-L 573.734312 352.215 
-Q 573.734312 370.097308 588.775046 370.097308 
+    <path d="M 588.775046 318.760615 
+L 799.345321 318.760615 
+Q 814.386055 318.760615 814.386055 303.408 
+L 814.386055 93.588923 
+Q 814.386055 78.236308 799.345321 78.236308 
+L 588.775046 78.236308 
+Q 573.734312 78.236308 573.734312 93.588923 
+L 573.734312 303.408 
+Q 573.734312 318.760615 588.775046 318.760615 
 z
-" clip-path="url(#p786a4d9b5c)" style="fill: #faece5; stroke: #d96b43; stroke-width: 2.5; stroke-linejoin: miter"/>
+" clip-path="url(#p270ac7f8bd)" style="fill: #ecfdf5; stroke: #059669; stroke-width: 2.5; stroke-linejoin: miter"/>
    </g>
    <g id="text_5">
-    <text style="font-weight: 700; font-size: 52px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #d96b43" x="694.060183" y="214.564135" transform="rotate(-0 694.060183 214.564135)">+21.7%</text>
+    <text style="font-weight: 700; font-size: 52px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #059669" x="694.060183" y="187.259519" transform="rotate(-0 694.060183 187.259519)">+21.7%</text>
    </g>
    <g id="text_6">
-    <text style="font-weight: 700; font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; fill: #363432" transform="translate(652.735183 295.489477)">BSS vs.</text>
-    <text style="font-weight: 700; font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; fill: #363432" transform="translate(628.292996 318.644946)">Persistence</text>
+    <text style="font-weight: 700; font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; fill: #363432" transform="translate(652.735183 253.849939)">BSS vs.</text>
+    <text style="font-weight: 700; font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; fill: #363432" transform="translate(628.292996 277.005407)">Persistence</text>
    </g>
   </g>
   <g id="axes_4">
    <g id="patch_5">
-    <path d="M 869.535413 370.097308 
-L 1080.105688 370.097308 
-Q 1095.146422 370.097308 1095.146422 352.215 
-L 1095.146422 107.823462 
-Q 1095.146422 89.941154 1080.105688 89.941154 
-L 869.535413 89.941154 
-Q 854.494679 89.941154 854.494679 107.823462 
-L 854.494679 352.215 
-Q 854.494679 370.097308 869.535413 370.097308 
+    <path d="M 869.535413 318.760615 
+L 1080.105688 318.760615 
+Q 1095.146422 318.760615 1095.146422 303.408 
+L 1095.146422 93.588923 
+Q 1095.146422 78.236308 1080.105688 78.236308 
+L 869.535413 78.236308 
+Q 854.494679 78.236308 854.494679 93.588923 
+L 854.494679 303.408 
+Q 854.494679 318.760615 869.535413 318.760615 
 z
-" clip-path="url(#peed16def92)" style="fill: #ecfdf5; stroke: #059669; stroke-width: 2.5; stroke-linejoin: miter"/>
+" clip-path="url(#pedc8a65e7f)" style="fill: #ecfdf5; stroke: #059669; stroke-width: 2.5; stroke-linejoin: miter"/>
    </g>
    <g id="text_7">
-    <text style="font-weight: 700; font-size: 52px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #059669" x="974.82055" y="214.564135" transform="rotate(-0 974.82055 214.564135)">+27.8%</text>
+    <text style="font-weight: 700; font-size: 52px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #059669" x="974.82055" y="187.259519" transform="rotate(-0 974.82055 187.259519)">+27.8%</text>
    </g>
    <g id="text_8">
-    <text style="font-weight: 700; font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; fill: #363432" transform="translate(873.368988 295.489477)">Pinball Skill Score</text>
-    <text style="font-weight: 700; font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; fill: #363432" transform="translate(889.303363 318.644946)">vs. Persistence</text>
+    <text style="font-weight: 700; font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; fill: #363432" transform="translate(873.368988 253.849939)">Pinball Skill Score</text>
+    <text style="font-weight: 700; font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; fill: #363432" transform="translate(889.303363 277.005407)">vs. Persistence</text>
    </g>
   </g>
   <g id="axes_5">
    <g id="table_1">
     <g id="patch_6">
-     <path d="M 39.9888 496.929231 
-L 173.548512 496.929231 
-L 173.548512 402.313846 
-L 39.9888 402.313846 
+     <path d="M 39.9888 427.650462 
+L 173.548512 427.650462 
+L 173.548512 346.419692 
+L 39.9888 346.419692 
 z
 " style="fill: #1e3f52; stroke: #cbd5e1; stroke-linejoin: miter"/>
     </g>
     <g id="text_9">
-     <text style="font-weight: 700; font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #ffffff" x="106.768656" y="455.140288" transform="rotate(-0 106.768656 455.140288)">Measure</text>
+     <text style="font-weight: 700; font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #ffffff" x="106.768656" y="392.553827" transform="rotate(-0 106.768656 392.553827)">Measure</text>
     </g>
     <g id="patch_7">
-     <path d="M 173.548512 496.929231 
-L 322.51896 496.929231 
-L 322.51896 402.313846 
-L 173.548512 402.313846 
+     <path d="M 173.548512 427.650462 
+L 322.51896 427.650462 
+L 322.51896 346.419692 
+L 173.548512 346.419692 
 z
 " style="fill: #1e3f52; stroke: #cbd5e1; stroke-linejoin: miter"/>
     </g>
     <g id="text_10">
-     <text style="font-weight: 700; font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #ffffff" x="248.033736" y="455.062163" transform="rotate(-0 248.033736 455.062163)">Climatology</text>
+     <text style="font-weight: 700; font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #ffffff" x="248.033736" y="392.475702" transform="rotate(-0 248.033736 392.475702)">Climatology</text>
     </g>
     <g id="patch_8">
-     <path d="M 322.51896 496.929231 
-L 471.489408 496.929231 
-L 471.489408 402.313846 
-L 322.51896 402.313846 
+     <path d="M 322.51896 427.650462 
+L 471.489408 427.650462 
+L 471.489408 346.419692 
+L 322.51896 346.419692 
 z
 " style="fill: #1e3f52; stroke: #cbd5e1; stroke-linejoin: miter"/>
     </g>
     <g id="text_11">
-     <text style="font-weight: 700; font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #ffffff" x="397.004184" y="455.140288" transform="rotate(-0 397.004184 455.140288)">Persistence</text>
+     <text style="font-weight: 700; font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #ffffff" x="397.004184" y="392.553827" transform="rotate(-0 397.004184 392.553827)">Persistence</text>
     </g>
     <g id="patch_9">
-     <path d="M 471.489408 496.929231 
-L 594.775296 496.929231 
-L 594.775296 402.313846 
-L 471.489408 402.313846 
+     <path d="M 471.489408 427.650462 
+L 594.775296 427.650462 
+L 594.775296 346.419692 
+L 471.489408 346.419692 
 z
 " style="fill: #1e3f52; stroke: #cbd5e1; stroke-linejoin: miter"/>
     </g>
     <g id="text_12">
-     <text style="font-weight: 700; font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #ffffff" x="533.132352" y="455.140288" transform="rotate(-0 533.132352 455.140288)">Model</text>
+     <text style="font-weight: 700; font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #ffffff" x="533.132352" y="392.553827" transform="rotate(-0 533.132352 392.553827)">Model</text>
     </g>
     <g id="patch_10">
-     <path d="M 594.775296 496.929231 
-L 831.073248 496.929231 
-L 831.073248 402.313846 
-L 594.775296 402.313846 
+     <path d="M 594.775296 427.650462 
+L 831.073248 427.650462 
+L 831.073248 346.419692 
+L 594.775296 346.419692 
 z
 " style="fill: #1e3f52; stroke: #cbd5e1; stroke-linejoin: miter"/>
     </g>
     <g id="text_13">
-     <text style="font-weight: 700; font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; fill: #ffffff" transform="translate(658.983647 443.864351)">Model vs.</text>
-     <text style="font-weight: 700; font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; fill: #ffffff" transform="translate(645.935209 466.259976)">Climatology</text>
+     <text style="font-weight: 700; font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; fill: #ffffff" transform="translate(658.983647 381.277889)">Model vs.</text>
+     <text style="font-weight: 700; font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; fill: #ffffff" transform="translate(645.935209 403.673514)">Climatology</text>
     </g>
     <g id="patch_11">
-     <path d="M 831.073248 496.929231 
-L 1067.3712 496.929231 
-L 1067.3712 402.313846 
-L 831.073248 402.313846 
+     <path d="M 831.073248 427.650462 
+L 1067.3712 427.650462 
+L 1067.3712 346.419692 
+L 831.073248 346.419692 
 z
 " style="fill: #1e3f52; stroke: #cbd5e1; stroke-linejoin: miter"/>
     </g>
     <g id="text_14">
-     <text style="font-weight: 700; font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; fill: #ffffff" transform="translate(895.281599 443.942476)">Model vs.</text>
-     <text style="font-weight: 700; font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; fill: #ffffff" transform="translate(883.455036 466.338101)">Persistence</text>
+     <text style="font-weight: 700; font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; fill: #ffffff" transform="translate(895.281599 381.356014)">Model vs.</text>
+     <text style="font-weight: 700; font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; fill: #ffffff" transform="translate(883.455036 403.751639)">Persistence</text>
     </g>
     <g id="patch_12">
-     <path d="M 39.9888 591.544615 
-L 173.548512 591.544615 
-L 173.548512 496.929231 
-L 39.9888 496.929231 
+     <path d="M 39.9888 508.881231 
+L 173.548512 508.881231 
+L 173.548512 427.650462 
+L 39.9888 427.650462 
 z
 " style="fill: #ffffff; stroke: #cbd5e1; stroke-linejoin: miter"/>
     </g>
     <g id="text_15">
-     <text style="font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #363432" x="106.768656" y="549.755673" transform="rotate(-0 106.768656 549.755673)">Brier</text>
+     <text style="font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #363432" x="106.768656" y="473.784596" transform="rotate(-0 106.768656 473.784596)">Brier</text>
     </g>
     <g id="patch_13">
-     <path d="M 173.548512 591.544615 
-L 322.51896 591.544615 
-L 322.51896 496.929231 
-L 173.548512 496.929231 
+     <path d="M 173.548512 508.881231 
+L 322.51896 508.881231 
+L 322.51896 427.650462 
+L 173.548512 427.650462 
 z
 " style="fill: #ffffff; stroke: #cbd5e1; stroke-linejoin: miter"/>
     </g>
     <g id="text_16">
-     <text style="font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #363432" x="248.033736" y="549.755673" transform="rotate(-0 248.033736 549.755673)">0.0996</text>
+     <text style="font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #363432" x="248.033736" y="473.784596" transform="rotate(-0 248.033736 473.784596)">0.0996</text>
     </g>
     <g id="patch_14">
-     <path d="M 322.51896 591.544615 
-L 471.489408 591.544615 
-L 471.489408 496.929231 
-L 322.51896 496.929231 
+     <path d="M 322.51896 508.881231 
+L 471.489408 508.881231 
+L 471.489408 427.650462 
+L 322.51896 427.650462 
 z
 " style="fill: #ffffff; stroke: #cbd5e1; stroke-linejoin: miter"/>
     </g>
     <g id="text_17">
-     <text style="font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #363432" x="397.004184" y="549.755673" transform="rotate(-0 397.004184 549.755673)">0.0830</text>
+     <text style="font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #363432" x="397.004184" y="473.784596" transform="rotate(-0 397.004184 473.784596)">0.0830</text>
     </g>
     <g id="patch_15">
-     <path d="M 471.489408 591.544615 
-L 594.775296 591.544615 
-L 594.775296 496.929231 
-L 471.489408 496.929231 
+     <path d="M 471.489408 508.881231 
+L 594.775296 508.881231 
+L 594.775296 427.650462 
+L 471.489408 427.650462 
 z
 " style="fill: #ffffff; stroke: #cbd5e1; stroke-linejoin: miter"/>
     </g>
     <g id="text_18">
-     <text style="font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #363432" x="533.132352" y="549.755673" transform="rotate(-0 533.132352 549.755673)">0.0650</text>
+     <text style="font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #363432" x="533.132352" y="473.784596" transform="rotate(-0 533.132352 473.784596)">0.0650</text>
     </g>
     <g id="patch_16">
-     <path d="M 594.775296 591.544615 
-L 831.073248 591.544615 
-L 831.073248 496.929231 
-L 594.775296 496.929231 
+     <path d="M 594.775296 508.881231 
+L 831.073248 508.881231 
+L 831.073248 427.650462 
+L 594.775296 427.650462 
 z
 " style="fill: #ffffff; stroke: #cbd5e1; stroke-linejoin: miter"/>
     </g>
     <g id="text_19">
-     <text style="font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #363432" x="712.924272" y="549.755673" transform="rotate(-0 712.924272 549.755673)">+34.8%</text>
+     <text style="font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #363432" x="712.924272" y="473.784596" transform="rotate(-0 712.924272 473.784596)">+34.8%</text>
     </g>
     <g id="patch_17">
-     <path d="M 831.073248 591.544615 
-L 1067.3712 591.544615 
-L 1067.3712 496.929231 
-L 831.073248 496.929231 
+     <path d="M 831.073248 508.881231 
+L 1067.3712 508.881231 
+L 1067.3712 427.650462 
+L 831.073248 427.650462 
 z
 " style="fill: #ffffff; stroke: #cbd5e1; stroke-linejoin: miter"/>
     </g>
     <g id="text_20">
-     <text style="font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #363432" x="949.222224" y="549.755673" transform="rotate(-0 949.222224 549.755673)">+21.7%</text>
+     <text style="font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #363432" x="949.222224" y="473.784596" transform="rotate(-0 949.222224 473.784596)">+21.7%</text>
     </g>
     <g id="patch_18">
-     <path d="M 39.9888 686.16 
-L 173.548512 686.16 
-L 173.548512 591.544615 
-L 39.9888 591.544615 
+     <path d="M 39.9888 590.112 
+L 173.548512 590.112 
+L 173.548512 508.881231 
+L 39.9888 508.881231 
 z
 " style="fill: #f8fafc; stroke: #cbd5e1; stroke-linejoin: miter"/>
     </g>
     <g id="text_21">
-     <text style="font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #363432" x="106.768656" y="644.371058" transform="rotate(-0 106.768656 644.371058)">Pinball loss</text>
+     <text style="font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #363432" x="106.768656" y="555.015365" transform="rotate(-0 106.768656 555.015365)">Pinball loss</text>
     </g>
     <g id="patch_19">
-     <path d="M 173.548512 686.16 
-L 322.51896 686.16 
-L 322.51896 591.544615 
-L 173.548512 591.544615 
+     <path d="M 173.548512 590.112 
+L 322.51896 590.112 
+L 322.51896 508.881231 
+L 173.548512 508.881231 
 z
 " style="fill: #f8fafc; stroke: #cbd5e1; stroke-linejoin: miter"/>
     </g>
     <g id="text_22">
-     <text style="font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #363432" x="248.033736" y="644.371058" transform="rotate(-0 248.033736 644.371058)">1.727</text>
+     <text style="font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #363432" x="248.033736" y="555.015365" transform="rotate(-0 248.033736 555.015365)">1.727</text>
     </g>
     <g id="patch_20">
-     <path d="M 322.51896 686.16 
-L 471.489408 686.16 
-L 471.489408 591.544615 
-L 322.51896 591.544615 
+     <path d="M 322.51896 590.112 
+L 471.489408 590.112 
+L 471.489408 508.881231 
+L 322.51896 508.881231 
 z
 " style="fill: #f8fafc; stroke: #cbd5e1; stroke-linejoin: miter"/>
     </g>
     <g id="text_23">
-     <text style="font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #363432" x="397.004184" y="644.371058" transform="rotate(-0 397.004184 644.371058)">0.949</text>
+     <text style="font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #363432" x="397.004184" y="555.015365" transform="rotate(-0 397.004184 555.015365)">0.949</text>
     </g>
     <g id="patch_21">
-     <path d="M 471.489408 686.16 
-L 594.775296 686.16 
-L 594.775296 591.544615 
-L 471.489408 591.544615 
+     <path d="M 471.489408 590.112 
+L 594.775296 590.112 
+L 594.775296 508.881231 
+L 471.489408 508.881231 
 z
 " style="fill: #f8fafc; stroke: #cbd5e1; stroke-linejoin: miter"/>
     </g>
     <g id="text_24">
-     <text style="font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #363432" x="533.132352" y="644.371058" transform="rotate(-0 533.132352 644.371058)">0.685</text>
+     <text style="font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #363432" x="533.132352" y="555.015365" transform="rotate(-0 533.132352 555.015365)">0.685</text>
     </g>
     <g id="patch_22">
-     <path d="M 594.775296 686.16 
-L 831.073248 686.16 
-L 831.073248 591.544615 
-L 594.775296 591.544615 
+     <path d="M 594.775296 590.112 
+L 831.073248 590.112 
+L 831.073248 508.881231 
+L 594.775296 508.881231 
 z
 " style="fill: #f8fafc; stroke: #cbd5e1; stroke-linejoin: miter"/>
     </g>
     <g id="text_25">
-     <text style="font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #363432" x="712.924272" y="644.371058" transform="rotate(-0 712.924272 644.371058)">+60.3%</text>
+     <text style="font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #363432" x="712.924272" y="555.015365" transform="rotate(-0 712.924272 555.015365)">+60.3%</text>
     </g>
     <g id="patch_23">
-     <path d="M 831.073248 686.16 
-L 1067.3712 686.16 
-L 1067.3712 591.544615 
-L 831.073248 591.544615 
+     <path d="M 831.073248 590.112 
+L 1067.3712 590.112 
+L 1067.3712 508.881231 
+L 831.073248 508.881231 
 z
 " style="fill: #f8fafc; stroke: #cbd5e1; stroke-linejoin: miter"/>
     </g>
     <g id="text_26">
-     <text style="font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #363432" x="949.222224" y="644.371058" transform="rotate(-0 949.222224 644.371058)">+27.8%</text>
+     <text style="font-size: 20px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #363432" x="949.222224" y="555.015365" transform="rotate(-0 949.222224 555.015365)">+27.8%</text>
     </g>
    </g>
   </g>
@@ -326,17 +326,17 @@ z
   </g>
  </g>
  <defs>
-  <clipPath id="p50d799c5f8">
-   <rect x="7.2" y="81" width="250.678899" height="298.038462"/>
+  <clipPath id="p2f74b61054">
+   <rect x="7.2" y="70.56" width="250.678899" height="255.876923"/>
   </clipPath>
-  <clipPath id="pc16ae67300">
-   <rect x="287.960367" y="81" width="250.678899" height="298.038462"/>
+  <clipPath id="pdf658f826f">
+   <rect x="287.960367" y="70.56" width="250.678899" height="255.876923"/>
   </clipPath>
-  <clipPath id="p786a4d9b5c">
-   <rect x="568.720734" y="81" width="250.678899" height="298.038462"/>
+  <clipPath id="p270ac7f8bd">
+   <rect x="568.720734" y="70.56" width="250.678899" height="255.876923"/>
   </clipPath>
-  <clipPath id="peed16def92">
-   <rect x="849.481101" y="81" width="250.678899" height="298.038462"/>
+  <clipPath id="pedc8a65e7f">
+   <rect x="849.481101" y="70.56" width="250.678899" height="255.876923"/>
   </clipPath>
  </defs>
 </svg>

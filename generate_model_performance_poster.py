@@ -38,6 +38,7 @@ import pandas as pd
 REPO_ROOT = Path(__file__).resolve().parent
 METRICS_CSV = REPO_ROOT / "LightGBM_v1" / "outputs" / "outputs_fe" / "tables" / "cv_metrics_summary_aweil.csv"
 PIXEL_PERF_MD = REPO_ROOT / "climatology_maps" / "outputs" / "forecast_maps" / "PIXEL_PERFORMANCE.md"
+DURATION_CSV = REPO_ROOT / "LightGBM_v1" / "outputs" / "outputs_fe" / "tables" / "duration_metrics_aweil.csv"
 POSTER_DIR = REPO_ROOT / "poster_visuals" / "model_performance"
 
 TEXT = "#363432"     # dark anthracite: body text
@@ -45,7 +46,8 @@ TITLE = "#1E3F52"    # deep slate blue: titles
 C_GREEN = "#059669"  # green card accent
 C_BLUE = "#1E3F52"   # deep slate blue card accent
 C_ORANGE = "#D96B43" # coral/amber card accent
-TINT = {"#059669": "#ECFDF5", "#1E3F52": "#E8EEF2", "#D96B43": "#FAECE5"}
+TINT = {"#059669": "#ECFDF5", "#1E3F52": "#E8EEF2", "#D96B43": "#FAECE5",
+        "#CA8A04": "#FEF9C3", "#EA580C": "#FFEDD5", "#DC2626": "#FEE2E2"}
 
 
 def set_style() -> None:
@@ -70,6 +72,12 @@ def load_model1_pooled() -> pd.DataFrame:
     """Pooled out-of-fold metrics for LightGBM vs. baselines (county level)."""
     df = pd.read_csv(METRICS_CSV)
     return df[df["scope"] == "pooled"].set_index("model")
+
+
+def load_duration_pooled() -> pd.DataFrame:
+    """Pooled duration-head metrics per lead week (h1..h4), LightGBM vs. baselines."""
+    df = pd.read_csv(DURATION_CSV)
+    return df[df["scope"] == "pooled"].set_index("horizon_weeks")
 
 
 def load_pixel_metrics() -> dict:
@@ -138,16 +146,16 @@ def generate_model1_overview(output_dir: Path) -> tuple[Path, Path]:
     pinball_cut = (1 - lgbm["mean_pinball_loss"] / clim["mean_pinball_loss"]) * 100
     pinball_cut_pers = (1 - lgbm["mean_pinball_loss"] / persist["mean_pinball_loss"]) * 100
 
-    fig = plt.figure(figsize=(16.5, 10.25), dpi=300)
+    fig = plt.figure(figsize=(16.5, 8.8), dpi=300)
     fig.patch.set_alpha(0.0)
     gs = fig.add_gridspec(2, 4, height_ratios=[1.05, 1.0], hspace=0.08, wspace=0.12)
 
     draw_stat_card(fig.add_subplot(gs[0, 0]), f"+{bss_clim:.1f}%",
                    "BSS vs.\nClimatology", C_GREEN)
     draw_stat_card(fig.add_subplot(gs[0, 1]), f"+{pinball_cut:.1f}%",
-                   "Pinball Skill Score\nvs. Climatology", C_BLUE)
+                   "Pinball Skill Score\nvs. Climatology", C_GREEN)
     draw_stat_card(fig.add_subplot(gs[0, 2]), f"+{bss_pers:.1f}%",
-                   "BSS vs.\nPersistence", C_ORANGE)
+                   "BSS vs.\nPersistence", C_GREEN)
     draw_stat_card(fig.add_subplot(gs[0, 3]), f"+{pinball_cut_pers:.1f}%",
                    "Pinball Skill Score\nvs. Persistence", C_GREEN)
 
@@ -228,6 +236,51 @@ def generate_model2_overview(output_dir: Path) -> tuple[Path, Path]:
     return png_path, svg_path
 
 
+def generate_duration_skill_overview(output_dir: Path) -> tuple[Path, Path]:
+    """Stage 2 duration heads: one card per lead week, green -> red by horizon.
+
+    Values are the pooled out-of-fold BSS vs. climatology per duration head
+    (h1..h4) from duration_metrics_aweil.csv. Card colours encode lead-time
+    difficulty (green = near-term, red = farthest horizon): the raw Brier
+    error rises monotonically with lead (+16.7% from Week 1 to Week 4).
+    """
+    dur = load_duration_pooled()
+    gradient = [C_GREEN, "#CA8A04", "#EA580C", "#DC2626"]  # green -> red
+
+    fig = plt.figure(figsize=(16.5, 8.8), dpi=300)
+    fig.patch.set_alpha(0.0)
+    gs = fig.add_gridspec(2, 4, height_ratios=[1.05, 1.0], hspace=0.08, wspace=0.12)
+
+    for i, h in enumerate((1, 2, 3, 4)):
+        bss = dur.loc[h, "bss_vs_climatology"] * 100
+        draw_stat_card(fig.add_subplot(gs[0, i]), f"+{bss:.1f}%",
+                       f"BSS vs. Climatology\nWeek {h} Forecast",
+                       gradient[i])
+
+    ax_tbl = fig.add_subplot(gs[1, :])
+    add_table_panel(
+        ax_tbl,
+        header=["Measure", "Week 1", "Week 2", "Week 3", "Week 4"],
+        rows=[["BSS vs. Climatology (%)"] + [f"+{dur.loc[h, 'bss_vs_climatology'] * 100:.1f}%" for h in (1, 2, 3, 4)],
+              ["BSS vs. Persistence (%)"] + [f"+{dur.loc[h, 'bss_vs_persistence'] * 100:.1f}%" for h in (1, 2, 3, 4)],
+              ["Brier error"] + [f"{dur.loc[h, 'brier_score']:.4f}" for h in (1, 2, 3, 4)]],
+        col_widths=[0.28, 0.18, 0.18, 0.18, 0.18],
+        bbox=[0.03, 0.0, 0.94, 1.0],
+    )
+
+    fig.suptitle("Stage 2 \u00b7 Flood Duration Skill by Lead Week (LightGBM)",
+                 fontsize=22, fontweight="bold", y=0.98, color=TITLE)
+    fig.subplots_adjust(left=0.04, right=0.96, top=0.88, bottom=0.06)
+
+    png_path = output_dir / "model1_duration_skill_by_week.png"
+    svg_path = output_dir / "model1_duration_skill_by_week.svg"
+    fig.savefig(png_path, dpi=300, bbox_inches="tight", transparent=True)
+    fig.savefig(svg_path, bbox_inches="tight", transparent=True)
+    plt.close(fig)
+    print(f"  [Stage 2] duration skill by lead week exported to:\n    - {png_path}\n    - {svg_path}")
+    return png_path, svg_path
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Generate model performance overview visuals.")
     parser.add_argument("--output-dir", "-o", type=Path, default=POSTER_DIR,
@@ -237,6 +290,7 @@ def main() -> None:
     set_style()
     generate_model1_overview(args.output_dir)
     generate_model2_overview(args.output_dir)
+    generate_duration_skill_overview(args.output_dir)
 
 
 if __name__ == "__main__":
