@@ -6,7 +6,7 @@
   <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
    <cc:Work>
     <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
-    <dc:date>2026-10-19T18:07:16.146398</dc:date>
+    <dc:date>2026-10-19T18:19:04.161789</dc:date>
     <dc:format>image/svg+xml</dc:format>
     <dc:creator>
      <cc:Agent>
@@ -41,7 +41,7 @@ Q 12.213578 89.941154 12.213578 107.823462
 L 12.213578 352.215 
 Q 12.213578 370.097308 27.254312 370.097308 
 z
-" clip-path="url(#p2d90d23623)" style="fill: #ecfdf5; stroke: #059669; stroke-width: 2.5; stroke-linejoin: miter"/>
+" clip-path="url(#p50d799c5f8)" style="fill: #ecfdf5; stroke: #059669; stroke-width: 2.5; stroke-linejoin: miter"/>
    </g>
    <g id="text_1">
     <text style="font-weight: 700; font-size: 52px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #059669" x="132.53945" y="214.564135" transform="rotate(-0 132.53945 214.564135)">+34.8%</text>
@@ -63,7 +63,7 @@ Q 292.973945 89.941154 292.973945 107.823462
 L 292.973945 352.215 
 Q 292.973945 370.097308 308.014679 370.097308 
 z
-" clip-path="url(#p965227921a)" style="fill: #e8eef2; stroke: #1e3f52; stroke-width: 2.5; stroke-linejoin: miter"/>
+" clip-path="url(#pc16ae67300)" style="fill: #e8eef2; stroke: #1e3f52; stroke-width: 2.5; stroke-linejoin: miter"/>
    </g>
    <g id="text_3">
     <text style="font-weight: 700; font-size: 52px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #1e3f52" x="413.299817" y="214.564135" transform="rotate(-0 413.299817 214.564135)">+60.3%</text>
@@ -85,7 +85,7 @@ Q 573.734312 89.941154 573.734312 107.823462
 L 573.734312 352.215 
 Q 573.734312 370.097308 588.775046 370.097308 
 z
-" clip-path="url(#pd38028d8dc)" style="fill: #faece5; stroke: #d96b43; stroke-width: 2.5; stroke-linejoin: miter"/>
+" clip-path="url(#p786a4d9b5c)" style="fill: #faece5; stroke: #d96b43; stroke-width: 2.5; stroke-linejoin: miter"/>
    </g>
    <g id="text_5">
     <text style="font-weight: 700; font-size: 52px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #d96b43" x="694.060183" y="214.564135" transform="rotate(-0 694.060183 214.564135)">+21.7%</text>
@@ -107,7 +107,7 @@ Q 854.494679 89.941154 854.494679 107.823462
 L 854.494679 352.215 
 Q 854.494679 370.097308 869.535413 370.097308 
 z
-" clip-path="url(#pbc9db74c8e)" style="fill: #ecfdf5; stroke: #059669; stroke-width: 2.5; stroke-linejoin: miter"/>
+" clip-path="url(#peed16def92)" style="fill: #ecfdf5; stroke: #059669; stroke-width: 2.5; stroke-linejoin: miter"/>
    </g>
    <g id="text_7">
     <text style="font-weight: 700; font-size: 52px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #059669" x="974.82055" y="214.564135" transform="rotate(-0 974.82055 214.564135)">+27.8%</text>
@@ -322,20 +322,20 @@ z
    </g>
   </g>
   <g id="text_27">
-   <text style="font-weight: 700; font-size: 22px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #1e3f52" x="553.68" y="23.916562" transform="rotate(-0 553.68 23.916562)">Model 1 · County Flood Forecast (LightGBM)</text>
+   <text style="font-weight: 700; font-size: 22px; font-family: 'Open Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #1e3f52" x="553.68" y="23.916562" transform="rotate(-0 553.68 23.916562)">Stage 2 · County Flood Forecast (LightGBM)</text>
   </g>
  </g>
  <defs>
-  <clipPath id="p2d90d23623">
+  <clipPath id="p50d799c5f8">
    <rect x="7.2" y="81" width="250.678899" height="298.038462"/>
   </clipPath>
-  <clipPath id="p965227921a">
+  <clipPath id="pc16ae67300">
    <rect x="287.960367" y="81" width="250.678899" height="298.038462"/>
   </clipPath>
-  <clipPath id="pd38028d8dc">
+  <clipPath id="p786a4d9b5c">
    <rect x="568.720734" y="81" width="250.678899" height="298.038462"/>
   </clipPath>
-  <clipPath id="pbc9db74c8e">
+  <clipPath id="peed16def92">
    <rect x="849.481101" y="81" width="250.678899" height="298.038462"/>
   </clipPath>
  </defs>
