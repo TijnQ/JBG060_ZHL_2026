@@ -34,7 +34,8 @@ Outputs (per forecast week): one PNG per asset showing the three ingredients
 side by side — Level-2 flood probability | asset map | expected exposure for
 the forecast week (duration heads stay in the table) — plus
 ``forecast_risk_summary.csv`` (county x horizon expected exposures and
-shares of the mapped totals).
+shares of the mapped totals). The PNG background outside the Northern Bahr
+el Ghazal study region is transparent so the figures overlay cleanly.
 
 Run the synthetic-data checks with: python -m risk_exposure.check_forecast_risk_map
 """
@@ -49,7 +50,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import rasterio
+from affine import Affine
 from matplotlib.colors import LogNorm
+from rasterio.features import rasterize
 from rasterio.windows import from_bounds
 
 from climatology_maps.forecast_maps import (
@@ -347,6 +350,23 @@ def _native_extent(layer: dict) -> tuple[float, float, float, float]:
     return left, left + transform.a * ncols, top + transform.e * nrows, top
 
 
+def _region_alpha(
+    boundaries: gpd.GeoDataFrame, transform: Affine, shape: tuple[int, int]
+) -> np.ndarray:
+    """1.0 inside the mapped county polygons, 0.0 outside.
+
+    A cell counts as inside when its centre falls in one of the polygons —
+    the same centre rule the exposure rasters use — so the alpha mask hugs
+    the drawn county outlines and everything outside the Northern Bahr el
+    Ghazal study region exports fully transparent.
+    """
+    inside = rasterize(
+        ((geometry, 1) for geometry in boundaries.geometry),
+        out_shape=shape, transform=transform, fill=0, dtype="uint8",
+    )
+    return np.where(inside == 1, 1.0, 0.0)
+
+
 def render_risk_figure(
     frame: pd.DataFrame,
     week: pd.Timestamp,
@@ -363,7 +383,9 @@ def render_risk_figure(
     the rule ``expected = chance of water x asset`` with all three
     ingredients. County labels on the right panel carry the county's
     expected total; where no forecast exists for a county its pixels stay
-    grey.
+    grey. Everything outside the mapped counties — the Northern Bahr el
+    Ghazal study region — is exported transparent (alpha 0, including the
+    figure canvas), so the PNG overlays on any background.
     """
     spec = ASSETS[asset]
     value_column = spec["column"]
@@ -381,12 +403,22 @@ def render_risk_figure(
     limits = (
         lons.min() - 0.02, lons.max() + 0.02, lats.min() - 0.02, lats.max() + 0.02,
     )
+    if boundaries is None:
+        grid_alpha = np.ones(matrix.shape)
+    else:
+        step_lon = (lons.max() - lons.min()) / max(len(lons) - 1, 1)
+        step_lat = (lats.max() - lats.min()) / max(len(lats) - 1, 1)
+        grid_transform = Affine(
+            step_lon, 0, float(lons.min()) - step_lon / 2,
+            0, step_lat, float(lats.min()) - step_lat / 2,
+        )
+        grid_alpha = _region_alpha(boundaries, grid_transform, matrix.shape)
 
     hazard_cmap = plt.get_cmap("YlOrRd").copy()
     hazard_cmap.set_bad("lightgrey")
     hazard_image = axes[0].imshow(
         matrix, extent=extent, origin="lower", cmap=hazard_cmap,
-        vmin=0.0, vmax=1.0, aspect="equal",
+        vmin=0.0, vmax=1.0, aspect="equal", alpha=grid_alpha,
     )
     axes[0].set_title(
         f"1. Where the model puts water\nforecast week of {week.date()}\n"
@@ -401,6 +433,12 @@ def render_risk_figure(
     asset_cmap.set_bad("lightgrey")
     asset_data = np.ma.masked_invalid(layer["data"])
     left, right, bottom, top = _native_extent(layer)
+    if boundaries is None:
+        asset_alpha = np.ones(asset_data.shape)
+    else:
+        asset_alpha = _region_alpha(
+            boundaries, layer["transform"], layer["data"].shape
+        )
     if asset == "cattle":
         transform = layer["transform"]
         centre_lat = transform.f + (np.arange(asset_data.shape[0]) + 0.5) * transform.e
@@ -414,11 +452,13 @@ def render_risk_figure(
         asset_image = axes[1].imshow(
             asset_data, extent=(left, right, bottom, top), origin="upper",
             cmap=asset_cmap, norm=LogNorm(vmin=vmin, vmax=vmax), aspect="equal",
+            alpha=asset_alpha,
         )
     else:
         asset_image = axes[1].imshow(
             asset_data, extent=(left, right, bottom, top), origin="upper",
             cmap=asset_cmap, vmin=0.0, vmax=100.0, aspect="equal",
+            alpha=asset_alpha,
         )
     axes[1].set_title(
         f"2. {spec['asset_title']}\n{spec['asset_subtitle']}", fontsize=10, pad=8
@@ -433,7 +473,7 @@ def render_risk_figure(
     vmax = float(frame[value_column].max()) or 1.0
     value_image = axes[2].imshow(
         value_matrix, extent=extent, origin="lower", cmap=value_cmap,
-        vmin=0.0, vmax=vmax, aspect="equal",
+        vmin=0.0, vmax=vmax, aspect="equal", alpha=grid_alpha,
     )
     axes[2].set_title(
         f"3. {spec['figure']}\nchance of water × asset", fontsize=10, pad=8
@@ -471,7 +511,7 @@ def render_risk_figure(
     )
     out_path = Path(out_path)
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    figure.savefig(out_path, dpi=150)
+    figure.savefig(out_path, dpi=150, transparent=boundaries is not None)
     plt.close(figure)
     return out_path
 

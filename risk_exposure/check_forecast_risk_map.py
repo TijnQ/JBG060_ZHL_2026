@@ -7,7 +7,9 @@ same footprint), the cattle expectation (density x pixel area, with the
 prob=1 ceiling reproducing the mapped herd exactly), the crop mask-cell rule
 (max pixel probability, count-once, prob x area allocation back to pixels),
 the summary table (target weeks, prob heads, percentages, behaviour without
-duration heads) and that the renderer writes PNGs.
+duration heads), the region-alpha mask that cuts the PNG background to the
+mapped counties, and that the renderer writes PNGs whose background outside
+those counties is transparent.
 """
 
 from __future__ import annotations
@@ -21,6 +23,7 @@ import numpy as np
 import pandas as pd
 import rasterio
 from affine import Affine
+from PIL import Image
 from shapely.geometry import box
 
 matplotlib.use("Agg")
@@ -34,6 +37,7 @@ from risk_exposure.forecast_risk_map import (
     select_weeks,
     summarise_week,
     week_frames,
+    _region_alpha,
 )
 
 WEEK = pd.Timestamp("2024-10-07")
@@ -320,6 +324,30 @@ def check_summary_table() -> None:
         assert (summary["horizon"] == 0).all()
 
 
+def check_region_alpha() -> None:
+    boundaries = _synthetic_boundaries()
+    # Pivot-style grid (origin "lower"): cell centres at 0.01 deg steps,
+    # all inside the two county boxes -> fully opaque.
+    lons = np.array([27.005, 27.015, 27.025, 27.035, 27.045])
+    step = 0.01
+    transform = Affine(step, 0, lons[0] - step / 2, 0, step, 9.5)
+    alpha = _region_alpha(boundaries, transform, (5, len(lons)))
+    assert alpha.shape == (5, len(lons)) and alpha.min() == 1.0
+    # Centres north of both boxes map to alpha 0 (transparent background).
+    north = Affine(step, 0, lons[0] - step / 2, 0, step, 9.6)
+    alpha = _region_alpha(boundaries, north, (2, len(lons)))
+    assert alpha.max() == 0.0
+    # Native raster transform (origin "upper", e < 0), the cattle-cell grid:
+    # the centre rule decides cell by cell.
+    cattle_transform = Affine(CATTLE_STEP, 0, 26.9, 0, -CATTLE_STEP, 9.6)
+    alpha = _region_alpha(boundaries, cattle_transform, (4, 8))
+    assert alpha[1, 2] == 1.0   # (27.025, 9.525) inside Alpha
+    assert alpha[1, 3] == 1.0   # (27.075, 9.525) inside Beta
+    assert alpha[1, 0] == 0.0   # (26.925, 9.525) west of both
+    assert alpha[0, 2] == 0.0   # (27.025, 9.575) north of both
+    assert alpha[2, 2] == 0.0   # (27.025, 9.475) south of both
+
+
 def check_select_weeks() -> None:
     weeks = [WEEK, WEEK + pd.Timedelta(weeks=1), WEEK + pd.Timedelta(weeks=2)]
     frames = []
@@ -360,6 +388,14 @@ def check_end_to_end() -> None:
         }
         for path in figures:
             assert path.stat().st_size > 0
+        # The renderer exports the background outside the mapped counties
+        # (here the two synthetic boxes) fully transparent; drawn content
+        # stays opaque.
+        with Image.open(figures[0]) as image:
+            assert image.mode == "RGBA"
+            alpha_band = np.asarray(image)[..., 3]
+        assert (alpha_band == 0).any()
+        assert (alpha_band == 255).any()
         table = pd.read_csv(tmp_path / "summary.csv")
         assert len(table) == 6
         row = table[(table["county"] == "Alpha") & (table["horizon"] == 0)].iloc[0]
@@ -387,6 +423,7 @@ def main() -> None:
         check_week_frames_uniform_signature,
         check_concentrated_signature_and_ceiling,
         check_summary_table,
+        check_region_alpha,
         check_select_weeks,
         check_end_to_end,
     ]
