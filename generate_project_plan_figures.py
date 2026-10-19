@@ -3,6 +3,7 @@
 This module creates two clean, academic figures with zero en-dashes or em-dashes:
 1. Figure 1: Hydrological Basin Decoupling (2023 vs. 2024 Flood Divergence)
    Saved as 'basin_decoupling_poster.svg' + 'basin_decoupling_poster.png'
+   (and 'visual3b_basin_decoupling_poster.{svg,png}')
    (A0-poster-proof typography: all text >= 20 pt)
 2. Figure 2: Staple Crop Phenology vs. Monthly Flood Risk in Northern Bahr el Ghazal
    Saved as 'crop_phenology_vs_flood_timeline_clean.png'
@@ -57,10 +58,12 @@ def generate_figure_basin_decoupling(output_dir: Path | str | None = None) -> pl
       * House-style palette: 2023 bar #1E3F52 (deep slate blue),
         2024 bar #D96B43 (coral/amber disaster year); all text #363432
         (dark anthracite); transparent background; light horizontal
-        gridlines #E0E0E0 (alpha 0.6).
+        gridlines #E0E0E0 (alpha 0.5).
       * Exact data tags directly above each bar; top/right spines hidden.
       * Export: vector 'basin_decoupling_poster.svg' + 300 DPI
-        'basin_decoupling_poster.png' (bbox_inches='tight', transparent).
+        'basin_decoupling_poster.png' and the same figure as
+        'visual3b_basin_decoupling_poster.{svg,png}' (bbox_inches='tight',
+        transparent).
 
     Parameters
     ----------
@@ -111,7 +114,7 @@ def generate_figure_basin_decoupling(output_dir: Path | str | None = None) -> pl
                         color=year_colors, zorder=3)
 
         ax1.set_title("White Nile / Sudd Catchment", pad=14,
-                      fontsize=20, fontweight="bold", color="#363432")
+                      fontsize=20, fontweight="bold", color="#1E3F52")
         ax1.set_ylabel("MODIS Flood Detections (Millions)", labelpad=10,
                        fontsize=20, color="#363432")
         ax1.set_ylim(0, 14.5)
@@ -120,7 +123,7 @@ def generate_figure_basin_decoupling(output_dir: Path | str | None = None) -> pl
         ax1.set_xticklabels(years, fontsize=20, color="#363432")
         ax1.tick_params(axis="y", labelsize=20, colors="#363432")
         ax1.tick_params(axis="both", length=5, width=1.2)
-        ax1.grid(axis="y", color="#E0E0E0", alpha=0.6, linewidth=1.2, zorder=0)
+        ax1.grid(axis="y", color="#E0E0E0", alpha=0.5, linewidth=1.2, zorder=0)
         ax1.set_axisbelow(True)
 
         # Exact data tags directly above each bar (1-second readability)
@@ -139,8 +142,8 @@ def generate_figure_basin_decoupling(output_dir: Path | str | None = None) -> pl
                         color=year_colors, zorder=3)
 
         ax2.set_title("River Lol / Aweil East", pad=14,
-                      fontsize=20, fontweight="bold", color="#363432")
-        ax2.set_ylabel("Flood Volume (km²-weeks)", labelpad=10,
+                      fontsize=20, fontweight="bold", color="#1E3F52")
+        ax2.set_ylabel("Inundated Volume (km²-weeks)", labelpad=10,
                        fontsize=20, color="#363432")
         ax2.set_ylim(0, 1000)
         ax2.yaxis.set_major_locator(MultipleLocator(200))
@@ -148,7 +151,7 @@ def generate_figure_basin_decoupling(output_dir: Path | str | None = None) -> pl
         ax2.set_xticklabels(years, fontsize=20, color="#363432")
         ax2.tick_params(axis="y", labelsize=20, colors="#363432")
         ax2.tick_params(axis="both", length=5, width=1.2)
-        ax2.grid(axis="y", color="#E0E0E0", alpha=0.6, linewidth=1.2, zorder=0)
+        ax2.grid(axis="y", color="#E0E0E0", alpha=0.5, linewidth=1.2, zorder=0)
         ax2.set_axisbelow(True)
 
         for bar, tag in zip(bars2, tags_lol):
@@ -161,19 +164,23 @@ def generate_figure_basin_decoupling(output_dir: Path | str | None = None) -> pl
             ax.spines["top"].set_visible(False)
             ax.spines["right"].set_visible(False)
 
-        # Main title: 24 pt bold, dark anthracite
+        # Main title: 24 pt bold, deep slate blue
         fig.suptitle(
-            "Hydrological Basin Decoupling: 2023 vs 2024 Flood Divergence",
-            fontsize=24, fontweight="bold", y=0.98, color="#363432"
+            "Hydrological Basin Decoupling (2023 vs. 2024)",
+            fontsize=24, fontweight="bold", y=0.98, color="#1E3F52"
         )
 
         fig.subplots_adjust(left=0.09, right=0.96, top=0.82, bottom=0.12, wspace=0.30)
 
         svg_path = output_dir / "basin_decoupling_poster.svg"
         png_path = output_dir / "basin_decoupling_poster.png"
+        svg_v3b_path = output_dir / "visual3b_basin_decoupling_poster.svg"
+        png_v3b_path = output_dir / "visual3b_basin_decoupling_poster.png"
         fig.savefig(svg_path, bbox_inches="tight", transparent=True)
         fig.savefig(png_path, dpi=300, bbox_inches="tight", transparent=True)
-        print(f"Figure 1 (poster-proof) saved to:\n  {svg_path}\n  {png_path}")
+        fig.savefig(svg_v3b_path, bbox_inches="tight", transparent=True)
+        fig.savefig(png_v3b_path, dpi=300, bbox_inches="tight", transparent=True)
+        print(f"Figure 1 (poster-proof) saved to:\n  {svg_path}\n  {png_path}\n  {svg_v3b_path}\n  {png_v3b_path}")
 
     return fig
 
