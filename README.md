@@ -1,5 +1,110 @@
 # JBG060-2026: Flood Dynamics in South Sudan
 
+Capstone project for **Zero Hunger Lab (ZHL) / ZOA**: turning satellite flood
+observations and hydrometeorological data into **weekly flood forecasts and
+risk maps for Northern Bahr el Ghazal (Aweil), South Sudan**, so that cattle
+and cropland can be moved out of harm's way *before* a flood (anticipatory
+action).
+
+## What the project does (end to end)
+
+The pipeline in [`main.ipynb`](main.ipynb) runs top-to-bottom and has four levels:
+
+1. **Data & labels** — raw satellite/weather data (`raw_data/`, downloaded
+   separately) is turned into model inputs:
+   - `processing_data/` loaders: rainfall/runoff (ERA5), river discharge
+     (Dartmouth Flood Observatory), lake levels, reference evapotranspiration,
+     flood masks (MODIS/VIIRS), population, county boundaries, cattle,
+     cropland/rangeland, GDP, IPC food security, health facilities.
+   - `process_et_NBeG.py`: raw AgERA5 ET NetCDFs → annual ET0 CSVs for the
+     Aweil grid cell.
+   - `EDA_flood_masks/`: raw flood-mask Parquets → weekly county flood
+     labels (the training target).
+   - `EDA_hydrometeorology/`: hydrological signals → monthly agricultural
+     exposure context and forecast-signal analysis.
+2. **Level 1 — county model** — `LightGBM_v1/` predicts, per Aweil county and
+   per week: flood probability (`det_prob`), flood area quantiles
+   (`q10/q50/q90`), and duration probabilities 1–4 weeks ahead. Honest
+   evaluation: 3 expanding-window CV folds, per-fold climatology/persistence
+   baselines, Optuna tuning, final fit + operational forecast for the latest
+   feature-complete week. `TabPFN_v1/` runs a zero-shot TabPFN reference
+   through the same runner for comparison.
+3. **Level 2 — pixel maps** — `climatology_maps/` builds a per-pixel
+   (~232 m) flood climatology from 26 years of detections and uses it as the
+   placement prior to downscale the county forecast onto the pixel grid;
+   includes an honest pixel-level validation of the downscaled maps.
+4. **Level 3 — exposure & risk products** — `risk_exposure/` combines the
+   Level-2 flood probability with the cattle and cropland rasters into
+   per-pixel risk maps and summary tables (forecast week + a historical
+   flood-season week).
+
+## Repository layout
+
+```text
+JBG060_ZHL_2026/
+|-- main.ipynb                  # End-to-end pipeline: run all cells top-to-bottom
+|-- run.py                      # Root runner -> LightGBM_v1.run.main()
+|-- process_et_NBeG.py          # AgERA5 ET -> annual ET0 CSVs (Aweil grid cell)
+|
+|-- processing_data/            # Core data loaders (hydromet + exposure/impact)
+|-- EDA_flood_masks/            # Flood-mask EDA -> weekly county flood labels
+|-- EDA_hydrometeorology/       # Hydro signals vs floods (Aweil + nationwide)
+|-- EDA_crop_phenology/         # Crop phenology vs flood-season timing
+|-- eda_farmland/               # Farmland / cattle / IPC food-security EDA
+|-- data_quality/               # Input data-quality EDA (hydromet + flood masks)
+|
+|-- LightGBM_v1/                # Level 1: LightGBM flood prediction & advisory pipeline
+|-- TabPFN_v1/                  # TabPFN zero-shot reference (via the shared runner)
+|-- climatology_maps/           # Level 2: pixel climatology + forecast downscaling
+|-- risk_exposure/              # Level 3: forecast x asset (cattle/crop) risk maps
+|
+|-- poster_visuals/             # Poster figure deliverables (v1, v2, model performance)
+|-- generate_project_plan_figures.py   # Scripts that regenerate the poster/plan
+|-- generate_poster_visuals.py         #   figures above (one script per visual set)
+|-- generate_poster_visuals_v2.py
+|-- generate_model_performance_poster.py
+|
+|-- raw_data/                   # Downloaded separately; NOT in Git
+|-- literature/                 # Papers and data documentation
+|-- model_plan.md               # Modeling plan (plain-language)
+|-- evaluation_metrics.md       # Frozen evaluation protocol (Task 1)
+|-- MODEL_RESEARCH.md           # Record of tested models and their verdicts
+|-- requirements.txt            # Pinned Python dependencies
+`-- README.md
+```
+
+## How to run
+
+- **Everything at once**: open [`main.ipynb`](main.ipynb) and run all cells
+  from the repository root (pre-processing → model training/tuning → final
+  forecast → pixel maps → risk maps). Missing raw inputs raise an error;
+  nothing is substituted.
+- **Model only**: `python run.py` (or `python LightGBM_v1/run.py`), with
+  `--model tabpfn` for the zero-shot reference (see `TabPFN_v1/README.md`).
+- **Offline checks** (no raw data needed):
+  `python -m EDA_flood_masks.check_flood_eda`,
+  `python -m data_quality.eda_quality_flood.check_flood_eda_data`,
+  `python -m risk_exposure.check_forecast_risk_map`.
+- **Data setup, loader reference and examples**: see the archived README below.
+
+## Status
+
+- Working end-to-end: loaders, EDAs, Level-1 LightGBM (+ Optuna tuning,
+  final fit), TabPFN reference, Level-2 downscaling, Level-3 risk maps.
+- Plan-only (documented, not implemented): a trained per-pixel spatial model
+  (U-Net) to replace the climatology prior — see
+  [`climatology_maps/UNET_PLAN.md`](climatology_maps/UNET_PLAN.md).
+
+---
+
+# Archived README (pre-cleanup)
+
+> Kept verbatim for reference after the 2026 repository cleanup. Some paths it
+> mentions no longer exist (e.g. the old `modeling/` testing ground was
+> removed; its surviving results live in `MODEL_RESEARCH.md`).
+
+# JBG060-2026: Flood Dynamics in South Sudan
+
 ## Introduction and overview
 
 This is our repository for the JBG060 project on floods in South Sudan. It contains code to load the datasets

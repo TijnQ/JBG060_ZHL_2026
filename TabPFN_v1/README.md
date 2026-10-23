@@ -18,7 +18,8 @@ duration probabilities. Seed 2026 is shared (duration uses seed + horizon).
 All training rows are used, with no subsampling. Validation rows are held out;
 TabPFN does not use LightGBM's boosting early stopping. TabPFN defaults are
 otherwise retained. Quantile failures stop the run rather than substituting
-point forecasts. The previous `redundant/modeling/tabpfn` outputs are not reused.
+point forecasts. The outputs of the earlier (now removed) modeling testing
+ground are not reused.
 
 LightGBM remains the default: `python LightGBM_v1/run.py`.
 Compare runs from the same commit and real-data files. Existing committed

@@ -145,7 +145,7 @@ Identical double to the LightGBM protocol so results are directly comparable:
 ## 4. Implementation layout (future files)
 
 ```
-modeling/unet/            # or climatology_maps/unet/
+climatology_maps/unet/
 ├── dataset.py            # parquet -> tensor dataset (embargoed, cached)
 ├── model.py              # U-Net definition
 ├── train.py              # folds, losses, AMP, early stopping, checkpointing
@@ -208,7 +208,7 @@ even train on the laptop) and comfortably fits v2.
 
 ## 8. Deliverables
 
-1. `modeling/unet/` (or `climatology_maps/unet/`) code + gitignored outputs.
+1. `climatology_maps/unet/` code + gitignored outputs.
 2. Comparison CSV: U-Net vs climatology vs LightGBM×climatology, pooled + per fold.
 3. Weekly probability PNGs + interactive HTML + `week_summary.csv` via the
    existing renderers.

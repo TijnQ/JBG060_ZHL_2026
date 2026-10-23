@@ -4,6 +4,9 @@ raw_data/flood_masks/compact_unusual/*_meta.json
 
 .venv
 *.pyc
+__pycache__/
+.ipynb_checkpoints/
+.ruff_cache/
 raw_data
 cache
 .cache/
@@ -11,8 +14,7 @@ cache
 .git
 output
 .agents
-# Generated modeling outputs (keep the code, not the results)
-modeling/outputs/
+# Generated model outputs that are not committed (keep the code, not the results)
 TabPFN_v1/outputs/
 LightGBM_v1/outputs/tuning/
 # Large interactive map html (regenerate on demand)

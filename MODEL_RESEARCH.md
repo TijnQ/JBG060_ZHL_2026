@@ -1,8 +1,9 @@
 # Model research results
 
 This file records the main results of models that were tested on real
-data. Detailed prediction tables are written to `modeling/outputs`.
-That folder is not stored in Git because it can contain large files.
+data. Detailed prediction tables are written to `LightGBM_v1/outputs/` and
+`TabPFN_v1/outputs/`; large intermediate files (e.g. Optuna studies) stay out
+of Git.
 
 ## TabPFN county-level baseline
 
