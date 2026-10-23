@@ -1,6 +1,6 @@
 ﻿# Evaluation Metrics — Task 1 (County-level model)
 
-> Companion to [`model_plan.md`](model_plan.md). Covers **Task 1 / Task A only**: the county-level
+> Covers **Task 1 / Task A only**: the county-level
 > LightGBM that predicts, per Aweil county and per week, (1) the probability of a *detected* flood,
 > (2) the flood area in km² as q10/q50/q90, and (3) the duration (still flooded 1–4 weeks ahead).
 > Task B (the spatial map) has its own metrics (CSI/POD/FAR vs the climatology null) — not covered here.
@@ -103,7 +103,7 @@ before it earns a place in the report (same keep/kill rule as the `baselines.py`
 
 A forecast that never looks at weather, only at the calendar. It exists because our floods are
 strongly seasonal; a model could score decently just by learning "October = flood season".
-Climatology is the bar that proves the weather matters. (In `model_plan.md` the word "climatology"
+Climatology is the bar that proves the weather matters. (The word "climatology"
 is used in three senses: the per-cell flood-frequency map for Task B, the county-month *area
 thresholds* behind the tiers, and this baseline forecast. Same idea — historical frequencies — but
 different objects; we name them separately in the report.)

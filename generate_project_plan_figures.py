@@ -2,11 +2,13 @@
 
 This module creates two clean, academic figures with zero en-dashes or em-dashes:
 1. Figure 1: Hydrological Basin Decoupling (2023 vs. 2024 Flood Divergence)
-   Saved as 'basin_decoupling_poster.svg' + 'basin_decoupling_poster.png'
+   Saved to poster_visuals/v1/3_Hydrological_Lag_and_Decoupling/ as
+   'basin_decoupling_poster.svg' + 'basin_decoupling_poster.png'
    (and 'visual3b_basin_decoupling_poster.{svg,png}')
    (A0-poster-proof typography: all text >= 20 pt)
 2. Figure 2: Staple Crop Phenology vs. Monthly Flood Risk in Northern Bahr el Ghazal
-   Saved as 'crop_phenology_vs_flood_timeline_clean.png'
+   Saved to poster_visuals/v1/4_Agricultural_Exposure_Phenology_Plot/ as
+   'crop_phenology_vs_flood_timeline_clean.png'
 """
 
 from __future__ import annotations
@@ -185,7 +187,7 @@ def generate_figure_basin_decoupling(output_dir: Path | str | None = None) -> pl
     return fig
 
 
-def generate_figure_crop_phenology(output_path: Path | str = "crop_phenology_vs_flood_timeline_clean.png") -> plt.Figure:
+def generate_figure_crop_phenology(output_path: Path | str = "poster_visuals/v1/4_Agricultural_Exposure_Phenology_Plot/crop_phenology_vs_flood_timeline_clean.png") -> plt.Figure:
     """Generate Figure 2: Decluttered Staple Crop Phenology vs. Monthly Flood Risk.
 
     Parameters
@@ -398,16 +400,21 @@ def main() -> None:
         description="Generate publication-ready figures for JBG060 Capstone Project Plan."
     )
     parser.add_argument(
-        "--output-dir", "-o", type=Path, default=Path.cwd(),
-        help="Directory to save the generated figures (default: current directory)."
+        "--output-dir", "-o", type=Path, default=None,
+        help="Base directory to save the generated figures "
+             "(default: poster_visuals/v1 in the repository)."
     )
     args = parser.parse_args()
 
-    args.output_dir.mkdir(parents=True, exist_ok=True)
-    fig2_path = args.output_dir / "crop_phenology_vs_flood_timeline_clean.png"
+    base_dir = args.output_dir if args.output_dir is not None else Path(__file__).resolve().parent / "poster_visuals" / "v1"
+    fig1_dir = base_dir / "3_Hydrological_Lag_and_Decoupling"
+    fig2_dir = base_dir / "4_Agricultural_Exposure_Phenology_Plot"
+    fig1_dir.mkdir(parents=True, exist_ok=True)
+    fig2_dir.mkdir(parents=True, exist_ok=True)
+    fig2_path = fig2_dir / "crop_phenology_vs_flood_timeline_clean.png"
 
     print("Generating Figure 1: River Basin Decoupling (A0-poster-proof)...")
-    fig1 = generate_figure_basin_decoupling(args.output_dir)
+    fig1 = generate_figure_basin_decoupling(fig1_dir)
     plt.close(fig1)
 
     print("Generating Figure 2: Decluttered Crop Phenology vs. Flood Timeline...")

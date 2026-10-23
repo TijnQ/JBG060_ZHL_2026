@@ -164,4 +164,4 @@ forecasts (`det_prob`, `q50/q90`, `det_prob_h1..h4`) from the committed
 per-pixel climatology as the spatial prior. When the U-Net (per-pixel)
 predictions are ready, feed `compose_week`-equivalent pixel forecasts into the
 same rendering functions. The climatology stays the baseline that any model
-must beat (the "keep/kill" idea recorded in `MODEL_RESEARCH.md`).
+must beat.

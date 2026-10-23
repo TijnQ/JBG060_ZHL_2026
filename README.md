@@ -66,9 +66,7 @@ JBG060_ZHL_2026/
 |
 |-- raw_data/                   # Downloaded separately; NOT in Git
 |-- literature/                 # Papers and data documentation
-|-- model_plan.md               # Modeling plan (plain-language)
 |-- evaluation_metrics.md       # Frozen evaluation protocol (Task 1)
-|-- MODEL_RESEARCH.md           # Record of tested models and their verdicts
 |-- requirements.txt            # Pinned Python dependencies
 `-- README.md
 ```
@@ -100,8 +98,8 @@ JBG060_ZHL_2026/
 # Archived README (pre-cleanup)
 
 > Kept verbatim for reference after the 2026 repository cleanup. Some paths it
-> mentions no longer exist (e.g. the old `modeling/` testing ground was
-> removed; its surviving results live in `MODEL_RESEARCH.md`).
+> mentions no longer exist (e.g. the old `modeling/` testing ground and the
+> planning docs around it were removed).
 
 # JBG060-2026: Flood Dynamics in South Sudan
 
