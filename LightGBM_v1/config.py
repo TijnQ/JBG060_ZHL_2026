@@ -75,7 +75,7 @@ SCOPE = "aweil"
 # no fold trains, validates, or tests on 2025, and no CV output contains 2025.
 YEARS = list(range(2000, 2026))
 
-# 3 expanding-window folds (evaluation_metrics.md sec. 2: walk-forward CV,
+# 3 expanding-window folds (walk-forward CV,
 # expanding train window, 1-year validation, 2-3-year holdout test).
 #   Fold 1: train 2000-2008, val 2009, test 2010-2011
 #   Fold 2: train 2000-2014, val 2015, test 2016-2017

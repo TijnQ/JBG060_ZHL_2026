@@ -1,6 +1,6 @@
 """Evaluation metrics module for LightGBM_v1 pipeline (baseline: protocol-aligned).
 
-The metric set is exactly the protocol frozen in evaluation_metrics.md (Task A):
+The metric set is the frozen Task A protocol:
 
 - det_prob (weekly flood-detection probability):
     * Brier Score — headline probabilistic accuracy metric
@@ -18,8 +18,7 @@ The metric set is exactly the protocol frozen in evaluation_metrics.md (Task A):
 
 The cutoff-dependent classification family (accuracy, precision, recall, F1,
 CSI, FAR) is intentionally NOT part of Task A: it throws the forecast
-probability away, and CSI / POD / FAR are reserved for Task B event metrics
-in evaluation_metrics.md.
+probability away, and CSI / POD / FAR are reserved for Task B event metrics.
 """
 
 from __future__ import annotations

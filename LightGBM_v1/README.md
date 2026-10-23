@@ -22,7 +22,7 @@ forecasts onto the pixel flood maps for the cattle/crop exposure risk products.
 
 ## 2. What Changed in `v3` (the Baseline)
 
-`v3` — now the project baseline — fixes three evaluation-honesty problems found in the `v2` design, following `evaluation_metrics.md`:
+`v3` — now the project baseline — fixes three evaluation-honesty problems found in the `v2` design:
 
 1. **3 expanding-window CV folds** (replacing 5 folds of 5-year blocks). Walk-forward design with an expanding training window, 1 validation year, and 2–3 held-out test years per fold. Every flood season 2009–2024 is used for validation/test exactly once.
 2. **Per-fold references**: climatology & persistence baselines are estimated *inside each fold's training window* and never see validation/test years.
@@ -113,7 +113,7 @@ LightGBM_v1/
 
 ---
 
-## 5. Evaluation Protocol (aligned with `evaluation_metrics.md`)
+## 5. Evaluation Protocol
 
 The headline summary (`cv_metrics_summary_aweil.csv`) contains **protocol metrics only**, one row per (fold, model) plus pooled rows for LightGBM, Climatology, and Persistence:
 
@@ -131,7 +131,7 @@ The headline summary (`cv_metrics_summary_aweil.csv`) contains **protocol metric
 - **Brier Score** of `det_prob_h{h}` against "flood detected h weeks ahead", with BSS vs a **county-month climatology** reference and a **Markov persistence** reference, both evaluated **at the target week** and estimated per fold (`duration_metrics_aweil.csv`).
 - **Reliability diagrams** per horizon (`reliability_duration_h1..h4.csv`).
 
-> The classification family (accuracy, precision, recall, F1, CSI, FAR) is intentionally absent from Task-A outputs: it is cutoff-dependent and reserved for Task B event metrics in `evaluation_metrics.md`.
+> The classification family (accuracy, precision, recall, F1, CSI, FAR) is intentionally absent from Task-A outputs: it is cutoff-dependent and reserved for Task B event metrics.
 
 ### **Honesty note — label censoring**
 The flood labels come from satellite flood masks with irregular observation coverage. Weeks without a valid detection are filled with zero area, so some "dry" labels are censored (unobserved) rather than truly dry. This biases detection metrics conservatively but is inherited from the committed EDA datasets; the provenance report and the EDA provenance files document the observation coverage.

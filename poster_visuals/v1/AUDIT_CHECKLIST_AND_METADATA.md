@@ -151,5 +151,5 @@ poster_visuals/
 
 To regenerate all visual assets in this folder, run:
 ```bash
-.venv/Scripts/python.exe poster_visuals/generate_poster_visuals.py
+.venv/Scripts/python.exe poster_visuals/v1/generate_poster_visuals.py
 ```

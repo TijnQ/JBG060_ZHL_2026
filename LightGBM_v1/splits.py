@@ -2,8 +2,8 @@
 
 Walk-forward cross-validation with an expanding training window: each fold
 trains on everything before its validation year, validates on one
-flood-season year, and scores 2-3 held-out test years (evaluation_metrics.md
-sec. 2). The first week of each val/test window is purged so no lag feature or
+flood-season year, and scores 2-3 held-out test years. The first week of each
+val/test window is purged so no lag feature or
 label window crosses a fold boundary.
 """
 

@@ -59,14 +59,10 @@ JBG060_ZHL_2026/
 |-- risk_exposure/              # Level 3: forecast x asset (cattle/crop) risk maps
 |
 |-- poster_visuals/             # Poster figure deliverables (v1, v2, model performance)
-|-- generate_project_plan_figures.py   # Scripts that regenerate the poster/plan
-|-- generate_poster_visuals.py         #   figures above (one script per visual set)
-|-- generate_poster_visuals_v2.py
-|-- generate_model_performance_poster.py
+|                               #   each folder holds its own generate_*.py script
 |
 |-- raw_data/                   # Downloaded separately; NOT in Git
 |-- literature/                 # Papers and data documentation
-|-- evaluation_metrics.md       # Frozen evaluation protocol (Task 1)
 |-- requirements.txt            # Pinned Python dependencies
 `-- README.md
 ```

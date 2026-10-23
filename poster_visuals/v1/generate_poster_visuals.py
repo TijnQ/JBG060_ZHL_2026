@@ -1,6 +1,6 @@
 """Generate high-quality, professional publication & poster visual assets for JBG060 Capstone.
 
-This script creates the complete 'poster_visuals/' folder containing all 6 required items:
+This script creates the complete 'poster_visuals/v1/' folder containing all 6 required items:
 1. Map 1: Study Area Locator Map (South Sudan overview + River Lol basin & 5 Aweil counties detail)
 2. Diagram 1: End-to-End Pipeline Architecture (Vector SVG, PDF, and 300 DPI PNG)
 3. Chart 1: Hydrological Lag & Decoupling Visual
@@ -32,15 +32,15 @@ from matplotlib.lines import Line2D
 import numpy as np
 import pandas as pd
 
-# Set repository root
-REPO_ROOT = Path(__file__).resolve().parent
+# Set repository root (script lives in poster_visuals/v1/, repo root is two levels up)
+REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from climatology_maps import pixel_climatology as pc
 from climatology_maps import forecast_maps as fm
 
-POSTER_DIR = REPO_ROOT / "poster_visuals"
+POSTER_DIR = Path(__file__).resolve().parent  # poster_visuals/v1/
 
 
 def set_poster_style() -> None:
@@ -1419,7 +1419,7 @@ poster_visuals/
 
 To regenerate all visual assets in this folder, run:
 ```bash
-.venv/Scripts/python.exe poster_visuals/generate_poster_visuals.py
+.venv/Scripts/python.exe poster_visuals/v1/generate_poster_visuals.py
 ```
 """
     with open(md_path, "w", encoding="utf-8") as f:
@@ -1440,7 +1440,7 @@ def main() -> None:
     POSTER_DIR.mkdir(parents=True, exist_ok=True)
 
     dir_map1 = POSTER_DIR / "1_Study_Area_Locator_Map"
-    dir_diag1 = POSTER_DIR / "v1" / "2_End_to_End_Pipeline_Diagram"
+    dir_diag1 = POSTER_DIR / "2_End_to_End_Pipeline_Diagram"
     dir_chart1 = POSTER_DIR / "3_Hydrological_Lag_and_Decoupling"
     dir_chart2 = POSTER_DIR / "4_Agricultural_Exposure_Phenology_Plot"
     dir_map2 = POSTER_DIR / "5_Sample_Downscaled_Forecast_Raster"
@@ -1491,7 +1491,7 @@ Two complementary visuals have been generated for Chart 1:
     generate_audit_metadata(POSTER_DIR)
 
     print("\n" + "=" * 80)
-    print("ALL VISUAL ASSETS SUCCESSFULLY GENERATED & AUDITED IN: 'poster_visuals/'")
+    print("ALL VISUAL ASSETS SUCCESSFULLY GENERATED & AUDITED IN: 'poster_visuals/v1/'")
     print("=" * 80)
 
 

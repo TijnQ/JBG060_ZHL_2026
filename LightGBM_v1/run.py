@@ -34,7 +34,7 @@ Performs:
 2.  3-Fold Expanding-Window Cross-Validation (config.CV_FOLDS; 2025 excluded)
 3.  Per-fold honest references: climatology & persistence baselines estimated
     strictly inside each fold's training window
-4.  Protocol-aligned metrics (evaluation_metrics.md): Brier / BSS, mean pinball,
+4.  Protocol-aligned metrics: Brier / BSS, mean pinball,
     interval coverage, flood-week MAE/bias, per-horizon duration Brier,
     reliability diagrams (no cutoff-dependent classification metrics)
 5.  Data provenance report (one row per real source, console only)

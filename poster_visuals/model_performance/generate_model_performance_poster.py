@@ -35,11 +35,11 @@ import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
 import pandas as pd
 
-REPO_ROOT = Path(__file__).resolve().parent
+REPO_ROOT = Path(__file__).resolve().parents[2]  # repo root (script lives in poster_visuals/model_performance/)
 METRICS_CSV = REPO_ROOT / "LightGBM_v1" / "outputs" / "outputs_fe" / "tables" / "cv_metrics_summary_aweil.csv"
 PIXEL_PERF_MD = REPO_ROOT / "climatology_maps" / "outputs" / "forecast_maps" / "PIXEL_PERFORMANCE.md"
 DURATION_CSV = REPO_ROOT / "LightGBM_v1" / "outputs" / "outputs_fe" / "tables" / "duration_metrics_aweil.csv"
-POSTER_DIR = REPO_ROOT / "poster_visuals" / "model_performance"
+POSTER_DIR = Path(__file__).resolve().parent  # poster_visuals/model_performance/
 
 TEXT = "#363432"     # dark anthracite: body text
 TITLE = "#1E3F52"    # deep slate blue: titles

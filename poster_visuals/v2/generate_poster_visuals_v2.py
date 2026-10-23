@@ -41,14 +41,14 @@ from rasterio.windows import from_bounds
 from scipy.ndimage import gaussian_filter
 
 # Set repository root
-REPO_ROOT = Path(__file__).resolve().parent
+REPO_ROOT = Path(__file__).resolve().parents[2]  # repo root (script lives in poster_visuals/v2/)
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from climatology_maps import pixel_climatology as pc
 from climatology_maps import forecast_maps as fm
 
-V2_DIR = REPO_ROOT / "poster_visuals" / "v2"
+V2_DIR = Path(__file__).resolve().parent  # poster_visuals/v2/
 
 
 def set_poster_style() -> None:

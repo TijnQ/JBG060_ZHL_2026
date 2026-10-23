@@ -187,13 +187,14 @@ def generate_figure_basin_decoupling(output_dir: Path | str | None = None) -> pl
     return fig
 
 
-def generate_figure_crop_phenology(output_path: Path | str = "poster_visuals/v1/4_Agricultural_Exposure_Phenology_Plot/crop_phenology_vs_flood_timeline_clean.png") -> plt.Figure:
+def generate_figure_crop_phenology(output_path: Path | str | None = None) -> plt.Figure:
     """Generate Figure 2: Decluttered Staple Crop Phenology vs. Monthly Flood Risk.
 
     Parameters
     ----------
-    output_path : Path or str
-        Destination path for saving the PNG file.
+    output_path : Path or str, optional
+        Destination path for saving the PNG file. Defaults to
+        poster_visuals/v1/4_Agricultural_Exposure_Phenology_Plot/ next to this script.
 
     Returns
     -------
@@ -201,6 +202,8 @@ def generate_figure_crop_phenology(output_path: Path | str = "poster_visuals/v1/
         The rendered matplotlib figure object.
     """
     set_academic_style()
+    if output_path is None:
+        output_path = Path(__file__).resolve().parent / "4_Agricultural_Exposure_Phenology_Plot" / "crop_phenology_vs_flood_timeline_clean.png"
     output_path = Path(output_path)
 
     fig, (ax_top, ax_bot) = plt.subplots(
@@ -406,7 +409,7 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    base_dir = args.output_dir if args.output_dir is not None else Path(__file__).resolve().parent / "poster_visuals" / "v1"
+    base_dir = args.output_dir if args.output_dir is not None else Path(__file__).resolve().parent
     fig1_dir = base_dir / "3_Hydrological_Lag_and_Decoupling"
     fig2_dir = base_dir / "4_Agricultural_Exposure_Phenology_Plot"
     fig1_dir.mkdir(parents=True, exist_ok=True)

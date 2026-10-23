@@ -160,7 +160,7 @@ format to the climatology disagg, so the two are visually diffable.
 
 ---
 
-## 5. Evaluation protocol (mirrors `evaluation_metrics.md`)
+## 5. Evaluation protocol
 
 - **Per-pixel**: Brier score, reliability diagram, and **Brier skill score vs
   three references** — (a) pure climatology map (`clim_det_prob × freq_given`),
