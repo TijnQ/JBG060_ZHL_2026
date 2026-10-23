@@ -80,7 +80,9 @@ YEARS = list(range(2000, 2026))
 #   Fold 1: train 2000-2008, val 2009, test 2010-2011
 #   Fold 2: train 2000-2014, val 2015, test 2016-2017
 #   Fold 3: train 2000-2020, val 2021, test 2022-2024
-# Each season 2009-2024 is used for validation/test exactly once.
+# Flood seasons are scored out-of-sample in three held-out blocks (2009-2011,
+# 2015-2017, 2021-2024), each exactly once; 2012-2014 and 2018-2020 remain
+# training-only in the later folds.
 CV_FOLDS = [
     {"fold": 1, "train_years": (2000, 2008), "val_year": 2009, "test_years": (2010, 2011)},
     {"fold": 2, "train_years": (2000, 2014), "val_year": 2015, "test_years": (2016, 2017)},

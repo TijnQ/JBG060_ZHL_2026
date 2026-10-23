@@ -24,7 +24,7 @@ forecasts onto the pixel flood maps for the cattle/crop exposure risk products.
 
 `v3` — now the project baseline — fixes three evaluation-honesty problems found in the `v2` design:
 
-1. **3 expanding-window CV folds** (replacing 5 folds of 5-year blocks). Walk-forward design with an expanding training window, 1 validation year, and 2–3 held-out test years per fold. Every flood season 2009–2024 is used for validation/test exactly once.
+1. **3 expanding-window CV folds** (replacing 5 folds of 5-year blocks). Walk-forward design with an expanding training window, 1 validation year, and 2–3 held-out test years per fold. Flood seasons are scored out-of-sample in three held-out validation+test blocks (2009–2011, 2015–2017, 2021–2024), each season within them exactly once; the seasons between the blocks (2012–2014, 2018–2020) remain training-only in the later folds.
 2. **Per-fold references**: climatology & persistence baselines are estimated *inside each fold's training window* and never see validation/test years.
 3. **Protocol-aligned metrics**: the cutoff-dependent classification family (accuracy, precision, recall, F1, CSI, FAR) is removed from the headline summary — it throws the forecast probability away. Headline detection accuracy is the **Brier Score** with skill scores vs climatology and persistence, plus reliability diagrams. Area metrics are pinball loss, interval coverage, and flood-week MAE/bias. Duration gets its own Brier metric per horizon.
 
@@ -63,8 +63,11 @@ LightGBM_v1/
     ├── outputs_v1/        # Execution outputs for initial baseline model
     ├── outputs_v2/        # Execution outputs for 5-fold CV & monthly/county breakdown
     ├── outputs_v3/        # Execution outputs for 3-fold expanding-window CV (--model lightgbm)
-    ├── outputs_baseline/  # Frozen baseline run (--model lightgbm_baseline)
-    └── outputs_fe/        # Feature-engineered run (--model lightgbm_fe): same tables
+    ├── outputs_baseline/         # Frozen baseline run (--model lightgbm_baseline)
+    ├── outputs_baseline_optuna/  # Optuna-tuned baseline run (--params baseline_optuna)
+    ├── outputs_fe/               # Feature-engineered run (--model lightgbm_fe): same tables
+    ├── outputs_fe_optuna/        # Optuna-tuned feature-engineered run (--params fe_optuna)
+    └── outputs_final_fit/        # Final-fit operational forecast (--mode final)
         └── tables/
             ├── cv_test_predictions_aweil.csv
             ├── cv_metrics_summary_aweil.csv
